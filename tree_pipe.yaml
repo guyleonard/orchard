@@ -1,0 +1,44 @@
+database:
+ user: orchard
+ password: password
+ server: 144.173.27.211
+ database: new_proteins
+ tablename: cider
+
+directories:
+ programs: /usr/bin
+ # The location of the *.fasta predicted protein files
+ database: /home/genomes/cider
+
+search:
+ # blast, blast+, blat, usearch
+ program: blast+
+ blast: blastp
+ evalue: 1e-10
+ top_hits: 10
+ max_length: 3000
+ special_taxa: Hyphochytrium_catenoides
+ special_top_hits: 10
+ threads: 4
+
+alignment:
+ # mafft, muscle
+ program: mafft
+ # mafft = --auto --quiet
+ # muscle = -maxiters 2 -quiet
+ options: --auto --quiet
+ threads: 4
+
+trimming:
+ # trimal, gblocks
+ program: trimal
+ cutoff_1: 50
+ cutoff_2: 20
+
+trees:
+ # fasttree, phyml
+ program: fasttree
+ # phyml = -4 for aLRT SH, fasttree = -bionj -slow
+ options: -bionj -slow
+ # number of taxa to make a tree from
+ min_taxa: 4
