@@ -1,9 +1,12 @@
 orchard
 =======
+A Quick Phylogenetic Tree Building Pipeline
+
 Prerequisites
 =============
 * Bioperl
 * YAML::XS
+
 Updates
 =======
 This is going to be a full re-write of the "'Darren's Orchard'" Pipeline.
