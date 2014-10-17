@@ -1,4 +1,4 @@
-orchard
+Darren's Orchard
 =======
 A Quick Phylogenetic Tree Building Pipeline
 
