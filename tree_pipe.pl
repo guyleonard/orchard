@@ -6,7 +6,6 @@ use warnings;
 use autodie;                       # bIlujDI' yIchegh()Qo'; yIHegh()!
 use Cwd;                           # Gets pathname of current working directory
 use English qw(-no_match_vars);    # No magic perl variables!
-use feature qw(switch);            # avoid cascading if-elsif chains
 use File::Basename;                # Remove path information and extract 8.3 filename
 use Getopt::Std;                   # Command line options, finally!
 use YAML::XS qw/LoadFile/;         # for the parameters file, user friendly layout
@@ -44,7 +43,7 @@ setup_main_directories();
 
 # declare the perl command line flags/options we want to allow
 my %options = ();
-getopts( "s:t:p:hvbamoq", \%options );    # or display_help();
+getopts( "s:t:p:hvbamoq", \%options ) or die display_help();    # or display_help();
 
 # Display the help message if the user invokes -h
 if ( $options{h} ) { display_help() }
@@ -95,37 +94,32 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     # only run search (blast) step
     if ( $options{b} ) {
         print "Running: Search ($search_program) ONLY\n";
-
     }
 
     # only run alignment step
-    elsif ( $options{a} ) {
+    if ( $options{a} ) {
         print "Running: Alignment ($alignment_program) ONLY\n";
-
     }
 
     # only run mask step
-    elsif ( $options{m} ) {
+    if ( $options{m} ) {
         print "Running: Masking ($masking_program) ONLY\n";
-
     }
 
     # only run tree building step (o is for orchard)
-    elsif ( $options{o} ) {
+    if ( $options{o} ) {
         print "Running: Tree Reconstruction ($tree_program) ONLY\n";
-
     }
 
     # run bamt for each sequence sequentially
-    elsif ( $options{q} ) {
+    if ( $options{q} ) {
         ## experimental, is it really useful?
     }
 
-    # run all steps but all blasts first then amt steps
-    else {
-        print "Running: ALL Steps, all searches ($search_program) first!\n";
-
-    }
+    if ( !$options{b} && !$options{a} && !$options{m} && !$options{o} && !$options{q}) {
+    	# run all steps but all blasts first then amt steps
+    	print "Running: ALL Steps, all searches ($search_program) first!\n";
+	}
 }
 else {
     display_help();
