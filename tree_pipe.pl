@@ -7,8 +7,8 @@ use autodie;                       # bIlujDI' yIchegh()Qo'; yIHegh()!
 use Cwd;                           # Gets pathname of current working directory
 use English qw(-no_match_vars);    # No magic perl variables!
 use File::Basename;                # Remove path information and extract 8.3 filename
-use Getopt::Std;
-use YAML::XS qw/LoadFile/;
+use Getopt::Std;                   # Command line options, finally!
+use YAML::XS qw/LoadFile/;         # for the parameters file, user friendly layout
 
 #
 our $WORKING_DIR = getcwd;
@@ -39,7 +39,11 @@ setup_main_directories();
 
 # declare the perl command line flags/options we want to allow
 my %options = ();
-getopts( "s:t:p:", \%options ) or display_help();
+getopts( "s:t:p:hbv", \%options ) or display_help();
+
+# Display the help message if the user invokes -h
+if    ( $options{h} ) { display_help() }
+elsif ( $options{v} ) { print "Orchard $VERSION\n"; }
 
 ###########################################################
 ##           Accessory Subroutines                       ##
@@ -47,7 +51,9 @@ getopts( "s:t:p:", \%options ) or display_help();
 
 sub display_help {
 
-    print "You need 3 files for input:\n";
+    print "You need 3 files for input:\n\t-s sequence(s) file\n\t-t taxa file\n\t-p paramaters file\n";
+    print "Example: perl tree_pipe.pl -s sequences.fasta -t taxa_list.txt -p paramaters.yaml\n";
+    print "Other paramaters:\n\t-b blast only\n\t-a alignment only\n\t-m mask only\n\t-t tree building only\n";
 
     return;
 }

@@ -6,6 +6,7 @@ database:
  tablename: cider
 
 directories:
+ # prerequistie programs location or PATH
  programs: /usr/bin
  # The location of the *.fasta predicted protein files
  database: /home/genomes/cider
