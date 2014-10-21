@@ -1,15 +1,5 @@
-database:
- user: orchard
- password: password
- server: 144.173.27.211
- database: new_proteins
- tablename: cider
-
-directories:
- # prerequistie programs location or PATH
- location: /usr/bin
- # The location of the *.fasta predicted protein files
- database: /home/genomes/cider
+user:
+ run_id: # give your run an ID
 
 search:
  # blast, blast+, blat, usearch
@@ -43,3 +33,16 @@ trees:
  options: -bionj -slow
  # number of taxa to make a tree from
  min_taxa: 4
+
+ database:
+ user: orchard
+ password: password
+ server: 144.173.27.211
+ database: new_proteins
+ tablename: cider
+
+directories:
+ # prerequistie programs location or PATH
+ location: /usr/bin
+ # The location of the *.fasta predicted protein files
+ database: /home/genomes/cider
