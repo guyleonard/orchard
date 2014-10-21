@@ -4,9 +4,16 @@ A Quick Phylogenetic Tree Building Pipeline
 
 Prerequisites
 =============
-* Bioperl
-* Digest::MD5;
+* Bio::Perl
+* Digest::MD5
 * YAML::XS
+
+You can install these by typing:
+
+```
+$ sudo -MCPAN -e shell
+cpan[1]> install prerequisit_name
+```
 
 Updates
 =======
