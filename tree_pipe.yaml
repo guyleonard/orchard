@@ -7,7 +7,7 @@ database:
 
 directories:
  # prerequistie programs location or PATH
- programs: /usr/bin
+ location: /usr/bin
  # The location of the *.fasta predicted protein files
  database: /home/genomes/cider
 
@@ -30,7 +30,7 @@ alignment:
  options: --auto --quiet
  threads: 4
 
-trimming:
+masking:
  # trimal, gblocks
  program: trimal
  cutoff_1: 50
@@ -38,7 +38,7 @@ trimming:
 
 trees:
  # fasttree, phyml
- program: fasttree
+ program: FastTree
  # phyml = -4 for aLRT SH, fasttree = -bionj -slow
  options: -bionj -slow
  # number of taxa to make a tree from
