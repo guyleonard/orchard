@@ -3,8 +3,9 @@ use strict;
 use warnings;
 
 #
-use autodie;                       # bIlujDI' yIchegh()Qo'; yIHegh()!
-use Cwd;                           # Gets pathname of current working directory
+use autodie;    # bIlujDI' yIchegh()Qo'; yIHegh()!
+use Cwd;        # Gets pathname of current working directory
+use Digest::MD5;
 use English qw(-no_match_vars);    # No magic perl variables!
 use File::Basename;                # Remove path information and extract 8.3 filename
 use Getopt::Std;                   # Command line options, finally!
@@ -43,7 +44,7 @@ setup_main_directories();
 
 # declare the perl command line flags/options we want to allow
 my %options = ();
-getopts( "s:t:p:hvbamoq", \%options ) or die display_help();    # or display_help();
+getopts( "s:t:p:hvbamoq", \%options ) or croak display_help();    # or display_help();
 
 # Display the help message if the user invokes -h
 if ( $options{h} ) { display_help() }
@@ -54,6 +55,9 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     ## print Dumper($paramaters);
 
     # read in parameters from YAML file and/or set defaults
+
+    #user options
+    my $user_options = $paramaters->{user}->{options} || Digest::MD5::md5_hex(rand);
 
     # search options
     my $search_program       = $paramaters->{search}->{program}    || 'blast+';
@@ -116,10 +120,11 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
         ## experimental, is it really useful?
     }
 
-    if ( !$options{b} && !$options{a} && !$options{m} && !$options{o} && !$options{q}) {
-    	# run all steps but all blasts first then amt steps
-    	print "Running: ALL Steps, all searches ($search_program) first!\n";
-	}
+    if ( !$options{b} && !$options{a} && !$options{m} && !$options{o} && !$options{q} ) {
+
+        # run all steps but all blasts first then amt steps
+        print "Running: ALL Steps, all searches ($search_program) first!\n";
+    }
 }
 else {
     display_help();
