@@ -44,7 +44,7 @@ setup_main_directories();
 
 # declare the perl command line flags/options we want to allow
 my %options = ();
-getopts( "s:t:p:hvbamtq", \%options );    # or display_help();
+getopts( "s:t:p:hvbamoq", \%options );    # or display_help();
 
 # Display the help message if the user invokes -h
 if ( $options{h} ) { display_help() }
@@ -106,12 +106,12 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
 
     # only run mask step
     elsif ( $options{m} ) {
-        print "Running: Masking ($mask_program) ONLY\n";
+        print "Running: Masking ($masking_program) ONLY\n";
 
     }
 
-    # only run tree building step
-    elsif ( $options{t} ) {
+    # only run tree building step (o is for orchard)
+    elsif ( $options{o} ) {
         print "Running: Tree Reconstruction ($tree_program) ONLY\n";
 
     }
