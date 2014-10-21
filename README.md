@@ -5,6 +5,7 @@ A Quick Phylogenetic Tree Building Pipeline
 Prerequisites
 =============
 * Bioperl
+* Digest::MD5;
 * YAML::XS
 
 Updates
