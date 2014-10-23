@@ -59,6 +59,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     # user options
     my $user_options = $paramaters->{user}->{options} || substr(Digest::MD5::md5_hex(rand), 0, 10);
     $WORKING_DIR = $WORKING_DIR . "/" . $user_options;
+    $output_report("Run ID: $user_options\n");    
     ## print "UO: $WORKING_DIR\n";
 
     # search options
@@ -135,6 +136,18 @@ else {
 ###########################################################
 ##           Accessory Subroutines                       ##
 ###########################################################
+
+sub output_report {
+
+    my $message = shift;
+    my $file_name = $WORKING_DIR\/report.txt;
+    
+    open my $report, ">>", $file_name;
+
+    print $report $message;
+
+    return;
+}
 
 sub display_help {
 
