@@ -40,7 +40,6 @@ our $VERSION     = '2014-10-17';
 ###########################################################
 ##           Main Program Flow                           ##
 ###########################################################
-setup_main_directories();
 
 # declare the perl command line flags/options we want to allow
 my %options = ();
@@ -59,8 +58,11 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     # user options
     my $user_options = $paramaters->{user}->{options} || substr(Digest::MD5::md5_hex(rand), 0, 10);
     $WORKING_DIR = $WORKING_DIR . "/" . $user_options;
-    $output_report("Run ID: $user_options\n");    
+    $output_report("Run ID: $user_options\n"); 
     ## print "UO: $WORKING_DIR\n";
+
+    # Now we can make the directories as we have modified the WD
+    setup_main_directories();
 
     # search options
     my $search_program       = $paramaters->{search}->{program}    || 'blast+';
