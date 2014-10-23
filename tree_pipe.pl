@@ -5,7 +5,7 @@ use warnings;
 #
 use autodie;    # bIlujDI' yIchegh()Qo'; yIHegh()!
 use Cwd;        # Gets pathname of current working directory
-use Digest::MD5;
+use Digest::MD5;# Generate random string for run ID
 use English qw(-no_match_vars);    # No magic perl variables!
 use File::Basename;                # Remove path information and extract 8.3 filename
 use Getopt::Std;                   # Command line options, finally!
@@ -28,9 +28,9 @@ our $VERSION     = '2014-10-17';
 #               Guy Leonard
 #               Finlay Maguire
 #
-#     This first version of this program was in 2009.
-#     There have been many 'hacks', extensions and updates.
-#	  This version attempts to refactor & fix those.
+#     The first version of this program is from 2009.
+#     There have been many 'hacks', extensions and updates by GL & FM.
+#	  This version attempts to refactor & fix those, mostly GL.
 #
 #     It is currently hosted here:
 #     https://github.com/guyleonard/orchard
@@ -56,8 +56,10 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
 
     # read in parameters from YAML file and/or set defaults
 
-    #user options
-    my $user_options = $paramaters->{user}->{options} || Digest::MD5::md5_hex(rand);
+    # user options
+    my $user_options = $paramaters->{user}->{options} || substr(Digest::MD5::md5_hex(rand), 0, 10);
+    $WORKING_DIR = $WORKING_DIR . "/" . $user_options;
+    ## print "UO: $WORKING_DIR\n";
 
     # search options
     my $search_program       = $paramaters->{search}->{program}    || 'blast+';
