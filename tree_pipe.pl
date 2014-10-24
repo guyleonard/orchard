@@ -156,13 +156,17 @@ sub search_step {
     my @taxa_array        = @{$_[2]};
     my $input_seqs_fname  = $_[3];
 
-    my $number_of_taxa = @taxa_array;
-
     my $seq_in = Bio::SeqIO->new( -file => "<$input_seqs_fname" );
 
-    while ( my $seq = $seq_in->next_seq() ) {
+    # I can't do this as it is a stream, need a way to gauge the number of
+    # seqs queued in the stream as I don't want to a) read stream twice or b)
+	# rely on bash/grep as I did before...
+    my $count = scalar keys %$seq_in; # . "\n";
+    print "XX $count\n";
 
-        print "Running:";
+    print Dumper($seq_in);
+
+    while ( my $seq = $seq_in->next_seq() ) {
 
         given ($search_program) {
             when (/BLAST\+/ism) {
