@@ -57,12 +57,12 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
 
     # user options
     my $user_options = $paramaters->{user}->{options} || substr(Digest::MD5::md5_hex(rand), 0, 10);
-    $WORKING_DIR = $WORKING_DIR . "/" . $user_options;
-    $output_report("Run ID: $user_options\n"); 
-    ## print "UO: $WORKING_DIR\n";
-
-    # Now we can make the directories as we have modified the WD
-    setup_main_directories();
+    my $run_directory = $WORKING_DIR . "/" . $user_options;
+    
+    # Now we can make the directories
+    setup_main_directories($run_directory);
+    # Report
+    $output_report("Run ID: $user_options\nDirectory: $run_directory\n"); 
 
     # search options
     my $search_program       = $paramaters->{search}->{program}    || 'blast+';
@@ -165,13 +165,15 @@ sub display_help {
 # are available, if not it creates them.
 sub setup_main_directories {
 
+	my $run_directory = shift;
+
     # main directories
-    my $seqs_dir = "$WORKING_DIR/seqs";
-    my $alig_dir = "$WORKING_DIR/alignments";
-    my $mask_dir = "$WORKING_DIR/masks";
-    my $tree_dir = "$WORKING_DIR/trees";
-    my $excl_dir = "$WORKING_DIR/excluded";
-    my $repo_dir = "$WORKING_DIR/report";
+    my $seqs_dir = "$run_directory/seqs";
+    my $alig_dir = "$run_directory/alignments";
+    my $mask_dir = "$run_directory/masks";
+    my $tree_dir = "$run_directory/trees";
+    my $excl_dir = "$run_directory/excluded";
+    my $repo_dir = "$run_directory/report";
 
     # create directories if they don't exist!
     if ( !-d $seqs_dir ) { mkdir $seqs_dir }
