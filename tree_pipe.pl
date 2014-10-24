@@ -5,6 +5,7 @@ use warnings;
 #
 use autodie;                       # bIlujDI' yIchegh()Qo'; yIHegh()!
 use Cwd;                           # Gets pathname of current working directory
+use Bio::SeqIO;                    # Use Bio::Perl
 use Digest::MD5;                   # Generate random string for run ID
 use English qw(-no_match_vars);    # No magic perl variables!
 use File::Basename;                # Remove path information and extract 8.3 filename
@@ -52,11 +53,14 @@ if ( $options{h} ) { display_help() }
 if ( $options{v} ) { print "Orchard $VERSION\n"; }
 
 if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
+    my $taxa_list_fname = "$options{t}";
+    my @taxa_array      = taxa_list_to_array($taxa_list_fname);
+
+    my $input_seqs_fname = "$options{s}";
+
     my $paramaters = LoadFile("$options{p}");
-    ## print Dumper($paramaters);
 
     # read in parameters from YAML file and/or set defaults
-
     # user options
     # modify the md5_hex to ten chars from pos 0 if none given in YAML
     my $user_options = $paramaters->{user}->{run_id} || substr( Digest::MD5::md5_hex(rand), 0, 10 );
@@ -69,15 +73,15 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     output_report("Run ID: $user_options\nDirectory: $run_directory\n");
 
     # search options
-    my $search_program       = $paramaters->{search}->{program}    || 'blast+';
-    my $search_program_blast = $paramaters->{search}->{blast}      || 'blastp';
-    my $search_evalue        = $paramaters->{search}->{evalue}     || '1e-10';
-    my $search_tophits       = $paramaters->{search}->{top_hits}   || '1';
-    my $search_maxlength     = $paramaters->{search}->{max_length} || '3000';
+    my $search_program    = $paramaters->{search}->{program}    || 'blast+';
+    my $search_subprogram = $paramaters->{search}->{subprogram} || 'blastp';
+    my $search_evalue     = $paramaters->{search}->{evalue}     || '1e-10';
+    my $search_tophits    = $paramaters->{search}->{top_hits}   || '1';
+    my $search_maxlength  = $paramaters->{search}->{max_length} || '3000';
     my $search_special_taxa    = $paramaters->{search}->{special_taxa};        # no default
     my $search_special_tophits = $paramaters->{search}->{special_top_hits};    # no default
     my $search_threads         = $paramaters->{search}->{threads} || '1';
-    my $search_other         = $paramaters->{search}->{other}; # no default
+    my $search_other           = $paramaters->{search}->{other};               # no default
 
     # alignment options
     my $alignment_program = $paramaters->{alignment}->{program} || 'mafft';
@@ -134,7 +138,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
 
         # run all steps but all blasts first then amt steps
         print "Running: ALL Steps, all searches ($search_program) first!\n";
-        search_step($search_program);
+        search_step( $search_program, $search_subprogram, \@taxa_array, $input_seqs_fname );
     }
 }
 else {
@@ -146,55 +150,114 @@ else {
 ###########################################################
 
 sub search_step {
-    #my ( $search_program, $search_program_blast ) = @_;
-    my $search_program = shift;
 
-    given ($search_program) {
-        when (/BLAST\+/ism) {
+    my $search_program    = $_[0];
+    my $search_subprogram = $_[1];
+    my @taxa_array        = @{$_[2]};
+    my $input_seqs_fname  = $_[3];
 
-            #$num_seqs = run_blast( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
-            print "Running: blast+\n";
-        }
-        when (/BLAST/ism) {
+    my $number_of_taxa = @taxa_array;
 
-            #$num_seqs = run_blast( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
-            print "Running: legacy blast\n";
-        }
-        when (/BLAT/ism) {
+    my $seq_in = Bio::SeqIO->new( -file => "<$input_seqs_fname" );
 
-            #$num_seqs = run_blat( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
-        }
-        when (/USEARCH/ism) {
+    while ( my $seq = $seq_in->next_seq() ) {
 
-            #$num_seqs = run_ublast( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
-        }
-        default {
+        print "Running:";
 
-            #$num_seqs = run_blast( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
+        given ($search_program) {
+            when (/BLAST\+/ism) {
+
+                #$num_seqs = run_blast_plus( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
+                print "Running: blast+\n";
+            }
+            when (/BLAST/ism) {
+
+                #$num_seqs = run_blast( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
+                print "Running: legacy blast\n";
+            }
+            when (/BLAT/ism) {
+
+                #$num_seqs = run_blat( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
+            }
+            when (/USEARCH/ism) {
+
+                #$num_seqs = run_ublast( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
+            }
+            default {
+
+                #$num_seqs = run_blast( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
+            }
         }
     }
 }
 
 sub run_blast_plus {
 
-	# blastp from blast+ package command
-	#my $blastp_command = "blastp -task $search_program_blast";
-	#$blastp_command .= " -db $seq_data\/XXX";
-	#$blastp_command .= " -query XXX";
-	#$blastp_command .= " -out XXX";
-	#$blastp_command .= " -evalue $search_evalue";
-	#$blastp_command .= " -outfmt XXX";
-	#$blastp_command .= " -num_alignments 0";
-	#$blastp_command .= " -max_target_seqs $search_tophits";
-	#$blastp_command .= " -num_threads $search_threads";
-	#$blastp_command .= " $search_other";
+    # blast(x) from blast+ package command
+    #my $blast_command = "blastp -task $search_program_blast";
+    #$blast_command .= " -db $seq_data\/XXX";
+    #$blast_command .= " -query XXX";
+    #$blast_command .= " -out XXX";
+    #$blast_command .= " -evalue $search_evalue";
+    #$blast_command .= " -outfmt XXX";
+    #$blast_command .= " -num_alignments 0";
+    #$blast_command .= " -max_target_seqs $search_tophits";
+    #$blast_command .= " -num_threads $search_threads";
+    #$blast_command .= " $search_other";
 
-    #system($blastp_command);
+    #system($blast_command);
+}
+
+sub run_legacy_blast {
+
+    # blast(x) from legacy blast package command
+    #my $blast_command = "blastall -p $search_program_blast";
+    #$blast_command .= " -d $seq_data\/XXX";
+    #$blast_command .= " -i XXX";
+    #$blast_command .= " -o XXX";
+    #$blast_command .= " -e $search_evalue";
+    #$blast_command .= " -m XXX";
+    #$blast_command .= " -b 0";
+    #$blast_command .= " -v $search_tophits";
+    #$blast_command .= " -a $search_threads";
+    #$blast_command .= " $search_other";
+
+    #system($blast_command);
+}
+
+sub run_blat {
+
+    #my $blat_command = "blat";
+    #$blat_command .= " -prot"; # this should be a user option eventually
+    #$blat_command .= " $seq_data\/XXX"; #database
+    #$blat_command .= " XXX"; # query file
+    #$blat_command .= " -out=blast";
+    #$blat_command .= " XXX"; # output filename
+}
+
+sub run_usearch {
+
+    #my $usearch_command = "usearch -ublast";
+    #$blat_command .= " XXX"; # query file
+    #$blat_command .= " -db $seq_data\/XXX";
+    #$blat_command .= " -evalue $search_evalue"; # this should be a user option eventually
+    #$blat_command .= " -blast6out XXX; # output filename
+    #$blat_command .= " -threads $search_threads";
 }
 
 ###########################################################
 ##           Accessory Subroutines                       ##
 ###########################################################
+
+sub taxa_list_to_array {
+
+    my $taxa_list_fname = shift;
+    open my $infile, '<', $taxa_list_fname;
+    chomp( my @data = <$infile> );
+    close($infile);
+
+    return @data;
+}
 
 sub output_report {
 
@@ -217,7 +280,7 @@ sub display_help {
 }
 
 # this checks to see if the directories needed for file output
-# are available, if not it creates them.
+# are available, if not it creates them all - for now.
 sub setup_main_directories {
 
     my $run_directory = shift;

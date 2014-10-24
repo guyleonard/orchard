@@ -5,14 +5,16 @@ user:
 search:
  # blast, blast+, blat, usearch
  program: blast+
- blast: blastp
+ # blastp, blastx, ublast etc
+ subprogram: blastp
+ threads: 4
+ other: # any special commands, must be exact correct format!
+ # values below are only supported by blast/blast+
  evalue: 1e-10
  top_hits: 10
  max_length: 3000
  special_taxa: Hyphochytrium_catenoides
  special_top_hits: 10
- threads: 4
- other: # any special commans, must be exact correct format!
 
 alignment:
  # mafft, muscle
@@ -36,7 +38,7 @@ trees:
  # number of taxa to make a tree from
  min_taxa: 4
 
- database:
+database:
  user: orchard
  password: password
  server: 144.173.27.211
