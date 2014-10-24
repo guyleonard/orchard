@@ -1,5 +1,6 @@
 user:
- run_id: # give your run an ID
+ run_id: test 
+# give your run an ID
 
 search:
  # blast, blast+, blat, usearch

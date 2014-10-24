@@ -3,9 +3,9 @@ use strict;
 use warnings;
 
 #
-use autodie;    # bIlujDI' yIchegh()Qo'; yIHegh()!
-use Cwd;        # Gets pathname of current working directory
-use Digest::MD5;# Generate random string for run ID
+use autodie;                       # bIlujDI' yIchegh()Qo'; yIHegh()!
+use Cwd;                           # Gets pathname of current working directory
+use Digest::MD5;                   # Generate random string for run ID
 use English qw(-no_match_vars);    # No magic perl variables!
 use File::Basename;                # Remove path information and extract 8.3 filename
 use Getopt::Std;                   # Command line options, finally!
@@ -56,13 +56,15 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     # read in parameters from YAML file and/or set defaults
 
     # user options
-    my $user_options = $paramaters->{user}->{options} || substr(Digest::MD5::md5_hex(rand), 0, 10);
-    my $run_directory = $WORKING_DIR . "/" . $user_options;
-    
+    # modify the md5_hex to ten chars from pos 0 if none given in YAML
+    my $user_options = $paramaters->{user}->{run_id} || substr( Digest::MD5::md5_hex(rand), 0, 10 );
+    my $run_directory = "$WORKING_DIR\/$user_options";
+
     # Now we can make the directories
     setup_main_directories($run_directory);
+
     # Report
-    $output_report("Run ID: $user_options\nDirectory: $run_directory\n"); 
+    output_report("Run ID: $user_options\nDirectory: $run_directory\n");
 
     # search options
     my $search_program       = $paramaters->{search}->{program}    || 'blast+';
@@ -141,12 +143,14 @@ else {
 
 sub output_report {
 
-    my $message = shift;
-    my $file_name = $WORKING_DIR\/report.txt;
-    
+    my $message   = shift;
+    my $file_name = "$WORKING_DIR\/report.txt";
+
     open my $report, ">>", $file_name;
 
     print $report $message;
+
+    close($report);
 
     return;
 }
@@ -165,23 +169,49 @@ sub display_help {
 # are available, if not it creates them.
 sub setup_main_directories {
 
-	my $run_directory = shift;
+    my $run_directory = shift;
 
-    # main directories
-    my $seqs_dir = "$run_directory/seqs";
-    my $alig_dir = "$run_directory/alignments";
-    my $mask_dir = "$run_directory/masks";
-    my $tree_dir = "$run_directory/trees";
-    my $excl_dir = "$run_directory/excluded";
-    my $repo_dir = "$run_directory/report";
+    if ( !-d $run_directory ) {
+        output_report("Creating Directory $run_directory\n");
+        mkdir $run_directory;
 
-    # create directories if they don't exist!
-    if ( !-d $seqs_dir ) { mkdir $seqs_dir }
-    if ( !-d $alig_dir ) { mkdir $alig_dir }
-    if ( !-d $mask_dir ) { mkdir $mask_dir }
-    if ( !-d $tree_dir ) { mkdir $tree_dir }
-    if ( !-d $excl_dir ) { mkdir $excl_dir }
-    if ( !-d $repo_dir ) { mkdir $repo_dir }
+        # create sub-directories
+        output_report("Creating Subdirectories\n");
+        mkdir "$run_directory\/seqs";
+        mkdir "$run_directory\/alignments";
+        mkdir "$run_directory\/masks";
+        mkdir "$run_directory\/trees";
+        mkdir "$run_directory\/excluded";
+        mkdir "$run_directory\/report";
+    }
+    else {
+        print "Directory Already Exists!\nContinue anyway? y/n\n>:";
+        chomp( my $user_choice = <STDIN> );
+        if ( $user_choice =~ m/n/i ) {
 
+            output_report("Terminating, run directories already exist\n");
+            exit;
+        }
+        else {
+            output_report("Continuing, although run directories already exist\n");
+
+            # Let's just make sure we have everything we will need!
+            # main directories
+            my $seqs_dir = "$run_directory\/seqs";
+            my $alig_dir = "$run_directory\/alignments";
+            my $mask_dir = "$run_directory\/masks";
+            my $tree_dir = "$run_directory\/trees";
+            my $excl_dir = "$run_directory\/excluded";
+            my $repo_dir = "$run_directory\/report";
+
+            # create directories if they don't exist!
+            if ( !-d $seqs_dir ) { mkdir $seqs_dir }
+            if ( !-d $alig_dir ) { mkdir $alig_dir }
+            if ( !-d $mask_dir ) { mkdir $mask_dir }
+            if ( !-d $tree_dir ) { mkdir $tree_dir }
+            if ( !-d $excl_dir ) { mkdir $excl_dir }
+            if ( !-d $repo_dir ) { mkdir $repo_dir }
+        }
+    }
     return;
 }
