@@ -134,6 +134,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
 
         # run all steps but all blasts first then amt steps
         print "Running: ALL Steps, all searches ($search_program) first!\n";
+        search_step($search_program);
     }
 }
 else {
@@ -145,16 +146,19 @@ else {
 ###########################################################
 
 sub search_step {
-    my ( $search_program, $search_program_blast ) = @_;
+    #my ( $search_program, $search_program_blast ) = @_;
+    my $search_program = shift;
 
     given ($search_program) {
-        when (/BLAST+/ism) {
+        when (/BLAST\+/ism) {
 
             #$num_seqs = run_blast( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
+            print "Running: blast+\n";
         }
         when (/BLAST/ism) {
 
             #$num_seqs = run_blast( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
+            print "Running: legacy blast\n";
         }
         when (/BLAT/ism) {
 
@@ -174,18 +178,18 @@ sub search_step {
 sub run_blast_plus {
 
 	# blastp from blast+ package command
-	my $blastp_command = "blastp -task $search_program_blast"
-	blastp_command .= " -db $seq_data\/XXX";
-	blastp_command .= " -query XXX";
-	blastp_command .= " -out XXX";
-	blastp_command .= " -evalue $search_evalue";
-	blastp_command .= " -outfmt XXX";
-	blastp_command .= " -num_alignments 0";
-	blastp_command .= " -max_target_seqs $search_tophits";
-	blastp_command .= " -num_threads $search_threads";
-	blastp_command .= " $search_other";
+	#my $blastp_command = "blastp -task $search_program_blast";
+	#$blastp_command .= " -db $seq_data\/XXX";
+	#$blastp_command .= " -query XXX";
+	#$blastp_command .= " -out XXX";
+	#$blastp_command .= " -evalue $search_evalue";
+	#$blastp_command .= " -outfmt XXX";
+	#$blastp_command .= " -num_alignments 0";
+	#$blastp_command .= " -max_target_seqs $search_tophits";
+	#$blastp_command .= " -num_threads $search_threads";
+	#$blastp_command .= " $search_other";
 
-    system(blastp_command);
+    #system($blastp_command);
 }
 
 ###########################################################
