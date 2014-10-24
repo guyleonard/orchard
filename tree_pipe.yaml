@@ -12,6 +12,7 @@ search:
  special_taxa: Hyphochytrium_catenoides
  special_top_hits: 10
  threads: 4
+ other: # any special commans, must be exact correct format!
 
 alignment:
  # mafft, muscle

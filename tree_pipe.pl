@@ -9,6 +9,7 @@ use Digest::MD5;                   # Generate random string for run ID
 use English qw(-no_match_vars);    # No magic perl variables!
 use File::Basename;                # Remove path information and extract 8.3 filename
 use Getopt::Std;                   # Command line options, finally!
+use feature qw{ switch };          # Given/when instead of switch
 use IO::Prompt;                    # User prompts
 use YAML::XS qw/LoadFile/;         # for the parameters file, user friendly layout
 
@@ -76,6 +77,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     my $search_special_taxa    = $paramaters->{search}->{special_taxa};        # no default
     my $search_special_tophits = $paramaters->{search}->{special_top_hits};    # no default
     my $search_threads         = $paramaters->{search}->{threads} || '1';
+    my $search_other         = $paramaters->{search}->{other}; # no default
 
     # alignment options
     my $alignment_program = $paramaters->{alignment}->{program} || 'mafft';
@@ -139,20 +141,65 @@ else {
 }
 
 ###########################################################
+##           Main Subroutines 	                         ##
+###########################################################
+
+sub search_step {
+    my ( $search_program, $search_program_blast ) = @_;
+
+    given ($search_program) {
+        when (/BLAST+/ism) {
+
+            #$num_seqs = run_blast( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
+        }
+        when (/BLAST/ism) {
+
+            #$num_seqs = run_blast( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
+        }
+        when (/BLAT/ism) {
+
+            #$num_seqs = run_blat( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
+        }
+        when (/USEARCH/ism) {
+
+            #$num_seqs = run_ublast( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
+        }
+        default {
+
+            #$num_seqs = run_blast( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
+        }
+    }
+}
+
+sub run_blast_plus {
+
+	# blastp from blast+ package command
+	my $blastp_command = "blastp -task $search_program_blast"
+	blastp_command .= " -db $seq_data\/XXX";
+	blastp_command .= " -query XXX";
+	blastp_command .= " -out XXX";
+	blastp_command .= " -evalue $search_evalue";
+	blastp_command .= " -outfmt XXX";
+	blastp_command .= " -num_alignments 0";
+	blastp_command .= " -max_target_seqs $search_tophits";
+	blastp_command .= " -num_threads $search_threads";
+	blastp_command .= " $search_other";
+
+    system(blastp_command);
+}
+
+###########################################################
 ##           Accessory Subroutines                       ##
 ###########################################################
 
 sub output_report {
 
+    # Append messages to report file
     my $message   = shift;
     my $file_name = "$WORKING_DIR\/report.txt";
-
     open my $report, ">>", $file_name;
-
     print $report $message;
-
     close($report);
-
     return;
 }
 
@@ -162,7 +209,6 @@ sub display_help {
     print "Example: perl tree_pipe.pl -s sequences.fasta -t taxa_list.txt -p paramaters.yaml\n";
     print
 "Other paramaters:\n\t-b blast only\n\t-a alignment only\n\t-m mask only\n\t-t tree building only\n\t-q run sequentially\n";
-
     exit(1);
 }
 
@@ -204,7 +250,7 @@ sub setup_main_directories {
             exit;
         }
         else {
-            output_report("Continuing, although run directories already exist\n");
+            output_report("Continuing, even though run directories already exist\n");
 
             # Let's just make sure we have everything we will need!
 
