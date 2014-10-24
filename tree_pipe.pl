@@ -9,6 +9,7 @@ use Digest::MD5;                   # Generate random string for run ID
 use English qw(-no_match_vars);    # No magic perl variables!
 use File::Basename;                # Remove path information and extract 8.3 filename
 use Getopt::Std;                   # Command line options, finally!
+use IO::Prompt;					   # User prompts
 use YAML::XS qw/LoadFile/;         # for the parameters file, user friendly layout
 
 #
@@ -185,9 +186,9 @@ sub setup_main_directories {
         mkdir "$run_directory\/report";
     }
     else {
-        print "Directory Already Exists!\nContinue anyway? y/n\n>:";
-        chomp( my $user_choice = <STDIN> );
-        if ( $user_choice =~ m/n/i ) {
+        print "Directory Already Exists!\nContinue anyway? y/n\n";
+        my $user_choice = prompt(">: ", -yes_no1);
+        if ( $user_choice =~ m/n/ism ) {
 
             output_report("Terminating, run directories already exist\n");
             exit;

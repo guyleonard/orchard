@@ -6,6 +6,7 @@ Prerequisites
 =============
 * Bio::Perl
 * Digest::MD5
+* IO::Prompt
 * YAML::XS
 
 You can install these by typing:
