@@ -9,7 +9,7 @@ use Digest::MD5;                   # Generate random string for run ID
 use English qw(-no_match_vars);    # No magic perl variables!
 use File::Basename;                # Remove path information and extract 8.3 filename
 use Getopt::Std;                   # Command line options, finally!
-use IO::Prompt;					   # User prompts
+use IO::Prompt;                    # User prompts
 use YAML::XS qw/LoadFile/;         # for the parameters file, user friendly layout
 
 #
@@ -172,22 +172,32 @@ sub setup_main_directories {
 
     my $run_directory = shift;
 
+    # main directories
+    my $seqs_dir = "$run_directory\/seqs";
+    my $alig_dir = "$run_directory\/alignments";
+    my $mask_dir = "$run_directory\/masks";
+    my $tree_dir = "$run_directory\/trees";
+    my $excl_dir = "$run_directory\/excluded";
+    my $repo_dir = "$run_directory\/report";
+
     if ( !-d $run_directory ) {
         output_report("Creating Directory $run_directory\n");
         mkdir $run_directory;
 
         # create sub-directories
         output_report("Creating Subdirectories\n");
-        mkdir "$run_directory\/seqs";
-        mkdir "$run_directory\/alignments";
-        mkdir "$run_directory\/masks";
-        mkdir "$run_directory\/trees";
-        mkdir "$run_directory\/excluded";
-        mkdir "$run_directory\/report";
+
+        # create directories if they don't exist!
+        if ( !-d $seqs_dir ) { mkdir $seqs_dir }
+        if ( !-d $alig_dir ) { mkdir $alig_dir }
+        if ( !-d $mask_dir ) { mkdir $mask_dir }
+        if ( !-d $tree_dir ) { mkdir $tree_dir }
+        if ( !-d $excl_dir ) { mkdir $excl_dir }
+        if ( !-d $repo_dir ) { mkdir $repo_dir }
     }
     else {
         print "Directory Already Exists!\nContinue anyway? y/n\n";
-        my $user_choice = prompt(">: ", -yes_no1);
+        my $user_choice = prompt( ">: ", -yes_no1 );
         if ( $user_choice =~ m/n/ism ) {
 
             output_report("Terminating, run directories already exist\n");
@@ -197,13 +207,6 @@ sub setup_main_directories {
             output_report("Continuing, although run directories already exist\n");
 
             # Let's just make sure we have everything we will need!
-            # main directories
-            my $seqs_dir = "$run_directory\/seqs";
-            my $alig_dir = "$run_directory\/alignments";
-            my $mask_dir = "$run_directory\/masks";
-            my $tree_dir = "$run_directory\/trees";
-            my $excl_dir = "$run_directory\/excluded";
-            my $repo_dir = "$run_directory\/report";
 
             # create directories if they don't exist!
             if ( !-d $seqs_dir ) { mkdir $seqs_dir }
