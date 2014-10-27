@@ -10,11 +10,11 @@ search:
  threads: 4
  other: # any special commands, must be exact correct format!
  # values below are only supported by blast/blast+
- evalue: 1e-10
- top_hits: 10
+ evalue: 1e-05
+ top_hits: 1
  max_length: 3000
- special_taxa: Hyphochytrium_catenoides
- special_top_hits: 10
+ special_taxa:
+ special_top_hits:
 
 alignment:
  # mafft, muscle
@@ -49,4 +49,4 @@ directories:
  # prerequistie programs location or PATH
  location: /usr/bin
  # The location of the *.fasta predicted protein files
- database: /home/genomes/cider
+ database: /home/cs02gl/Desktop/genomes/cider

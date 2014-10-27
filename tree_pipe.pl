@@ -5,6 +5,8 @@ use warnings;
 #
 use autodie;                       # bIlujDI' yIchegh()Qo'; yIHegh()!
 use Cwd;                           # Gets pathname of current working directory
+use Bio::Index::BlastTable;        # parse blast tabular format
+use Bio::SearchIO;
 use Bio::SeqIO;                    # Use Bio::Perl
 use Digest::MD5;                   # Generate random string for run ID
 use English qw(-no_match_vars);    # No magic perl variables!
@@ -58,12 +60,11 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
 
     my $input_seqs_fname = "$options{s}";
 
-    my $paramaters = LoadFile("$options{p}");
-
     # read in parameters from YAML file and/or set defaults
     # user options
     # modify the md5_hex to ten chars from pos 0 if none given in YAML
-    my $user_options = $paramaters->{user}->{run_id} || substr( Digest::MD5::md5_hex(rand), 0, 10 );
+    my $paramaters    = LoadFile("$options{p}");
+    my $user_options  = $paramaters->{user}->{run_id} || substr( Digest::MD5::md5_hex(rand), 0, 10 );
     my $run_directory = "$WORKING_DIR\/$user_options";
 
     # Now we can make the directories
@@ -139,11 +140,13 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     if ( !$options{b} && !$options{a} && !$options{m} && !$options{o} && !$options{q} ) {
 
         # run all steps but all blasts first then amt steps
-        print "Running: ALL Steps, all searches ($search_program) first!\n";
+        print "Running: ALL Steps; all searches ($search_program) first!\n";
+
+        # gosh I shouldn't pass this many variables through subroutines...
         search_step(
             $search_program,         $search_subprogram, \@taxa_array,      $input_seqs_fname,
             $search_evalue,          $search_tophits,    $search_maxlength, $search_special_taxa,
-            $search_special_tophits, $search_threads,    $search_other
+            $search_special_tophits, $search_threads,    $search_other,     $seq_data
         );
     }
 }
@@ -157,13 +160,17 @@ else {
 
 sub search_step {
 
+    # get all of the values passed to the sub...
     my (
         $search_program,         $search_subprogram, $taxa_array_ref,   $input_seqs_fname,
         $search_evalue,          $search_tophits,    $search_maxlength, $search_special_taxa,
-        $search_special_tophits, $search_threads,    $search_other
+        $search_special_tophits, $search_threads,    $search_other,     $seq_data
     ) = @_;
+
+    # dereference the array
     my @taxa_array = @{$taxa_array_ref};
 
+    # we should always have one sequence, right!?
     my $input_seqs_count = 1;
 
     # open bioperl seqio object with user input sequences
@@ -180,15 +187,36 @@ sub search_step {
 
         print "Processing: $input_seqs_count of $input_seqs_total\n";
 
+        # Get Sequence Name
+        my $sequence_name = $seq->id;
+        $sequence_name =~ s/\s+/\_/gms;    # Replace spaces with '_'
+
+        # Output Query Sequence
+        my $query_out = Bio::SeqIO->new(
+            -file   => ">$sequence_name\_query.fas",
+            -format => 'fasta'
+        );
+        $query_out->write_seq($seq);
+
+        # Running total of hits, note '>>' append
+        my $hits_out = Bio::SeqIO->new(
+            -file   => ">>$sequence_name\_hits.fas",
+            -format => 'fasta'
+        );
+        $hits_out->write_seq($seq);
+
         given ($search_program) {
             when (/BLAST\+/ism) {
 
-                my $num_seqs = run_blast_plus(
+                print "\tRunning: blast+ on $sequence_name\n";
+
+                my $num_hit_seqs = run_blast_plus(
                     $search_program,         $search_subprogram, \@taxa_array,      $input_seqs_fname,
                     $search_evalue,          $search_tophits,    $search_maxlength, $search_special_taxa,
-                    $search_special_tophits, $search_threads,    $search_other
+                    $search_special_tophits, $search_threads,    $search_other,     $sequence_name,
+                    $seq_data
                 );
-                print "\tRunning: blast+\n";
+
             }
             when (/BLAST/ism) {
 
@@ -219,23 +247,85 @@ sub run_blast_plus {
     my (
         $search_program,         $search_subprogram, $taxa_array_ref,   $input_seqs_fname,
         $search_evalue,          $search_tophits,    $search_maxlength, $search_special_taxa,
-        $search_special_tophits, $search_threads,    $search_other
+        $search_special_tophits, $search_threads,    $search_other,     $sequence_name,
+        $seq_data
     ) = @_;
+
+    my @taxa_array = @{$taxa_array_ref};
+    my $taxa_total = @taxa_array;
+    my $taxa_count = 1;
+
+    while (@taxa_array) {
+
+        # Current Taxa Name
+        my $taxa_name = shift(@taxa_array);
+        $taxa_name =~ s/\s+/\_/gms;    # Replace spaces with '_'
+
+        if ( $taxa_name =~ m/^#/ ) {
+            print "\t\tSkipping commented out $taxa_name\n";
+            $taxa_count++;
+        }
+        else {
+
+            # Blast Output Filename
+            my $search_output = $sequence_name . "_v_" . $taxa_name . "." . $search_subprogram;
+
+            # BLAST Output Progress
+            #printf "\tRunning $search_subprogram\t$. of $taxa_total\n\e[A";    # Progress, $. is current line
+            print "\t\t>: $search_subprogram\t$taxa_count of $taxa_total\n";    # Progress, $. is current line
+
+            my $database = $taxa_name . ".fas";
+
+            # blast(x) from blast+ package command
+            my $blast_command = "$search_subprogram -task $search_subprogram";
+            $blast_command .= " -db $seq_data\/$database";
+            $blast_command .= " -query $sequence_name\_query.fas";
+            $blast_command .= " -out $search_output";
+            $blast_command .= " -evalue $search_evalue";
+            $blast_command .= " -outfmt 6";
+
+            #$blast_command .= " -num_alignments $search_tophits";
+            $blast_command .= " -max_target_seqs $search_tophits";
+            $blast_command .= " -num_threads $search_threads";
+
+            #$blast_command .= " $search_other";
+
+            #print "\t\t$blast_command\n";
+
+            system($blast_command);
+            parse_search_output(
+                $search_program,         $search_subprogram, \@taxa_array,      $input_seqs_fname,
+                $search_evalue,          $search_tophits,    $search_maxlength, $search_special_taxa,
+                $search_special_tophits, $search_threads,    $search_other,     $sequence_name,
+                $seq_data,               $taxa_name,         $database
+            );
+
+            $taxa_count++;
+        }
+    }
+}
+
+sub parse_search_output {
+
+    my (
+        $search_program,         $search_subprogram, $taxa_array_ref,   $input_seqs_fname,
+        $search_evalue,          $search_tophits,    $search_maxlength, $search_special_taxa,
+        $search_special_tophits, $search_threads,    $search_other,     $sequence_name,
+        $seq_data,               $taxa_name,         $database
+    ) = @_;
+
     my @taxa_array = @{$taxa_array_ref};
 
-    # blast(x) from blast+ package command
-    #my $blast_command = "blastp -task $search_program_blast";
-    #$blast_command .= " -db $seq_data\/XXX";
-    #$blast_command .= " -query XXX";
-    #$blast_command .= " -out XXX";
-    #$blast_command .= " -evalue $search_evalue";
-    #$blast_command .= " -outfmt XXX";
-    #$blast_command .= " -num_alignments 0";
-    #$blast_command .= " -max_target_seqs $search_tophits";
-    #$blast_command .= " -num_threads $search_threads";
-    #$blast_command .= " $search_other";
+    #Blast Output Filename
+    my $search_output = "$sequence_name\_v\_$taxa_name\.$search_subprogram";
 
-    #system($blast_command);
+    my $read_search_output = new Bio::SearchIO( -format => 'blasttable', -file => $search_output );
+
+    while ( my $result = $read_search_output->next_result ) {
+    	while( my $hit = $result->next_hit ) {
+    		print $hit->name;
+    	}
+    }
 }
 
 sub run_legacy_blast {
@@ -261,7 +351,7 @@ sub run_blat {
     #$blat_command .= " -prot"; # this should be a user option eventually
     #$blat_command .= " $seq_data\/XXX"; #database
     #$blat_command .= " XXX"; # query file
-    #$blat_command .= " -out=blast";
+    #$blat_command .= " -out=blast8";
     #$blat_command .= " XXX"; # output filename
 }
 
@@ -339,15 +429,15 @@ sub setup_main_directories {
         if ( !-d $repo_dir ) { mkdir $repo_dir }
     }
     else {
-        print "Directory Already Exists!\nContinue anyway? y/n\n";
-        my $user_choice = prompt( ">: ", -yes_no1 );
+        print "Directory Already Exists!\nContinue anyway? y/ n \n ";
+        my $user_choice = prompt( " > : ", -yes_no1 );
         if ( $user_choice =~ m/n/ism ) {
 
-            output_report("Terminating, run directories already exist\n");
+            output_report(" Terminating, run directories already exist \n ");
             exit;
         }
         else {
-            output_report("Continuing, even though run directories already exist\n");
+            output_report(" Continuing, even though run directories already exist \n ");
 
             # Let's just make sure we have everything we will need!
 
