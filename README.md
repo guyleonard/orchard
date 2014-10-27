@@ -4,7 +4,7 @@ A Quick Phylogenetic Tree Building Pipeline
 
 Prerequisites
 =============
-* Bio::Perl
+* Bundle::Bioperl
 * Digest::MD5
 * IO::Prompt
 * YAML::XS

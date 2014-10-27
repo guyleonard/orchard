@@ -99,6 +99,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     my $tree_mintaxa = $paramaters->{trees}->{min_taxa} || '4';
 
     # database options
+    # this needs to quit the program if they are not set...
     my $username  = $paramaters->{database}->{user};
     my $password  = $paramaters->{database}->{password};
     my $server_ip = $paramaters->{database}->{server};
@@ -107,7 +108,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
 
     # directory options
     my $programs = $paramaters->{directories}->{location} || '/usr/bin';
-    my $seq_data = $paramaters->{directories}->{database};                     # no default
+    my $seq_data = $paramaters->{directories}->{database};    # no default
 
     # only run search (blast) step
     if ( $options{b} ) {
@@ -129,16 +130,21 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
         print "Running: Tree Reconstruction ($tree_program) ONLY\n";
     }
 
-    # run bamt for each sequence sequentially
+    # run b-a-m-t for each sequence sequentially
     if ( $options{q} ) {
         ## experimental, is it really useful?
     }
 
+    # run default
     if ( !$options{b} && !$options{a} && !$options{m} && !$options{o} && !$options{q} ) {
 
         # run all steps but all blasts first then amt steps
         print "Running: ALL Steps, all searches ($search_program) first!\n";
-        search_step( $search_program, $search_subprogram, \@taxa_array, $input_seqs_fname );
+        search_step(
+            $search_program,         $search_subprogram, \@taxa_array,      $input_seqs_fname,
+            $search_evalue,          $search_tophits,    $search_maxlength, $search_special_taxa,
+            $search_special_tophits, $search_threads,    $search_other
+        );
     }
 }
 else {
@@ -151,33 +157,43 @@ else {
 
 sub search_step {
 
-    my $search_program    = $_[0];
-    my $search_subprogram = $_[1];
-    my @taxa_array        = @{$_[2]};
-    my $input_seqs_fname  = $_[3];
+    my (
+        $search_program,         $search_subprogram, $taxa_array_ref,   $input_seqs_fname,
+        $search_evalue,          $search_tophits,    $search_maxlength, $search_special_taxa,
+        $search_special_tophits, $search_threads,    $search_other
+    ) = @_;
+    my @taxa_array = @{$taxa_array_ref};
 
+    my $input_seqs_count = 1;
+
+    # open bioperl seqio object with user input sequences
     my $seq_in = Bio::SeqIO->new( -file => "<$input_seqs_fname" );
 
-    # I can't do this as it is a stream, need a way to gauge the number of
-    # seqs queued in the stream as I don't want to a) read stream twice or b)
-	# rely on bash/grep as I did before...
-    my $count = scalar keys %$seq_in; # . "\n";
-    print "XX $count\n";
+    # I am still relying on 'grep' to count the number of sequences
+    # there is no way to get this directly from the Bio::Seq object
+    # without needless iteration. Anyone?
+    chomp( my $input_seqs_total = `grep -c ">" $input_seqs_fname` );
 
-    print Dumper($seq_in);
-
+    # iterate through the stream of sequences and perform searches
+    output_report("Starting $input_seqs_total searches using $search_program($search_subprogram)\n");
     while ( my $seq = $seq_in->next_seq() ) {
+
+        print "Processing: $input_seqs_count of $input_seqs_total\n";
 
         given ($search_program) {
             when (/BLAST\+/ism) {
 
-                #$num_seqs = run_blast_plus( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
-                print "Running: blast+\n";
+                my $num_seqs = run_blast_plus(
+                    $search_program,         $search_subprogram, \@taxa_array,      $input_seqs_fname,
+                    $search_evalue,          $search_tophits,    $search_maxlength, $search_special_taxa,
+                    $search_special_tophits, $search_threads,    $search_other
+                );
+                print "\tRunning: blast+\n";
             }
             when (/BLAST/ism) {
 
                 #$num_seqs = run_blast( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
-                print "Running: legacy blast\n";
+                print "\tRunning: legacy blast\n";
             }
             when (/BLAT/ism) {
 
@@ -192,10 +208,20 @@ sub search_step {
                 #$num_seqs = run_blast( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
             }
         }
+        $input_seqs_count++;
     }
+
+    return;
 }
 
 sub run_blast_plus {
+
+    my (
+        $search_program,         $search_subprogram, $taxa_array_ref,   $input_seqs_fname,
+        $search_evalue,          $search_tophits,    $search_maxlength, $search_special_taxa,
+        $search_special_tophits, $search_threads,    $search_other
+    ) = @_;
+    my @taxa_array = @{$taxa_array_ref};
 
     # blast(x) from blast+ package command
     #my $blast_command = "blastp -task $search_program_blast";
@@ -276,7 +302,7 @@ sub output_report {
 
 sub display_help {
 
-    print "You need 3 files for input:\n\t-s sequence(s) file\n\t-t taxa file\n\t-p paramaters file\n";
+    print "Required files for input:\n\t-s sequence(s) file\n\t-t taxa file\n\t-p paramaters file\n";
     print "Example: perl tree_pipe.pl -s sequences.fasta -t taxa_list.txt -p paramaters.yaml\n";
     print
 "Other paramaters:\n\t-b blast only\n\t-a alignment only\n\t-m mask only\n\t-t tree building only\n\t-q run sequentially\n";
