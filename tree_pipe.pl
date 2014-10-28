@@ -323,7 +323,12 @@ sub parse_search_output {
 
     while ( my $result = $read_search_output->next_result ) {
     	while( my $hit = $result->next_hit ) {
-    		print $hit->name;
+    		if (defined $hit->name) {
+    			print "Hit: " . $hit->name . "\n";
+    		}
+    		else {
+    			print "No hit";
+    		}
     	}
     }
 }

@@ -1,0 +1,61 @@
+Acanthamoeba castellanii str. Neff
+Allomyces macrogynus atcc 38327
+Arabidopsis thaliana
+Aureococcus anophagefferens
+Batrachochytrium dendrobatidis JAM81
+Bigelowiella natans
+Blastocystis hominis
+Branchiostoma floridae
+Caenorhabditis elegans
+Capsaspora owczarzaki
+Chlamydomonas reinhardtii
+Ciona intestinalis
+Cryptosporidium parvum
+Cyanidioschyzon merolae
+Dictyostelium discoideum
+Drosophila melanogaster
+Ectocarpus siliculosus
+Emiliania huxleyi CCMP1516
+Encephalitozoon hellem ATCC 50504
+Entamoeba histolytica
+Enterococcus faecalis V583
+Fonticula alba
+Giardia lamblia
+Glycine max
+Guillardia theta
+Homo sapiens
+Leishmania major
+Melampsora laricis-populina
+Monosiga brevicollis
+Mus musculus
+Mycobacterium bovis AF2122_97
+Naegleria gruberi
+Nematostella vectensis
+Neurospora crassa OR74A
+Ostreococcus lucimarinus
+Paramecium tetraurelia
+Perkinsus marinus
+Phaeodactylum tricornutum
+Physcomitrella patens
+Phytophthora sojae
+Plasmodium berghei
+Plasmodium falciparum
+Pneumocystis jirovecii
+Postia placenta MAD 698-R
+Pseudomonas aeruginosa PAO1
+Rhizopus delemar RA 99-880
+Saccharomyces cerevisiae S288C
+Salmonella enterica subsp. enterica serovar Typhi str. CT18
+Schizosaccharomyces pombe
+Sphaeroforma arctica jp610
+Tetrahymena thermophila macronucleus
+Thalassiosira pseudonana
+Thecamonas trahens ATCC 50062
+Toxoplasma gondii
+Trichomonas vaginalis G3
+Trichoplax adhaerens
+Trypanosoma brucei
+Ustilago maydis
+Vibrio cholerae O1 biovar El Tor str. N16961
+Xenopus laevis
+Zea mays
