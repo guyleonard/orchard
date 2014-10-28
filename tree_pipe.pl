@@ -5,8 +5,8 @@ use warnings;
 #
 use autodie;                       # bIlujDI' yIchegh()Qo'; yIHegh()!
 use Cwd;                           # Gets pathname of current working directory
-use Bio::Index::BlastTable;        # parse blast tabular format
-use Bio::SearchIO;
+use Bio::DB::Fasta;                # for indexing fasta files for sequence retrieval
+use Bio::SearchIO;				   # parse blast tabular format
 use Bio::SeqIO;                    # Use Bio::Perl
 use Digest::MD5;                   # Generate random string for run ID
 use English qw(-no_match_vars);    # No magic perl variables!
@@ -43,6 +43,13 @@ our $VERSION     = '2014-10-17';
 ###########################################################
 
 ###########################################################
+##           Global Variables                            ##
+###########################################################
+
+our $USER_RUNID;
+our $VERBOSE = 1;
+
+###########################################################
 ##           Main Program Flow                           ##
 ###########################################################
 
@@ -63,15 +70,15 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     # read in parameters from YAML file and/or set defaults
     # user options
     # modify the md5_hex to ten chars from pos 0 if none given in YAML
-    my $paramaters    = LoadFile("$options{p}");
-    my $user_options  = $paramaters->{user}->{run_id} || substr( Digest::MD5::md5_hex(rand), 0, 10 );
-    my $run_directory = "$WORKING_DIR\/$user_options";
+    my $paramaters = LoadFile("$options{p}");
+    $USER_RUNID = $paramaters->{user}->{run_id} || substr( Digest::MD5::md5_hex(rand), 0, 10 );
+    my $run_directory = "$WORKING_DIR\/$USER_RUNID";
 
     # Now we can make the directories
     setup_main_directories($run_directory);
 
     # Report
-    output_report("Run ID: $user_options\nDirectory: $run_directory\n");
+    output_report("Run ID: $USER_RUNID\nDirectory: $run_directory\n");
 
     # search options
     my $search_program    = $paramaters->{search}->{program}    || 'blast+';
@@ -268,11 +275,11 @@ sub run_blast_plus {
         else {
 
             # Blast Output Filename
-            my $search_output = $sequence_name . "_v_" . $taxa_name . "." . $search_subprogram;
+            my $search_output = "$sequence_name\_v\_$taxa_name\.$search_subprogram";
 
             # BLAST Output Progress
             #printf "\tRunning $search_subprogram\t$. of $taxa_total\n\e[A";    # Progress, $. is current line
-            print "\t\t>: $search_subprogram\t$taxa_count of $taxa_total\n";    # Progress, $. is current line
+            print "\t\t>: $search_subprogram: $taxa_count of $taxa_total - $taxa_name\n";    # Progress...
 
             my $database = $taxa_name . ".fas";
 
@@ -316,21 +323,45 @@ sub parse_search_output {
 
     my @taxa_array = @{$taxa_array_ref};
 
-    #Blast Output Filename
+    # search output filename
     my $search_output = "$sequence_name\_v\_$taxa_name\.$search_subprogram";
 
-    my $read_search_output = new Bio::SearchIO( -format => 'blasttable', -file => $search_output );
+    # open file for seq retrieval
+    # this will create an index file on the first run, this may slow things down once
+    # it may also cause issues if the index is not rebuilt for updated *.fas files
+    # I may need to include a user option of reindex, as below...
+    # my $sequence_file = Bio::DB::Fasta->new( "$seq_data\/$taxa_name\.fas", -reindex );
+    my $sequence_file = Bio::DB::Fasta->new( "$seq_data\/$taxa_name\.fas" );
 
+    # open file in to searchio stream
+    my $read_search_output = Bio::SearchIO->new( -format => 'blasttable', -file => $search_output );
+
+    # searchio for blasttable returns an empty object but not undef
+    # so to count 'no hits' - empty search output - we need a boolean
+    my $hit_count = 0;
+
+    # iterate through the stream
     while ( my $result = $read_search_output->next_result ) {
-    	while( my $hit = $result->next_hit ) {
-    		if (defined $hit->name) {
-    			print "Hit: " . $hit->name . "\n";
-    		}
-    		else {
-    			print "No hit";
-    		}
-    	}
+        while ( my $hit = $result->next_hit ) {
+        	my $hit_name = $hit->name;
+            print "\t\t\tHit: " . $hit->name . " :\n";
+            my $sequence = $sequence_file->seq($hit_name);
+            # if there is a hit = true
+            $hit_count = 1;
+        }
     }
+
+    # lets do something when there is no hit
+    if ( $hit_count == 0 ) { print "\t\t\tNo hit!\n" }
+
+    # move the files once we are finished to the report directory
+    # we may need to make it first
+    my $report_dir = "$WORKING_DIR\/$USER_RUNID\/report\/$sequence_name";
+    if ( !-d $report_dir ) { mkdir $report_dir }
+    system "mv $search_output $report_dir";
+
+    # return
+    return;
 }
 
 sub run_legacy_blast {

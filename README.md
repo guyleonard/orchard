@@ -5,6 +5,7 @@ A Quick Phylogenetic Tree Building Pipeline
 Prerequisites
 =============
 * Bundle::Bioperl
+* Bio::DB::Fasta (sometimes I find this isn't installed with BioPerl !?)
 * Digest::MD5
 * IO::Prompt
 * YAML::XS
