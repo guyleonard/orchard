@@ -6,7 +6,7 @@ use warnings;
 use autodie;                       # bIlujDI' yIchegh()Qo'; yIHegh()!
 use Cwd;                           # Gets pathname of current working directory
 use Bio::DB::Fasta;                # for indexing fasta files for sequence retrieval
-use Bio::SearchIO;				   # parse blast tabular format
+use Bio::SearchIO;                 # parse blast tabular format
 use Bio::SeqIO;                    # Use Bio::Perl
 use Digest::MD5;                   # Generate random string for run ID
 use English qw(-no_match_vars);    # No magic perl variables!
@@ -47,6 +47,7 @@ our $VERSION     = '2014-10-17';
 ###########################################################
 
 our $USER_RUNID;
+our $USER_REINDEX;
 our $VERBOSE = 1;
 
 ###########################################################
@@ -72,6 +73,8 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     # modify the md5_hex to ten chars from pos 0 if none given in YAML
     my $paramaters = LoadFile("$options{p}");
     $USER_RUNID = $paramaters->{user}->{run_id} || substr( Digest::MD5::md5_hex(rand), 0, 10 );
+    $USER_REINDEX = $paramaters->{user}->{reindex} || 'n';    # default no
+    if ( $USER_REINDEX eq 'y' ) { output_report("User requested reindexing of database directory files\n"); }
     my $run_directory = "$WORKING_DIR\/$USER_RUNID";
 
     # Now we can make the directories
@@ -196,7 +199,8 @@ sub search_step {
 
         # Get Sequence Name
         my $sequence_name = $seq->id;
-        $sequence_name =~ s/\s+/\_/gms;    # Replace spaces with '_'
+
+        #$sequence_name =~ s/\s+/\_/gms;    # Replace spaces with '_'
 
         # Output Query Sequence
         my $query_out = Bio::SeqIO->new(
@@ -262,11 +266,16 @@ sub run_blast_plus {
     my $taxa_total = @taxa_array;
     my $taxa_count = 1;
 
+    my $sequence_name_for_blast = $sequence_name;
+    $sequence_name_for_blast =~ s/\s+/\_/gms;    # Replace spaces with '_'
+
     while (@taxa_array) {
 
         # Current Taxa Name
         my $taxa_name = shift(@taxa_array);
-        $taxa_name =~ s/\s+/\_/gms;    # Replace spaces with '_'
+
+        my $taxa_name_for_blast = $taxa_name;
+        $taxa_name_for_blast =~ s/\s+/\_/gms;    # Replace spaces with '_'
 
         if ( $taxa_name =~ m/^#/ ) {
             print "\t\tSkipping commented out $taxa_name\n";
@@ -275,23 +284,23 @@ sub run_blast_plus {
         else {
 
             # Blast Output Filename
-            my $search_output = "$sequence_name\_v\_$taxa_name\.$search_subprogram";
+            my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$search_subprogram";
 
             # BLAST Output Progress
             #printf "\tRunning $search_subprogram\t$. of $taxa_total\n\e[A";    # Progress, $. is current line
             print "\t\t>: $search_subprogram: $taxa_count of $taxa_total - $taxa_name\n";    # Progress...
 
-            my $database = $taxa_name . ".fas";
+            my $database = $taxa_name_for_blast . ".fas";
 
             # blast(x) from blast+ package command
+            # we will use tabulated output as it's smaller than XML
+            # and we don't really need much information other than the hit ID
             my $blast_command = "$search_subprogram -task $search_subprogram";
             $blast_command .= " -db $seq_data\/$database";
-            $blast_command .= " -query $sequence_name\_query.fas";
+            $blast_command .= " -query $sequence_name_for_blast\_query.fas";
             $blast_command .= " -out $search_output";
             $blast_command .= " -evalue $search_evalue";
             $blast_command .= " -outfmt 6";
-
-            #$blast_command .= " -num_alignments $search_tophits";
             $blast_command .= " -max_target_seqs $search_tophits";
             $blast_command .= " -num_threads $search_threads";
 
@@ -312,6 +321,8 @@ sub run_blast_plus {
     }
 }
 
+# this should be able to read and parse the output from blast/blast+, blat and usearch
+# as we are forcing them all to output tabulated data...
 sub parse_search_output {
 
     my (
@@ -323,15 +334,26 @@ sub parse_search_output {
 
     my @taxa_array = @{$taxa_array_ref};
 
+    # blast cannot handle spaces in names (it is also bad practice)
+    # but sequence retreival needs an unmodified accession
+    my $taxa_name_for_blast = $taxa_name;
+    $taxa_name_for_blast =~ s/\s+/\_/gms;    # Replace spaces with '_'
+
     # search output filename
-    my $search_output = "$sequence_name\_v\_$taxa_name\.$search_subprogram";
+    my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$search_subprogram";
 
     # open file for seq retrieval
     # this will create an index file on the first run, this may slow things down once
     # it may also cause issues if the index is not rebuilt for updated *.fas files
     # I may need to include a user option of reindex, as below...
     # my $sequence_file = Bio::DB::Fasta->new( "$seq_data\/$taxa_name\.fas", -reindex );
-    my $sequence_file = Bio::DB::Fasta->new( "$seq_data\/$taxa_name\.fas" );
+    my $sequence_file;
+    if ( $USER_REINDEX eq 'y' ) {
+        $sequence_file = Bio::DB::Fasta->new( "$seq_data\/$taxa_name_for_blast\.fas", -reindex );
+    }
+    else {
+        $sequence_file = Bio::DB::Fasta->new("$seq_data\/$taxa_name_for_blast\.fas");
+    }
 
     # open file in to searchio stream
     my $read_search_output = Bio::SearchIO->new( -format => 'blasttable', -file => $search_output );
@@ -343,9 +365,24 @@ sub parse_search_output {
     # iterate through the stream
     while ( my $result = $read_search_output->next_result ) {
         while ( my $hit = $result->next_hit ) {
-        	my $hit_name = $hit->name;
+            my $hit_name = $hit->name;
             print "\t\t\tHit: " . $hit->name . " :\n";
+
             my $sequence = $sequence_file->seq($hit_name);
+
+            # report sequence retreival problems to output report
+            # if there is a problem, don't output an empty sequence
+            if ( defined $sequence ) {
+
+                # output hits to hits files
+                open my $hits_seq_out, '>>', "$sequence_name\_hits.fas";
+                print $hits_seq_out ">$hit_name \n$sequence\n";
+                close $hits_seq_out;
+            }
+            else {
+                output_report("\t$sequence_name: sequence retreival problem for: $hit_name -> $taxa_name\n");
+            }
+
             # if there is a hit = true
             $hit_count = 1;
         }
@@ -358,6 +395,8 @@ sub parse_search_output {
     # we may need to make it first
     my $report_dir = "$WORKING_DIR\/$USER_RUNID\/report\/$sequence_name";
     if ( !-d $report_dir ) { mkdir $report_dir }
+    if ( !-d "$report_dir\/$search_subprogram" ) { mkdir "$report_dir\/$search_subprogram" }
+
     system "mv $search_output $report_dir";
 
     # return

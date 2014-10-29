@@ -1,6 +1,6 @@
 user:
- run_id: test 
-# give your run an ID
+ run_id: test # give your run an ID
+ reindex: y # force reindex of search db y/n
 
 search:
  # blast, blast+, blat, usearch
@@ -11,7 +11,7 @@ search:
  other: # any special commands, must be exact correct format!
  # values below are only supported by blast/blast+
  evalue: 1e-05
- top_hits: 1
+ top_hits: 2
  max_length: 3000
  special_taxa:
  special_top_hits:
