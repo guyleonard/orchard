@@ -21,7 +21,7 @@ Entamoeba histolytica
 Enterococcus faecalis V583
 Fonticula alba
 Giardia lamblia
-Glycine max
+#Glycine max
 Guillardia theta
 Homo sapiens
 Leishmania major
@@ -38,7 +38,7 @@ Perkinsus marinus
 Phaeodactylum tricornutum
 Physcomitrella patens
 Phytophthora sojae
-Plasmodium berghei
+#Plasmodium berghei
 Plasmodium falciparum
 Pneumocystis jirovecii
 Postia placenta MAD 698-R

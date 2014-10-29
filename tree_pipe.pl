@@ -287,8 +287,7 @@ sub run_blast_plus {
             my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$search_subprogram";
 
             # BLAST Output Progress
-            #printf "\tRunning $search_subprogram\t$. of $taxa_total\n\e[A";    # Progress, $. is current line
-            print "\t\t>: $search_subprogram: $taxa_count of $taxa_total - $taxa_name\n";    # Progress...
+            printf "\t\t>: $search_subprogram: $taxa_count of $taxa_total\n\e[A"; # - $taxa_name\n\e[A";    # Progress...
 
             my $database = $taxa_name_for_blast . ".fas";
 
@@ -319,6 +318,16 @@ sub run_blast_plus {
             $taxa_count++;
         }
     }
+
+    # Find total number of hits
+    # I am still relying on 'grep' to count the number of sequences
+    # there is no way to get this directly from the Bio::Seq object
+    # without needless iteration. Anyone?
+    chomp( my $hit_seqs_total = `grep -c ">" $sequence_name\_hits.fas` );
+
+    #
+    print "\n\tNumber of Sequences found = $hit_seqs_total\n";
+    return $hit_seqs_total;
 }
 
 # this should be able to read and parse the output from blast/blast+, blat and usearch
@@ -366,12 +375,13 @@ sub parse_search_output {
     while ( my $result = $read_search_output->next_result ) {
         while ( my $hit = $result->next_hit ) {
             my $hit_name = $hit->name;
-            print "\t\t\tHit: " . $hit->name . " :\n";
+            #print "\t\t\tHit: " . $hit->name . " :\n" if $VERBOSE == 1;
 
+            # get the sequence from the file stream
             my $sequence = $sequence_file->seq($hit_name);
 
-            # report sequence retreival problems to output report
             # if there is a problem, don't output an empty sequence
+            # report sequence retreival problems to output report
             if ( defined $sequence ) {
 
                 # output hits to hits files
@@ -389,7 +399,7 @@ sub parse_search_output {
     }
 
     # lets do something when there is no hit
-    if ( $hit_count == 0 ) { print "\t\t\tNo hit!\n" }
+    # if ( $hit_count == 0 ) { print "\t\t\tNo hit!\n" }
 
     # move the files once we are finished to the report directory
     # we may need to make it first
@@ -397,7 +407,7 @@ sub parse_search_output {
     if ( !-d $report_dir ) { mkdir $report_dir }
     if ( !-d "$report_dir\/$search_subprogram" ) { mkdir "$report_dir\/$search_subprogram" }
 
-    system "mv $search_output $report_dir";
+    system "mv $search_output $report_dir\/$search_subprogram";
 
     # return
     return;

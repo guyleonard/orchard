@@ -1,6 +1,6 @@
 user:
  run_id: test # give your run an ID
- reindex: y # force reindex of search db y/n
+ reindex: n # force reindex of search db y/n
 
 search:
  # blast, blast+, blat, usearch
