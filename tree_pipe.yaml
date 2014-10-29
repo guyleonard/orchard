@@ -36,7 +36,7 @@ trees:
  # phyml = -4 for aLRT SH, fasttree = -bionj -slow
  options: -bionj -slow
  # number of taxa to make a tree from
- min_taxa: 4
+ min_taxa: 70
 
 database:
  user: orchard

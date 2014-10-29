@@ -156,7 +156,8 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
         search_step(
             $search_program,         $search_subprogram, \@taxa_array,      $input_seqs_fname,
             $search_evalue,          $search_tophits,    $search_maxlength, $search_special_taxa,
-            $search_special_tophits, $search_threads,    $search_other,     $seq_data
+            $search_special_tophits, $search_threads,    $search_other,     $seq_data,
+            $tree_mintaxa
         );
     }
 }
@@ -174,7 +175,8 @@ sub search_step {
     my (
         $search_program,         $search_subprogram, $taxa_array_ref,   $input_seqs_fname,
         $search_evalue,          $search_tophits,    $search_maxlength, $search_special_taxa,
-        $search_special_tophits, $search_threads,    $search_other,     $seq_data
+        $search_special_tophits, $search_threads,    $search_other,     $seq_data,
+        $tree_mintaxa
     ) = @_;
 
     # dereference the array
@@ -182,6 +184,10 @@ sub search_step {
 
     # we should always have one sequence, right!?
     my $input_seqs_count = 1;
+
+    #
+    my $num_hit_seqs  = 0;
+    my $sequence_name = "";
 
     # open bioperl seqio object with user input sequences
     my $seq_in = Bio::SeqIO->new( -file => "<$input_seqs_fname" );
@@ -198,7 +204,7 @@ sub search_step {
         print "Processing: $input_seqs_count of $input_seqs_total\n";
 
         # Get Sequence Name
-        my $sequence_name = $seq->id;
+        $sequence_name = $seq->id;
 
         #$sequence_name =~ s/\s+/\_/gms;    # Replace spaces with '_'
 
@@ -221,7 +227,7 @@ sub search_step {
 
                 print "\tRunning: blast+ on $sequence_name\n";
 
-                my $num_hit_seqs = run_blast_plus(
+                $num_hit_seqs = run_blast_plus(
                     $search_program,         $search_subprogram, \@taxa_array,      $input_seqs_fname,
                     $search_evalue,          $search_tophits,    $search_maxlength, $search_special_taxa,
                     $search_special_tophits, $search_threads,    $search_other,     $sequence_name,
@@ -248,8 +254,19 @@ sub search_step {
             }
         }
         $input_seqs_count++;
-    }
 
+        if ( $num_hit_seqs <= $tree_mintaxa ) {
+            output_report("\t$sequence_name: Too few hits\n");
+            unlink "$WORKING_DIR\/$sequence_name\_query.fas";
+            system "mv $sequence_name\_hits.fas $WORKING_DIR\/$USER_RUNID\/excluded\/";
+
+            #next;
+        }
+        else {
+            unlink "$WORKING_DIR\/$sequence_name\_query.fas";
+            system "mv $sequence_name\_hits.fas $WORKING_DIR\/$USER_RUNID\/seqs\/";
+        }
+    }
     return;
 }
 
@@ -287,7 +304,8 @@ sub run_blast_plus {
             my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$search_subprogram";
 
             # BLAST Output Progress
-            printf "\t\t>: $search_subprogram: $taxa_count of $taxa_total\n\e[A"; # - $taxa_name\n\e[A";    # Progress...
+            printf
+              "\t\t>: $search_subprogram: $taxa_count of $taxa_total\n\e[A";    # - $taxa_name\n\e[A";    # Progress...
 
             my $database = $taxa_name_for_blast . ".fas";
 
@@ -375,6 +393,7 @@ sub parse_search_output {
     while ( my $result = $read_search_output->next_result ) {
         while ( my $hit = $result->next_hit ) {
             my $hit_name = $hit->name;
+
             #print "\t\t\tHit: " . $hit->name . " :\n" if $VERBOSE == 1;
 
             # get the sequence from the file stream
