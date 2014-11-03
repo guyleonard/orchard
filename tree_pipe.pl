@@ -3,17 +3,21 @@ use strict;
 use warnings;
 
 #
-use autodie;                       # bIlujDI' yIchegh()Qo'; yIHegh()!
-use Cwd;                           # Gets pathname of current working directory
-use Bio::DB::Fasta;                # for indexing fasta files for sequence retrieval
-use Bio::SearchIO;                 # parse blast tabular format
-use Bio::SeqIO;                    # Use Bio::Perl
+use autodie;           # bIlujDI' yIchegh()Qo'; yIHegh()!
+use Cwd;               # Gets pathname of current working directory
+use Bio::DB::Fasta;    # for indexing fasta files for sequence retrieval
+use Bio::SearchIO;     # parse blast tabular format
+use Bio::SeqIO;        # Use Bio::Perl
+use DateTime;
+use DateTime::Format::Duration;
 use Digest::MD5;                   # Generate random string for run ID
 use English qw(-no_match_vars);    # No magic perl variables!
 use File::Basename;                # Remove path information and extract 8.3 filename
 use Getopt::Std;                   # Command line options, finally!
 use feature qw{ switch };          # Given/when instead of switch
 use IO::Prompt;                    # User prompts
+use POSIX qw(strftime);
+use Time::HiRes qw( time );
 use YAML::XS qw/LoadFile/;         # for the parameters file, user friendly layout
 
 #
@@ -56,7 +60,7 @@ our $VERBOSE = 1;
 
 # declare the perl command line flags/options we want to allow
 my %options = ();
-getopts( "s:t:p:hvbamoq", \%options ) or croak display_help();    # or display_help();
+getopts( "s:t:p:hvbamoqf", \%options ) or croak display_help();    # or display_help();
 
 # Display the help message if the user invokes -h
 if ( $options{h} ) { display_help() }
@@ -74,14 +78,14 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     my $paramaters = LoadFile("$options{p}");
     $USER_RUNID = $paramaters->{user}->{run_id} || substr( Digest::MD5::md5_hex(rand), 0, 10 );
     $USER_REINDEX = $paramaters->{user}->{reindex} || 'n';    # default no
-    if ( $USER_REINDEX eq 'y' ) { output_report("User requested reindexing of database directory files\n"); }
+    if ( $USER_REINDEX eq 'y' ) { output_report("[INFO]\tUser requested reindexing of database directory files\n"); }
     my $run_directory = "$WORKING_DIR\/$USER_RUNID";
 
     # Now we can make the directories
-    setup_main_directories($run_directory);
+    setup_main_directories( $run_directory, $options{f} );
 
     # Report
-    output_report("Run ID: $USER_RUNID\nDirectory: $run_directory\n");
+    output_report("[INFO]\tRun ID: $USER_RUNID\n[INFO]\tDirectory: $run_directory\n");
 
     # search options
     my $search_program    = $paramaters->{search}->{program}    || 'blast+';
@@ -152,6 +156,9 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
         # run all steps but all blasts first then amt steps
         print "Running: ALL Steps; all searches ($search_program) first!\n";
 
+        my $start_time = DateTime->now;    #time();
+        print "Start: $start_time\n";
+
         # gosh I shouldn't pass this many variables through subroutines...
         search_step(
             $search_program,         $search_subprogram, \@taxa_array,      $input_seqs_fname,
@@ -159,6 +166,15 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
             $search_special_tophits, $search_threads,    $search_other,     $seq_data,
             $tree_mintaxa
         );
+
+        my $end_time = DateTime->now;      #time();
+        print "End: $end_time\n";
+
+        my $total_time = $start_time->subtract_datetime_absolute($end_time);
+        my $format =
+          DateTime::Format::Duration->new(
+            pattern => '%Y years, %m months, %e days, %H hours, %M minutes, %S seconds' );
+        print $format->format_duration($total_time) . "\n";
     }
 }
 else {
@@ -198,7 +214,7 @@ sub search_step {
     chomp( my $input_seqs_total = `grep -c ">" $input_seqs_fname` );
 
     # iterate through the stream of sequences and perform searches
-    output_report("Starting $input_seqs_total searches using $search_program($search_subprogram)\n");
+    output_report("[INFO]\tStarting $input_seqs_total searches using $search_program($search_subprogram)\n");
     while ( my $seq = $seq_in->next_seq() ) {
 
         print "Processing: $input_seqs_count of $input_seqs_total\n";
@@ -256,11 +272,9 @@ sub search_step {
         $input_seqs_count++;
 
         if ( $num_hit_seqs <= $tree_mintaxa ) {
-            output_report("\t$sequence_name: Too few hits\n");
+            output_report("[WARN]\t$sequence_name: Too few hits\n");
             unlink "$WORKING_DIR\/$sequence_name\_query.fas";
             system "mv $sequence_name\_hits.fas $WORKING_DIR\/$USER_RUNID\/excluded\/";
-
-            #next;
         }
         else {
             unlink "$WORKING_DIR\/$sequence_name\_query.fas";
@@ -296,6 +310,7 @@ sub run_blast_plus {
 
         if ( $taxa_name =~ m/^#/ ) {
             print "\t\tSkipping commented out $taxa_name\n";
+            output_report("[INFO]\t$sequence_name: Skipping commented out $taxa_name\n");
             $taxa_count++;
         }
         else {
@@ -409,7 +424,7 @@ sub parse_search_output {
                 close $hits_seq_out;
             }
             else {
-                output_report("\t$sequence_name: sequence retreival problem for: $hit_name -> $taxa_name\n");
+                output_report("[WARN]\t$sequence_name: sequence retreival problem for: $hit_name -> $taxa_name\n");
             }
 
             # if there is a hit = true
@@ -508,6 +523,7 @@ sub display_help {
 sub setup_main_directories {
 
     my $run_directory = shift;
+    my $force         = shift;
 
     # main directories
     my $seqs_dir = "$run_directory\/seqs";
@@ -517,12 +533,13 @@ sub setup_main_directories {
     my $excl_dir = "$run_directory\/excluded";
     my $repo_dir = "$run_directory\/report";
 
+    #if ( $force != 0 ) {
     if ( !-d $run_directory ) {
-        output_report("Creating Directory $run_directory\n");
+        output_report("[INFO]\tCreating Directory $run_directory\n");
         mkdir $run_directory;
 
         # create sub-directories
-        output_report("Creating Subdirectories\n");
+        output_report("[INFO]\tCreating Subdirectories\n");
 
         # create directories if they don't exist!
         if ( !-d $seqs_dir ) { mkdir $seqs_dir }
@@ -533,15 +550,15 @@ sub setup_main_directories {
         if ( !-d $repo_dir ) { mkdir $repo_dir }
     }
     else {
-        print "Directory Already Exists!\nContinue anyway? y/ n \n ";
+        print "Directory Already Exists!\nContinue anyway? (this may overwrite files) y/ n \n ";
         my $user_choice = prompt( " > : ", -yes_no1 );
         if ( $user_choice =~ m/n/ism ) {
 
-            output_report(" Terminating, run directories already exist \n ");
+            output_report("[INFO]\tTerminating, run directories already exist\n");
             exit;
         }
         else {
-            output_report(" Continuing, even though run directories already exist \n ");
+            output_report("[WARN]\tContinuing, even though run directories already exist\n");
 
             # Let's just make sure we have everything we will need!
 
@@ -554,5 +571,7 @@ sub setup_main_directories {
             if ( !-d $repo_dir ) { mkdir $repo_dir }
         }
     }
+
+    #}
     return;
 }
