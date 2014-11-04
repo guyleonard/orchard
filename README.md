@@ -22,10 +22,11 @@ cpan[1]> install prerequisit_name
 Standalone Programs
 -------------------
 A choice of either:
-1. Legacy Blast
-2. Blast+
-3. Blat
-4. USEARCH
+
+1. [Legacy Blast](http://blast.ncbi.nlm.nih.gov/Blast.cgi/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
+2. [Blast+](http://blast.ncbi.nlm.nih.gov/Blast.cgi/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
+3. [Blat](https://genome.ucsc.edu/FAQ/FAQblat.html)
+4. [USEARCH](http://www.drive5.com/usearch/)
 
 
 Updates
