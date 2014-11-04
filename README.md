@@ -4,6 +4,8 @@ A Quick Phylogenetic Tree Building Pipeline
 
 Prerequisites
 =============
+Perl Modules
+------------
 * Bundle::Bioperl
 * Bio::DB::Fasta (sometimes I find this isn't installed with BioPerl !?)
 * Digest::MD5
@@ -16,6 +18,15 @@ You can install these by typing:
 $ sudo -MCPAN -e shell
 cpan[1]> install prerequisit_name
 ```
+
+Standalone Programs
+-------------------
+A choice of either:
+1. Legacy Blast
+1. Blast+
+1. Blat
+1. USEARCH
+
 
 Updates
 =======

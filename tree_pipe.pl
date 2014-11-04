@@ -170,10 +170,10 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
         my $end_time = DateTime->now;      #time();
         print "End: $end_time\n";
 
-        my $total_time = $start_time->subtract_datetime_absolute($end_time);
+        my $total_time = $end_time->subtract_datetime_absolute($start_time);
         my $format =
           DateTime::Format::Duration->new(
-            pattern => '%Y years, %m months, %e days, %H hours, %M minutes, %S seconds' );
+            pattern => '%e days, %H hours, %M minutes, %S seconds' );
         print $format->format_duration($total_time) . "\n";
     }
 }
