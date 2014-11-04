@@ -23,9 +23,9 @@ Standalone Programs
 -------------------
 A choice of either:
 1. Legacy Blast
-1. Blast+
-1. Blat
-1. USEARCH
+2. Blast+
+3. Blat
+4. USEARCH
 
 
 Updates
