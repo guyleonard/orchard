@@ -4,6 +4,8 @@ A Quick Phylogenetic Tree Building Pipeline
 
 Prerequisites
 =============
+There are quite a few programs and other prerequisites you will need to have installed in your path.
+
 Perl Modules
 ------------
 * Bundle::Bioperl

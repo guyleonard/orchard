@@ -53,6 +53,7 @@ our $VERSION     = '2014-10-17';
 our $USER_RUNID;
 our $USER_REINDEX;
 our $VERBOSE = 1;
+our $EMPTY   = q{};
 
 ###########################################################
 ##           Main Program Flow                           ##
@@ -153,11 +154,10 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     # run default
     if ( !$options{b} && !$options{a} && !$options{m} && !$options{o} && !$options{q} ) {
 
-        # run all steps but all blasts first then amt steps
+        # run all steps, but all blasts first then amt steps
         print "Running: ALL Steps; all searches ($search_program) first!\n";
 
-        my $start_time = DateTime->now;    #time();
-        print "Start: $start_time\n";
+        my $start_time = timing('start');
 
         # gosh I shouldn't pass this many variables through subroutines...
         search_step(
@@ -167,14 +167,8 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
             $tree_mintaxa
         );
 
-        my $end_time = DateTime->now;      #time();
-        print "End: $end_time\n";
+        my $end_time = timing( 'end', $start_time );
 
-        my $total_time = $end_time->subtract_datetime_absolute($start_time);
-        my $format =
-          DateTime::Format::Duration->new(
-            pattern => '%e days, %H hours, %M minutes, %S seconds' );
-        print $format->format_duration($total_time) . "\n";
     }
 }
 else {
@@ -574,4 +568,32 @@ sub setup_main_directories {
 
     #}
     return;
+}
+
+# Handles output of start/end and duration times of
+# different steps
+sub timing {
+
+    my $time_operation = shift;
+    my $start_time     = shift;
+
+    my $time_now = $EMPTY;
+
+    if ( $time_operation eq 'start' ) {
+
+        $time_now = DateTime->now;
+        print "Start Time: $time_now\n";
+        output_report("[INFO]\tStart Time: $time_now\n");
+    }
+    else {
+        $time_now = DateTime->now;
+        print "End Time: $time_now\n";
+        output_report("[INFO]\tEnd Time: $time_now\n");
+        my $total_time = $time_now->subtract_datetime_absolute($start_time);
+        my $format = DateTime::Format::Duration->new( pattern => '%e days, %H hours, %M minutes, %S seconds' );
+        print "Elapsed Time: " . $format->format_duration($total_time) . "\n";
+        output_report( "[INFO]\tElapsed Time: " . $format->format_duration($total_time) . "\n" );
+    }
+
+    return $time_now;
 }
