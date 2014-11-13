@@ -338,8 +338,6 @@ sub run_blast_plus {
 
             #$blast_command .= " $SEARCH_OTHER";
 
-            #print "\t\t$blast_command\n";
-
             system($blast_command);
             parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
 
@@ -394,7 +392,7 @@ sub run_blast_legacy {
             my $database = $taxa_name_for_blast . ".fas";
 
             # blast(x) from legacy blast package command
-             # we will use tabulated output as it's smaller than XML
+            # we will use tabulated output as it's smaller than XML
             # and we don't really need much information other than the hit ID
             my $blast_command = "blastall -p $SEARCH_SUBPROGRAM";
             $blast_command .= " -d $SEQ_DATA\/$database";
@@ -576,7 +574,7 @@ sub setup_main_directories {
 
     #if ( $force != 0 ) {
     if ( !-d $run_directory ) {
-        output_report("[INFO]\tCreating Directory $run_directory\n");
+        output_report("[INFO]\tCreating Directory: $run_directory\n");
         mkdir $run_directory;
 
         # create sub-directories
@@ -591,15 +589,15 @@ sub setup_main_directories {
         if ( !-d $repo_dir ) { mkdir $repo_dir }
     }
     else {
-        print "Directory Already Exists!\nContinue anyway? (this may overwrite files) y/ n \n ";
+        print "Directory Already Exists!\nContinue anyway? (this may overwrite files) y/n\n";
         my $user_choice = prompt( " > : ", -yes_no1 );
         if ( $user_choice =~ m/n/ism ) {
 
-            output_report("[INFO]\tTerminating, run directories already exist\n");
+            output_report("[INFO]\tTerminating: run directories already exist\n");
             exit;
         }
         else {
-            output_report("[WARN]\tContinuing, even though run directories already exist\n");
+            output_report("[WARN]\tContinuing: even though run directories already exist\n");
 
             # Let's just make sure we have everything we will need!
 

@@ -4,7 +4,9 @@ user:
 
 search:
  # blast, blast+, blat, usearch
- program: blast+
+ # in some cases legacy blast is 'faster' than blast+ but occasionally returns
+ # fewer hits than the newer version...
+ program: blast
  # blastp, blastx, ublast etc
  subprogram: blastp
  threads: 4
