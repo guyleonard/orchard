@@ -14,7 +14,8 @@ use Digest::MD5;                   # Generate random string for run ID
 use English qw(-no_match_vars);    # No magic perl variables!
 use File::Basename;                # Remove path information and extract 8.3 filename
 use Getopt::Std;                   # Command line options, finally!
-use feature qw{ switch };          # Given/when instead of switch
+use feature qw{ switch };          # Given/when instead of switch - warns in 5.18
+no warnings 'experimental::smartmatch'; # ignore warning - eventually I will switch this to "for()" http://www.effectiveperlprogramming.com/2011/05/use-for-instead-of-given/
 use IO::Prompt;                    # User prompts
 use YAML::XS qw/LoadFile/;         # for the parameters file, user friendly layout
 
@@ -213,7 +214,7 @@ sub search_step {
 
     #
     my $num_hit_seqs  = 0;
-    my $sequence_name = "";
+    my $sequence_name = $EMPTY;
 
     # open bioperl seqio object with user input sequences
     my $seq_in = Bio::SeqIO->new( -file => "<$input_seqs_fname" );
@@ -257,7 +258,7 @@ sub search_step {
             }
             when (/BLAST/ism) {
 
-                #$num_seqs = run_blast( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
+                $num_hit_seqs = run_blast_legacy( \@taxa_array, $input_seqs_fname, $sequence_name );
                 print "\tRunning: legacy blast\n";
             }
             when (/BLAT/ism) {
@@ -307,7 +308,7 @@ sub run_blast_plus {
         my $taxa_name_for_blast = $taxa_name;
         $taxa_name_for_blast =~ s/\s+/\_/gms;    # Replace spaces with '_'
 
-        if ( $taxa_name =~ m/^#/ ) {
+        if ( $taxa_name =~ m/^#/sm ) {
             print "\t\tSkipping commented out $taxa_name\n";
             output_report("[INFO]\t$sequence_name: Skipping commented out $taxa_name\n");
             $taxa_count++;
@@ -338,6 +339,74 @@ sub run_blast_plus {
             #$blast_command .= " $SEARCH_OTHER";
 
             #print "\t\t$blast_command\n";
+
+            system($blast_command);
+            parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
+
+            $taxa_count++;
+        }
+    }
+
+    # Find total number of hits
+    # I am still relying on 'grep' to count the number of sequences
+    # there is no way to get this directly from the Bio::Seq object
+    # without needless iteration. Anyone?
+    chomp( my $hit_seqs_total = `grep -c ">" $sequence_name\_hits.fas` );
+
+    #
+    print "\n\tNumber of Sequences found = $hit_seqs_total\n";
+    return $hit_seqs_total;
+}
+
+sub run_blast_legacy {
+
+    my ( $taxa_array_ref, $input_seqs_fname, $sequence_name ) = @_;
+
+    my @taxa_array = @{$taxa_array_ref};
+    my $taxa_total = @taxa_array;
+    my $taxa_count = 1;
+
+    my $sequence_name_for_blast = $sequence_name;
+    $sequence_name_for_blast =~ s/\s+/\_/gms;    # Replace spaces with '_'
+
+    while (@taxa_array) {
+
+        # Current Taxa Name
+        my $taxa_name = shift(@taxa_array);
+
+        my $taxa_name_for_blast = $taxa_name;
+        $taxa_name_for_blast =~ s/\s+/\_/gms;    # Replace spaces with '_'
+
+        if ( $taxa_name =~ m/^#/sm ) {
+            print "\t\tSkipping commented out $taxa_name\n";
+            output_report("[INFO]\t$sequence_name: Skipping commented out $taxa_name\n");
+            $taxa_count++;
+        }
+        else {
+
+            # Blast Output Filename
+            my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$SEARCH_SUBPROGRAM";
+
+            # BLAST Output Progress
+            printf
+              "\t\t>: $SEARCH_SUBPROGRAM: $taxa_count of $taxa_total\n\e[A"; # Progress...
+
+            my $database = $taxa_name_for_blast . ".fas";
+
+            # blast(x) from legacy blast package command
+             # we will use tabulated output as it's smaller than XML
+            # and we don't really need much information other than the hit ID
+            my $blast_command = "blastall -p $SEARCH_SUBPROGRAM";
+            $blast_command .= " -d $SEQ_DATA\/$database";
+            $blast_command .= " -i $sequence_name_for_blast\_query.fas";
+            $blast_command .= " -o $search_output";
+            $blast_command .= " -e $SEARCH_EVALUE";
+            $blast_command .= " -m 8";
+            $blast_command .= " -b $SEARCH_TOPHITS";
+            #$blast_command .= " -v $SEARCH_TOPHITS";
+            $blast_command .= " -a $SEARCH_THREADS";
+
+            #$blast_command .= " $SEARCH_OTHER";
 
             system($blast_command);
             parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
@@ -434,23 +503,6 @@ sub parse_search_output {
 
     # return
     return;
-}
-
-sub run_legacy_blast {
-
-    # blast(x) from legacy blast package command
-    #my $blast_command = "blastall -p $SEARCH_PROGRAM_blast";
-    #$blast_command .= " -d $SEQ_DATA\/XXX";
-    #$blast_command .= " -i XXX";
-    #$blast_command .= " -o XXX";
-    #$blast_command .= " -e $SEARCH_EVALUE";
-    #$blast_command .= " -m XXX";
-    #$blast_command .= " -b 0";
-    #$blast_command .= " -v $SEARCH_TOPHITS";
-    #$blast_command .= " -a $SEARCH_THREADS";
-    #$blast_command .= " $SEARCH_OTHER";
-
-    #system($blast_command);
 }
 
 sub run_blat {
