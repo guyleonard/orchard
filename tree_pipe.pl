@@ -68,7 +68,7 @@ our $SEARCH_EVALUE          = $EMPTY;
 our $SEARCH_MAXLENGTH       = $EMPTY;
 our $SEARCH_OTHER           = $EMPTY;
 our $SEARCH_PROGRAM         = $EMPTY;
-our $SEARCH_SPECIAL_TAXA    = $EMPTY;
+our @SEARCH_SPECIAL_TAXA    = $EMPTY;
 our $SEARCH_SPECIAL_TOPHITS = $EMPTY;
 our $SEARCH_SUBPROGRAM      = $EMPTY;
 our $SEARCH_THREADS         = $EMPTY;
@@ -125,8 +125,9 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     $SEARCH_EVALUE     = $paramaters->{search}->{evalue}     || '1e-10';
     $SEARCH_TOPHITS    = $paramaters->{search}->{top_hits}   || '1';
     $SEARCH_MAXLENGTH  = $paramaters->{search}->{max_length} || '3000';
-    $SEARCH_SPECIAL_TAXA    = $paramaters->{search}->{special_taxa};        # no default
-    $SEARCH_SPECIAL_TOPHITS = $paramaters->{search}->{special_top_hits};    # no default
+    @SEARCH_SPECIAL_TAXA    = split(/,/, $paramaters->{search}->{special_taxa});        # no default
+    print Dumper @SEARCH_SPECIAL_TAXA;
+    $SEARCH_SPECIAL_TOPHITS = $paramaters->{search}->{special_top_hits} || $SEARCH_TOPHITS;
     $SEARCH_THREADS         = $paramaters->{search}->{threads} || '1';
     $SEARCH_OTHER           = $paramaters->{search}->{other};               # no default
 
@@ -327,22 +328,45 @@ sub run_blast_plus {
 
             my $database = $taxa_name_for_blast . ".fas";
 
-            # blast(x) from blast+ package command
-            # we will use tabulated output as it's smaller than XML
-            # and we don't really need much information other than the hit ID
-            my $blast_command = "$SEARCH_SUBPROGRAM -task $SEARCH_SUBPROGRAM";
-            $blast_command .= " -db $SEQ_DATA\/$database";
-            $blast_command .= " -query $sequence_name_for_blast\_query.fas";
-            $blast_command .= " -out $search_output";
-            $blast_command .= " -evalue $SEARCH_EVALUE";
-            $blast_command .= " -outfmt 6";
-            $blast_command .= " -max_target_seqs $SEARCH_TOPHITS";
-            $blast_command .= " -num_threads $SEARCH_THREADS";
+            if (grep { $_ eq $taxa_name } @SEARCH_SPECIAL_TAXA) {
 
-            #$blast_command .= " $SEARCH_OTHER";
+                # blast(x) from blast+ package command
+                # we will use tabulated output as it's smaller than XML
+                # and we don't really need much information other than the hit ID
+                my $blast_command = "$SEARCH_SUBPROGRAM -task $SEARCH_SUBPROGRAM";
+                $blast_command .= " -db $SEQ_DATA\/$database";
+                $blast_command .= " -query $sequence_name_for_blast\_query.fas";
+                $blast_command .= " -out $search_output";
+                $blast_command .= " -evalue $SEARCH_EVALUE";
+                $blast_command .= " -outfmt 6";
+                $blast_command .= " -max_target_seqs $SEARCH_SPECIAL_TOPHITS";
+                $blast_command .= " -num_threads $SEARCH_THREADS";
 
-            system($blast_command);
-            parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
+                #$blast_command .= " $SEARCH_OTHER";
+
+                system($blast_command);
+                parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
+
+                output_report("[INFO]\t$sequence_name: Using special -max_target_seqs $SEARCH_SPECIAL_TOPHITS for $taxa_name\n");
+            }
+            else {
+                # blast(x) from blast+ package command
+                # we will use tabulated output as it's smaller than XML
+                # and we don't really need much information other than the hit ID
+                my $blast_command = "$SEARCH_SUBPROGRAM -task $SEARCH_SUBPROGRAM";
+                $blast_command .= " -db $SEQ_DATA\/$database";
+                $blast_command .= " -query $sequence_name_for_blast\_query.fas";
+                $blast_command .= " -out $search_output";
+                $blast_command .= " -evalue $SEARCH_EVALUE";
+                $blast_command .= " -outfmt 6";
+                $blast_command .= " -max_target_seqs $SEARCH_TOPHITS";
+                $blast_command .= " -num_threads $SEARCH_THREADS";
+
+                #$blast_command .= " $SEARCH_OTHER";
+
+                system($blast_command);
+                parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
+            }
 
             $taxa_count++;
         }
@@ -532,6 +556,7 @@ sub run_usearch {
             $usearch_command .= " -evalue $SEARCH_EVALUE";                 # this should be a user option eventually
             $usearch_command .= " -blast6out $search_output";              # output filename
             $usearch_command .= " -threads $SEARCH_THREADS";
+            $usearch_command .= " -maxaccepts $SEARCH_TOPHITS";
 
             system($usearch_command);
             parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
@@ -660,7 +685,7 @@ sub display_help {
     print "Required files for input:\n\t-s sequence(s) file\n\t-t taxa file\n\t-p paramaters file\n";
     print "Example: perl tree_pipe.pl -s sequences.fasta -t taxa_list.txt -p paramaters.yaml\n";
     print
-"Other paramaters:\n\t-b blast only\n\t-a alignment only\n\t-m mask only\n\t-t tree building only\n\t-q run sequentially\n";
+"Other paramaters:\n\t-b blast only\n\t-a alignment only\n\t-m mask only\n\t-t tree building only\n\t-q run sequentially\n\t-f force yes\n";
     exit(1);
 }
 

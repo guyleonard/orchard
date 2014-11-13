@@ -6,17 +6,19 @@ search:
  # blast, blast+, blat, usearch
  # in some cases legacy blast is 'faster' than blast+ but occasionally returns
  # fewer hits than the newer version...
- program: usearch
+ program: blast+
  # blastp, blastx, ublast, blat, etc
- subprogram: usearch
+ subprogram: blastp
  threads: 4
  other: # any special commands, must be exact correct format!
- # values below are only supported by blast/blast+
+ # values below are only supported by blast/blast+/usearch
  evalue: 1e-05
- top_hits: 2
+ top_hits: 1
+ # values below are only supported by blast/blast+
  max_length: 3000
- special_taxa:
- special_top_hits:
+ # must be a comma separated list of taxa names or blank
+ special_taxa: Acanthamoeba castellanii str. Neff,Allomyces macrogynus atcc 38327
+ special_top_hits: 10
 
 alignment:
  # mafft, muscle
