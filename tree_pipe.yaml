@@ -6,9 +6,9 @@ search:
  # blast, blast+, blat, usearch
  # in some cases legacy blast is 'faster' than blast+ but occasionally returns
  # fewer hits than the newer version...
- program: blast
- # blastp, blastx, ublast etc
- subprogram: blastp
+ program: usearch
+ # blastp, blastx, ublast, blat, etc
+ subprogram: usearch
  threads: 4
  other: # any special commands, must be exact correct format!
  # values below are only supported by blast/blast+

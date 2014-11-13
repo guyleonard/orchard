@@ -15,12 +15,13 @@ use English qw(-no_match_vars);    # No magic perl variables!
 use File::Basename;                # Remove path information and extract 8.3 filename
 use Getopt::Std;                   # Command line options, finally!
 use feature qw{ switch };          # Given/when instead of switch - warns in 5.18
-no warnings 'experimental::smartmatch'; # ignore warning - eventually I will switch this to "for()" http://www.effectiveperlprogramming.com/2011/05/use-for-instead-of-given/
-use IO::Prompt;                    # User prompts
-use YAML::XS qw/LoadFile/;         # for the parameters file, user friendly layout
+no warnings 'experimental::smartmatch'
+  ; # ignore warning - eventually I will switch this to "for()" http://www.effectiveperlprogramming.com/2011/05/use-for-instead-of-given/
+use IO::Prompt;               # User prompts
+use YAML::XS qw/LoadFile/;    # for the parameters file, user friendly layout
 
 #
-use Data::Dumper;                  # temporary during rewrite to dump data nicely to screen
+use Data::Dumper;             # temporary during rewrite to dump data nicely to screen
 
 # remove ## comments before publication
 #
@@ -252,9 +253,8 @@ sub search_step {
         given ($SEARCH_PROGRAM) {
             when (/BLAST\+/ism) {
 
-                print "\tRunning: blast+ on $sequence_name\n";
-
                 $num_hit_seqs = run_blast_plus( \@taxa_array, $input_seqs_fname, $sequence_name );
+                print "\tRunning: blast+ on $sequence_name\n";
             }
             when (/BLAST/ism) {
 
@@ -263,15 +263,18 @@ sub search_step {
             }
             when (/BLAT/ism) {
 
-                #$num_seqs = run_blat( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
+                $num_hit_seqs = run_blat( \@taxa_array, $input_seqs_fname, $sequence_name );
+                print "\tRunning: blat\n";
             }
             when (/USEARCH/ism) {
 
-                #$num_seqs = run_ublast( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
+                $num_hit_seqs = run_usearch( \@taxa_array, $input_seqs_fname, $sequence_name );
+                print "\tRunning: usearch\n";
             }
             default {
 
-                #$num_seqs = run_blast( "$sequence_name", "$sequence_name\_test.fas", "$sequence_name\_seqs.fas" );
+                $num_hit_seqs = run_blast_plus( \@taxa_array, $input_seqs_fname, $sequence_name );
+                print "\tRunning: blast+ on $sequence_name\n";
             }
         }
         $input_seqs_count++;
@@ -386,8 +389,7 @@ sub run_blast_legacy {
             my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$SEARCH_SUBPROGRAM";
 
             # BLAST Output Progress
-            printf
-              "\t\t>: $SEARCH_SUBPROGRAM: $taxa_count of $taxa_total\n\e[A"; # Progress...
+            printf "\t\t>: $SEARCH_SUBPROGRAM: $taxa_count of $taxa_total\n\e[A";    # Progress...
 
             my $database = $taxa_name_for_blast . ".fas";
 
@@ -401,12 +403,137 @@ sub run_blast_legacy {
             $blast_command .= " -e $SEARCH_EVALUE";
             $blast_command .= " -m 8";
             $blast_command .= " -b $SEARCH_TOPHITS";
+
             #$blast_command .= " -v $SEARCH_TOPHITS";
             $blast_command .= " -a $SEARCH_THREADS";
 
             #$blast_command .= " $SEARCH_OTHER";
 
             system($blast_command);
+            parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
+
+            $taxa_count++;
+        }
+    }
+
+    # Find total number of hits
+    # I am still relying on 'grep' to count the number of sequences
+    # there is no way to get this directly from the Bio::Seq object
+    # without needless iteration. Anyone?
+    chomp( my $hit_seqs_total = `grep -c ">" $sequence_name\_hits.fas` );
+
+    #
+    print "\n\tNumber of Sequences found = $hit_seqs_total\n";
+    return $hit_seqs_total;
+}
+
+sub run_blat {
+
+    my ( $taxa_array_ref, $input_seqs_fname, $sequence_name ) = @_;
+
+    my @taxa_array = @{$taxa_array_ref};
+    my $taxa_total = @taxa_array;
+    my $taxa_count = 1;
+
+    my $sequence_name_for_blast = $sequence_name;
+    $sequence_name_for_blast =~ s/\s+/\_/gms;    # Replace spaces with '_'
+
+    while (@taxa_array) {
+
+        # Current Taxa Name
+        my $taxa_name = shift(@taxa_array);
+
+        my $taxa_name_for_blast = $taxa_name;
+        $taxa_name_for_blast =~ s/\s+/\_/gms;    # Replace spaces with '_'
+
+        if ( $taxa_name =~ m/^#/sm ) {
+            print "\t\tSkipping commented out $taxa_name\n";
+            output_report("[INFO]\t$sequence_name: Skipping commented out $taxa_name\n");
+            $taxa_count++;
+        }
+        else {
+
+            # Blast Output Filename
+            my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$SEARCH_SUBPROGRAM";
+
+            # BLAST Output Progress
+            printf "\t\t>: $SEARCH_SUBPROGRAM: $taxa_count of $taxa_total\n\e[A";    # Progress...
+
+            my $database = $taxa_name_for_blast . ".fas";
+
+            # blat from blat package command
+            # we will use tabulated output as it's smaller than XML
+            # and we don't really need much information other than the hit ID
+            my $blat_command = "blat";
+            $blat_command .= " -prot";                                  # this should be a user option eventually
+            $blat_command .= " $SEQ_DATA\/$database";
+            $blat_command .= " $sequence_name_for_blast\_query.fas";    # query file
+            $blat_command .= " -out=blast8";
+            $blat_command .= " $search_output";                         # output filename
+
+            system($blat_command);
+            parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
+
+            $taxa_count++;
+        }
+    }
+
+    # Find total number of hits
+    # I am still relying on 'grep' to count the number of sequences
+    # there is no way to get this directly from the Bio::Seq object
+    # without needless iteration. Anyone?
+    chomp( my $hit_seqs_total = `grep -c ">" $sequence_name\_hits.fas` );
+
+    #
+    print "\n\tNumber of Sequences found = $hit_seqs_total\n";
+    return $hit_seqs_total;
+}
+
+sub run_usearch {
+
+    my ( $taxa_array_ref, $input_seqs_fname, $sequence_name ) = @_;
+
+    my @taxa_array = @{$taxa_array_ref};
+    my $taxa_total = @taxa_array;
+    my $taxa_count = 1;
+
+    my $sequence_name_for_blast = $sequence_name;
+    $sequence_name_for_blast =~ s/\s+/\_/gms;    # Replace spaces with '_'
+
+    while (@taxa_array) {
+
+        # Current Taxa Name
+        my $taxa_name = shift(@taxa_array);
+
+        my $taxa_name_for_blast = $taxa_name;
+        $taxa_name_for_blast =~ s/\s+/\_/gms;    # Replace spaces with '_'
+
+        if ( $taxa_name =~ m/^#/sm ) {
+            print "\t\tSkipping commented out $taxa_name\n";
+            output_report("[INFO]\t$sequence_name: Skipping commented out $taxa_name\n");
+            $taxa_count++;
+        }
+        else {
+
+            # Blast Output Filename
+            my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$SEARCH_SUBPROGRAM";
+
+            # BLAST Output Progress
+            printf "\t\t>: $SEARCH_SUBPROGRAM: $taxa_count of $taxa_total\n\e[A";    # Progress...
+
+            my $database = $taxa_name_for_blast . ".fas";
+
+            # ublast from usearch package command
+            # we will use tabulated output as it's smaller than XML
+            # and we don't really need much information other than the hit ID
+            my $usearch_command = "usearch -ublast";
+            $usearch_command .= " $sequence_name_for_blast\_query.fas";    # query file
+            $usearch_command .= " -db $SEQ_DATA\/$database";
+            $usearch_command .= " -evalue $SEARCH_EVALUE";                 # this should be a user option eventually
+            $usearch_command .= " -blast6out $search_output";              # output filename
+            $usearch_command .= " -threads $SEARCH_THREADS";
+
+            system($usearch_command);
             parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
 
             $taxa_count++;
@@ -503,26 +630,6 @@ sub parse_search_output {
     return;
 }
 
-sub run_blat {
-
-    #my $blat_command = "blat";
-    #$blat_command .= " -prot"; # this should be a user option eventually
-    #$blat_command .= " $SEQ_DATA\/XXX"; #database
-    #$blat_command .= " XXX"; # query file
-    #$blat_command .= " -out=blast8";
-    #$blat_command .= " XXX"; # output filename
-}
-
-sub run_usearch {
-
-    #my $usearch_command = "usearch -ublast";
-    #$blat_command .= " XXX"; # query file
-    #$blat_command .= " -db $SEQ_DATA\/XXX";
-    #$blat_command .= " -evalue $SEARCH_EVALUE"; # this should be a user option eventually
-    #$blat_command .= " -blast6out XXX; # output filename
-    #$blat_command .= " -threads $SEARCH_THREADS";
-}
-
 ###########################################################
 ##           Accessory Subroutines                       ##
 ###########################################################
@@ -594,6 +701,7 @@ sub setup_main_directories {
         if ( $user_choice =~ m/n/ism ) {
 
             output_report("[INFO]\tTerminating: run directories already exist\n");
+            print "Bye!\n";
             exit;
         }
         else {
