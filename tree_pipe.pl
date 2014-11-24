@@ -58,15 +58,12 @@ our $ALIGNMENT_OPTIONS = $EMPTY;
 our $ALIGNMENT_PROGRAM = $EMPTY;
 our $ALIGNMENT_THREADS = $EMPTY;
 
-#our $DATABASE               = $EMPTY;
 our $MASKING_CUTOFF1 = $EMPTY;
 our $MASKING_CUTOFF2 = $EMPTY;
 
-#our $PASSWORD               = $EMPTY;
-#our $PROGRAMS               = $EMPTY;
 our $SEARCH_EVALUE          = $EMPTY;
 our $SEARCH_MAXLENGTH       = $EMPTY;
-our $SEARCH_OTHER           = $EMPTY;
+#our $SEARCH_OTHER           = $EMPTY;
 our $SEARCH_PROGRAM         = $EMPTY;
 our @SEARCH_SPECIAL_TAXA    = $EMPTY;
 our $SEARCH_SPECIAL_TOPHITS = $EMPTY;
@@ -75,13 +72,10 @@ our $SEARCH_THREADS         = $EMPTY;
 our $SEARCH_TOPHITS         = $EMPTY;
 our $SEQ_DATA               = $EMPTY;
 
-#our $SERVER_IP              = $EMPTY;
-#our $TABLENAME              = $EMPTY;
 our $TREE_MINTAXA = $EMPTY;
 our $TREE_OPTIONS = $EMPTY;
 our $TREE_PROGRAM = $EMPTY;
 
-#our $USERNAME               = $EMPTY;
 our $USER_REINDEX = $EMPTY;
 our $USER_RUNID   = $EMPTY;
 our $VERBOSE      = 1;
@@ -126,10 +120,9 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     $SEARCH_TOPHITS    = $paramaters->{search}->{top_hits}   || '1';
     $SEARCH_MAXLENGTH  = $paramaters->{search}->{max_length} || '3000';
     @SEARCH_SPECIAL_TAXA = split( /,/, $paramaters->{search}->{special_taxa} );    # no default
-    ## print Dumper @SEARCH_SPECIAL_TAXA;
     $SEARCH_SPECIAL_TOPHITS = $paramaters->{search}->{special_top_hits} || $SEARCH_TOPHITS;
     $SEARCH_THREADS         = $paramaters->{search}->{threads}          || '1';
-    $SEARCH_OTHER = $paramaters->{search}->{other};                                # no default
+    #$SEARCH_OTHER = $paramaters->{search}->{other};                                # no default
 
     # alignment options
     $ALIGNMENT_PROGRAM = $paramaters->{alignment}->{program} || 'mafft';
@@ -291,7 +284,6 @@ sub masking_step {
         # run trimal and report mask length with -nogaps option
         my $mask_length = &run_trimal( $current_sequences, "-nogaps" );
 
-        print "First MASK: $mask_length\n";
         # if the length is less than the first limit
         if ( $mask_length <= $MASKING_CUTOFF1 ) {
 
