@@ -31,8 +31,8 @@ alignment:
 masking:
  # trimal, gblocks
  program: trimal
- cutoff_1: 50
- cutoff_2: 20
+ cutoff_1: 500
+ cutoff_2: 300
 
 trees:
  # fasttree, phyml

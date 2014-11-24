@@ -5,6 +5,7 @@ use warnings;
 #
 use autodie;                       # bIlujDI' yIchegh()Qo'; yIHegh()!
 use Cwd;                           # Gets pathname of current working directory
+use Bio::AlignIO;                  # Use Bio::Perl for Phylip Format Reading
 use Bio::DB::Fasta;                # for indexing fasta files for sequence retrieval
 use Bio::SearchIO;                 # parse blast tabular format
 use Bio::SeqIO;                    # Use Bio::Perl
@@ -16,13 +17,15 @@ use English qw(-no_match_vars);    # No magic perl variables!
 use File::Basename;                # Remove path information and extract 8.3 filename
 use Getopt::Std;                   # Command line options, finally!
 
-use feature qw{ switch };                  # Given/when instead of switch - warns in 5.18
-no warnings 'experimental::smartmatch';    # ignore warning - eventually I will switch this to "for()" http://www.effectiveperlprogramming.com/2011/05/use-for-instead-of-given/
-use IO::Prompt;                            # User prompts
-use YAML::XS qw/LoadFile/;                 # for the parameters file, user friendly layout
+#use experimental 'smartmatch';
+use feature qw{ switch }
+  ;    # Given/when instead of switch - warns in 5.18 eventually I will switch this to "for()" http://www.effectiveperlprogramming.com/2011/05/use-for-instead-of-given/
+no if $] >= 5.017011, warnings => 'experimental::smartmatch';    # ignore experimental warning for 'when'
+use IO::Prompt;                                                  # User prompts
+use YAML::XS qw/LoadFile/;                                       # for the parameters file, user friendly layout
 
 #
-use Data::Dumper;                          # temporary during rewrite to dump data nicely to screen
+use Data::Dumper;                                                # temporary during rewrite to dump data nicely to screen
 
 # remove ## comments before publication
 #
@@ -179,7 +182,10 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
 
     # only run mask step
     if ( $options{m} ) {
-        print "Running: Masking ($MASKING_PROGRAM) ONLY\n";
+        print "Running: Masking with $MASKING_PROGRAM ONLY\n";
+        my $start_time = timing('start');
+        masking_step();
+        my $end_time = timing( 'end', $start_time );
     }
 
     # only run tree building step (o is for orchard)
@@ -208,6 +214,12 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
         $start_time = timing('start');
         alignment_step();
         $end_time = timing( 'end', $start_time );
+
+        # Run the user selected masking option
+        print "Running: Masking with $MASKING_PROGRAM\n";
+        $start_time = timing('start');
+        masking_step();
+        $end_time = timing( 'end', $start_time );
     }
 }
 else {
@@ -219,14 +231,114 @@ else {
 ###########################################################
 
 #################################################
+##           Masking Subroutines               ##
+#################################################
+
+sub masking_step {
+
+    # directory variables
+    my $alignments_directory = "$WORKING_DIR\/$USER_RUNID\/alignments";
+    my $masks_directory      = "$WORKING_DIR\/$USER_RUNID\/masks";
+
+    # get list of sequences that were not excluded in previous stage
+    my @algn_file_names       = glob "$alignments_directory\/*.afa";
+    my $algn_file_names_total = @algn_file_names;
+
+    # iterate through the stream of sequences and perform each search
+    output_report("[INFO]\tStarting $algn_file_names_total alignments using $MASKING_PROGRAM\n");
+
+    for ( my $i = 0 ; $i < $algn_file_names_total ; $i++ ) {
+
+        my $current_sequences = $algn_file_names[$i];
+
+        my ( $file, $dir, $ext ) = fileparse $current_sequences, '\.afa';
+
+        # Using an 'if/elsif' statement match here as there are 'bugs' in
+        # perl's experimental when and the lexical $_ on the match $MASKING_PRPROGRAM
+        # was being replaced by a file name after running bioperl! ANNOYING.
+        if ( $MASKING_PROGRAM =~ /trimal/ism ) {
+
+            # run trimal and report mask length with -nogaps option
+            my $mask_length = &run_trimal( $current_sequences, "-nogaps" );
+
+            # if the length is less than the first limit
+            if ( $mask_length <= $MASKING_CUTOFF1 ) {
+
+                # then re-run trimal and report mask length with -automated1 option
+                $mask_length = &run_trimal( $current_sequences, "-automated1" );
+
+                print "\t\tMask Length: $mask_length is ";
+
+                # if the length is less than the second limit (always the smaller)
+                if ( $mask_length <= $MASKING_CUTOFF2 ) {
+                    print " not OK. Excluding sequence.\n";
+
+                    # then abandon this sequence, report it, move to excluded
+                    output_report("[WARN]\t$file does not satisfy $MASKING_PROGRAM cutoffs ($MASKING_CUTOFF1 or $MASKING_CUTOFF2). Moved to excluded directory.\n");
+                    system "mv $WORKING_DIR\/$USER_RUNID\/masks\/$file\.afa-tr $WORKING_DIR\/$USER_RUNID\/excluded\/$file\.afa-tr"
+                }
+                else {
+                    print " OK.\n";
+                }
+            }
+            else {
+                print "\t\tMask Length: $mask_length is OK 1\n";
+            }
+        }
+    }
+}
+
+sub run_trimal {
+
+    my $aligned_sequences = shift;
+    my $option            = shift;
+    my $masks_directory   = "$WORKING_DIR\/$USER_RUNID\/masks";
+
+    my ( $file, $dir, $ext ) = fileparse $aligned_sequences, '\.afa';
+
+    print "\tRunning trimal $option on $aligned_sequences\n";
+
+    my $trimal_command = "trimal";
+    $trimal_command .= " -in $aligned_sequences";
+    $trimal_command .= " -out $masks_directory\/$file\.afa\-tr";
+    $trimal_command .= " $option";
+
+    system($trimal_command);
+
+    my $length = &mask_check("$masks_directory\/$file\.afa\-tr");
+
+    return $length;
+}
+
+sub mask_check {
+
+    my $aligned_sequences = shift;
+
+    # I want to silence the "MSG: Got a sequence without letters. Could not guess alphabet"
+    # when trimal/gblock produce an alignment with 0 letters...as I deal with it above
+    # anybody have any ideas as verbose -1 isn't working!
+    #my $phylipstream = Bio::AlignIO->new( '-file' => $aligned_sequences, -verbose => -1 );
+
+    my $phylipstream = Bio::SeqIO->new( '-file' => $aligned_sequences, -verbose => -1 );
+
+    # get the length of the first sequence...
+    #my $seqobj = $phylipstream->next_aln;
+    my $seqobj = $phylipstream->next_seq;
+
+    my $length = $seqobj->length;
+
+    return $length;
+}
+
+#################################################
 ##           Alignment Subroutines             ##
 #################################################
 
 sub alignment_step {
 
     # directory variables
-    my $sequence_directory = "$WORKING_DIR\/$USER_RUNID\/seqs";
-    my $alignments_directory     = "$WORKING_DIR\/$USER_RUNID\/alignments";
+    my $sequence_directory   = "$WORKING_DIR\/$USER_RUNID\/seqs";
+    my $alignments_directory = "$WORKING_DIR\/$USER_RUNID\/alignments";
 
     # get list of sequences that were not excluded in previous stage
     my @seq_file_names       = glob "$sequence_directory\/*.fas";
