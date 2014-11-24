@@ -58,7 +58,7 @@ Required files for input:
 	-s sequence(s) file
 	-t taxa file
 	-p paramaters file
-Example: perl tree_pipe.pl -s sequences.fasta -t taxa_list.txt -p paramaters.yaml
+Example: perl orchard.pl -s sequences.fasta -t taxa_list.txt -p paramaters.yaml
 Other paramaters:
 	-b blast only
 	-a alignment only

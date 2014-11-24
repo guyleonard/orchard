@@ -881,7 +881,7 @@ sub output_report {
 sub display_help {
 
     print "Required files for input:\n\t-s sequence(s) file\n\t-t taxa file\n\t-p paramaters file\n";
-    print "Example: perl tree_pipe.pl -s sequences.fasta -t taxa_list.txt -p paramaters.yaml\n";
+    print "Example: perl orchard.pl -s sequences.fasta -t taxa_list.txt -p paramaters.yaml\n";
     print "Other paramaters:\n\t-b blast only\n\t-a alignment only\n\t-m mask only\n\t-t tree building only\n\t-q run sequentially\n\t-f force yes\n";
     exit(1);
 }
