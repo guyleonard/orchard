@@ -78,7 +78,6 @@ our $TREE_PROGRAM = $EMPTY;
 
 our $USER_REINDEX = $EMPTY;
 our $USER_RUNID   = $EMPTY;
-our $VERBOSE      = 1;
 
 ###########################################################
 ##           Main Program Flow                           ##
@@ -474,6 +473,10 @@ sub search_step {
         else {
             unlink "$WORKING_DIR\/$sequence_name\_query.fas";
             system "mv $sequence_name\_hits.fas $WORKING_DIR\/$USER_RUNID\/seqs\/";
+
+            # remove selenocystein and non-alpha numeric characters as they cause MAFFT 
+            # to crash (and --anysymbol option produces terrible alignments)
+            system "sed -i '/^>/! s/U|\w/X/g' $WORKING_DIR\/$USER_RUNID\/seqs\/$sequence_name\_hits.fas";
         }
     }
     return;
@@ -794,7 +797,7 @@ sub parse_search_output {
     my $read_search_output = Bio::SearchIO->new( -format => 'blasttable', -file => $search_output );
 
     # searchio for blasttable returns an empty object but not undef
-    # so to count 'no hits' - empty search output - we need a boolean
+    # so to count 'no hits' - an empty search output - we need a boolean
     my $hit_count = 0;
 
     # iterate through the stream
@@ -802,7 +805,7 @@ sub parse_search_output {
         while ( my $hit = $result->next_hit ) {
             my $hit_name = $hit->name;
 
-            #print "\t\t\tHit: " . $hit->name . " :\n" if $VERBOSE == 1;
+            ##print "\t\t\tHit: " . $hit->name . " :\n" if $VERBOSE == 1;
 
             # get the sequence from the file stream
             my $sequence = $sequence_file->seq($hit_name);
@@ -811,10 +814,21 @@ sub parse_search_output {
             # report sequence retreival problems to output report
             if ( defined $sequence ) {
 
-                # output hits to hits files
-                open my $hits_seq_out, '>>', "$sequence_name\_hits.fas";
-                print $hits_seq_out ">$hit_name \n$sequence\n";
-                close $hits_seq_out;
+                # get the length of the sequence - this was a feature added by Fin originally
+                # he was getting some ridiculous sequence lengths 3k++ which were causing
+                # many alignment issues
+                my $sequence_length = length $sequence;
+
+                if ($sequence_length <= $SEARCH_MAXLENGTH) {
+
+                    # output hits to hits files
+                    open my $hits_seq_out, '>>', "$sequence_name\_hits.fas";
+                    print $hits_seq_out ">$hit_name \n$sequence\n";
+                    close $hits_seq_out;
+                }
+                else {
+                    output_report("[WARN]\t$sequence_name: sequence hit too long for: $hit_name -> $taxa_name\n");
+                }
             }
             else {
                 output_report("[WARN]\t$sequence_name: sequence retreival problem for: $hit_name -> $taxa_name\n");
@@ -855,7 +869,7 @@ sub output_report {
 
     # Append messages to report file
     my $message   = shift;
-    my $file_name = "$WORKING_DIR\/report.txt";
+    my $file_name = "$WORKING_DIR\/$USER_RUNID\_report.txt";
     open my $report, ">>", $file_name;
     print $report $message;
     close($report);
