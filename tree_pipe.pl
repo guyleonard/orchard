@@ -3,25 +3,26 @@ use strict;
 use warnings;
 
 #
-use autodie;           # bIlujDI' yIchegh()Qo'; yIHegh()!
-use Cwd;               # Gets pathname of current working directory
-use Bio::DB::Fasta;    # for indexing fasta files for sequence retrieval
-use Bio::SearchIO;     # parse blast tabular format
-use Bio::SeqIO;        # Use Bio::Perl
-use DateTime;          # Start and End times
-use DateTime::Format::Duration; # Duration of processes
+use autodie;                       # bIlujDI' yIchegh()Qo'; yIHegh()!
+use Cwd;                           # Gets pathname of current working directory
+use Bio::DB::Fasta;                # for indexing fasta files for sequence retrieval
+use Bio::SearchIO;                 # parse blast tabular format
+use Bio::SeqIO;                    # Use Bio::Perl
+use DateTime;                      # Start and End times
+use DateTime::Format::Duration;    # Duration of processes
 use Digest::MD5;                   # Generate random string for run ID
-#use English qw(-no_match_vars);    # No magic perl variables!
+
+use English qw(-no_match_vars);    # No magic perl variables!
 use File::Basename;                # Remove path information and extract 8.3 filename
 use Getopt::Std;                   # Command line options, finally!
-#use feature qw{ switch };          # Given/when instead of switch - warns in 5.18
-#no warnings 'experimental::smartmatch'
-#  ; # ignore warning - eventually I will switch this to "for()" http://www.effectiveperlprogramming.com/2011/05/use-for-instead-of-given/
-use IO::Prompt;               # User prompts
-use YAML::XS qw/LoadFile/;    # for the parameters file, user friendly layout
+
+use feature qw{ switch };                  # Given/when instead of switch - warns in 5.18
+no warnings 'experimental::smartmatch';    # ignore warning - eventually I will switch this to "for()" http://www.effectiveperlprogramming.com/2011/05/use-for-instead-of-given/
+use IO::Prompt;                            # User prompts
+use YAML::XS qw/LoadFile/;                 # for the parameters file, user friendly layout
 
 #
-use Data::Dumper;             # temporary during rewrite to dump data nicely to screen
+use Data::Dumper;                          # temporary during rewrite to dump data nicely to screen
 
 # remove ## comments before publication
 #
@@ -125,15 +126,15 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     $SEARCH_EVALUE     = $paramaters->{search}->{evalue}     || '1e-10';
     $SEARCH_TOPHITS    = $paramaters->{search}->{top_hits}   || '1';
     $SEARCH_MAXLENGTH  = $paramaters->{search}->{max_length} || '3000';
-    @SEARCH_SPECIAL_TAXA    = split(/,/, $paramaters->{search}->{special_taxa});        # no default
+    @SEARCH_SPECIAL_TAXA = split( /,/, $paramaters->{search}->{special_taxa} );    # no default
     ## print Dumper @SEARCH_SPECIAL_TAXA;
     $SEARCH_SPECIAL_TOPHITS = $paramaters->{search}->{special_top_hits} || $SEARCH_TOPHITS;
-    $SEARCH_THREADS         = $paramaters->{search}->{threads} || '1';
-    $SEARCH_OTHER           = $paramaters->{search}->{other};               # no default
+    $SEARCH_THREADS         = $paramaters->{search}->{threads}          || '1';
+    $SEARCH_OTHER = $paramaters->{search}->{other};                                # no default
 
     # alignment options
     $ALIGNMENT_PROGRAM = $paramaters->{alignment}->{program} || 'mafft';
-    $ALIGNMENT_OPTIONS = $paramaters->{alignment}->{options};               # no default
+    $ALIGNMENT_OPTIONS = $paramaters->{alignment}->{options};                      # no default
     $ALIGNMENT_THREADS = $paramaters->{alignment}->{threads} || '1';
 
     # masking options
@@ -143,7 +144,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
 
     # tree building options
     $TREE_PROGRAM = $paramaters->{trees}->{program} || 'FastTreeMP';
-    $TREE_OPTIONS = $paramaters->{trees}->{options};                        # no default
+    $TREE_OPTIONS = $paramaters->{trees}->{options};                               # no default
     $TREE_MINTAXA = $paramaters->{trees}->{min_taxa} || '4';
 
     # database options
@@ -161,6 +162,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     # only run search (blast) step
     if ( $options{b} ) {
         print "Running: Search ($SEARCH_PROGRAM) ONLY\n";
+
         # Run the user selected sequence search option
         my $start_time = timing('start');
         search_step( \@taxa_array, $input_seqs_fname );
@@ -170,6 +172,9 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     # only run alignment step
     if ( $options{a} ) {
         print "Running: Alignment ($ALIGNMENT_PROGRAM) ONLY\n";
+        my $start_time = timing('start');
+        alignment_step();
+        my $end_time = timing( 'end', $start_time );
     }
 
     # only run mask step
@@ -197,6 +202,12 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
         my $start_time = timing('start');
         search_step( \@taxa_array, $input_seqs_fname );
         my $end_time = timing( 'end', $start_time );
+
+        # Run the user selected alignment option
+        print "Running: Alignment ($ALIGNMENT_PROGRAM)\n";
+        $start_time = timing('start');
+        alignment_step();
+        $end_time = timing( 'end', $start_time );
     }
 }
 else {
@@ -207,6 +218,55 @@ else {
 ##           Main Subroutines 	                         ##
 ###########################################################
 
+#################################################
+##           Alignment Subroutines             ##
+#################################################
+
+sub alignment_step {
+
+    # directory variables
+    my $sequence_directory = "$WORKING_DIR\/$USER_RUNID\/seqs";
+    my $alignments_directory     = "$WORKING_DIR\/$USER_RUNID\/alignments";
+
+    # get list of sequences that were not excluded in previous stage
+    my @seq_file_names       = glob "$sequence_directory\/*.fas";
+    my $seq_file_names_total = @seq_file_names;
+
+    # iterate through the stream of sequences and perform each search
+    output_report("[INFO]\tStarting $seq_file_names_total alignments using $ALIGNMENT_PROGRAM\n");
+
+    for ( my $i = 0 ; $i < $seq_file_names_total ; $i++ ) {
+
+        my $current_sequences = $seq_file_names[$i];
+
+        my ( $file, $dir, $ext ) = fileparse $current_sequences, '\.fas';
+
+        for ($ALIGNMENT_PROGRAM) {
+            when (/mafft/ism) {
+                my $mafft_command = "mafft --auto --quiet";
+                $mafft_command .= " --thread $ALIGNMENT_THREADS";
+                $mafft_command .= " --reorder";
+                $mafft_command .= " $current_sequences > $alignments_directory\/$file\.afa";
+
+                system($mafft_command);
+            }
+            when (/muscle/ism) {
+
+                my $muscle_command = "muscle -maxiters 2 -quiet";
+                $muscle_command .= " -group";
+                $muscle_command .= " -in $current_sequences -out $alignments_directory\/$file\.afa";
+
+                system($muscle_command);
+            }
+        }
+    }
+
+    return;
+}
+
+#################################################
+##           Search Subroutines                ##
+#################################################
 sub search_step {
 
     # get all of the values passed to the sub...
@@ -325,14 +385,13 @@ sub run_blast_plus {
             my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$SEARCH_SUBPROGRAM";
 
             # BLAST Output Progress
-            printf
-              "\t\t>: $SEARCH_SUBPROGRAM: $taxa_count of $taxa_total\n\e[A";    # - $taxa_name\n\e[A";    # Progress...
+            printf "\t\t>: $SEARCH_SUBPROGRAM: $taxa_count of $taxa_total\n\e[A";    # - $taxa_name\n\e[A";    # Progress...
 
             my $database = $taxa_name_for_blast . ".fas";
 
             # In the future I might consider replacing grep with List:MoreUtils 'any' to save
             # large searches
-            if (grep { $_ eq $taxa_name } @SEARCH_SPECIAL_TAXA) {
+            if ( grep { $_ eq $taxa_name } @SEARCH_SPECIAL_TAXA ) {
 
                 # blast(x) from blast+ package command
                 # we will use tabulated output as it's smaller than XML
@@ -345,6 +404,7 @@ sub run_blast_plus {
                 $blast_command .= " -outfmt 6";
                 $blast_command .= " -max_target_seqs $SEARCH_SPECIAL_TOPHITS";
                 $blast_command .= " -num_threads $SEARCH_THREADS";
+
                 #$blast_command .= " $SEARCH_OTHER";
 
                 system($blast_command);
@@ -492,11 +552,11 @@ sub run_blat {
             # we will use tabulated output as it's smaller than XML
             # and we don't really need much information other than the hit ID
             my $blat_command = "blat";
-            $blat_command .= " -prot";                                  # this should be a user option eventually
+            $blat_command .= " -prot";                                               # this should be a user option eventually
             $blat_command .= " $SEQ_DATA\/$database";
-            $blat_command .= " $sequence_name_for_blast\_query.fas";    # query file
+            $blat_command .= " $sequence_name_for_blast\_query.fas";                 # query file
             $blat_command .= " -out=blast8";
-            $blat_command .= " $search_output";                         # output filename
+            $blat_command .= " $search_output";                                      # output filename
 
             system($blat_command);
             parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
@@ -554,10 +614,10 @@ sub run_usearch {
             # we will use tabulated output as it's smaller than XML
             # and we don't really need much information other than the hit ID
             my $usearch_command = "usearch -ublast";
-            $usearch_command .= " $sequence_name_for_blast\_query.fas";    # query file
+            $usearch_command .= " $sequence_name_for_blast\_query.fas";              # query file
             $usearch_command .= " -db $SEQ_DATA\/$database";
-            $usearch_command .= " -evalue $SEARCH_EVALUE";                 # this should be a user option eventually
-            $usearch_command .= " -blast6out $search_output";              # output filename
+            $usearch_command .= " -evalue $SEARCH_EVALUE";                           # this should be a user option eventually
+            $usearch_command .= " -blast6out $search_output";                        # output filename
             $usearch_command .= " -threads $SEARCH_THREADS";
             $usearch_command .= " -maxaccepts $SEARCH_TOPHITS";
 
@@ -682,8 +742,7 @@ sub display_help {
 
     print "Required files for input:\n\t-s sequence(s) file\n\t-t taxa file\n\t-p paramaters file\n";
     print "Example: perl tree_pipe.pl -s sequences.fasta -t taxa_list.txt -p paramaters.yaml\n";
-    print
-"Other paramaters:\n\t-b blast only\n\t-a alignment only\n\t-m mask only\n\t-t tree building only\n\t-q run sequentially\n\t-f force yes\n";
+    print "Other paramaters:\n\t-b blast only\n\t-a alignment only\n\t-m mask only\n\t-t tree building only\n\t-q run sequentially\n\t-f force yes\n";
     exit(1);
 }
 

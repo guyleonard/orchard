@@ -25,7 +25,7 @@ alignment:
  program: mafft
  # mafft = --auto --quiet
  # muscle = -maxiters 2 -quiet
- options: --auto --quiet
+ options: 
  threads: 4
 
 masking:
