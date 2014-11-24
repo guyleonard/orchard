@@ -46,6 +46,8 @@ Other paramaters:
 	-q run sequentially
 ```
 
+Order preference of parameters is ignored: i.e. specificy '-ab' will run blasts then alignments.
+
 Updates
 =======
 This is going to be a somewhat full re-write of the "'Darren's Orchard'" Pipeline.
