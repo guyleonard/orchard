@@ -33,10 +33,10 @@ masking:
  cutoff_2: 300
 
 trees:
- # fasttree, phyml
- program: FastTree
- # phyml = -4 for aLRT SH, fasttree = -bionj -slow
- options: -bionj -slow
+ # fasttree, fasttreemp
+ program: FastTreeMP
+ # fasttree = -bionj -slow
+ options: -bionj -slow -quiet
  # number of taxa to make a tree from
  min_taxa: 5
 

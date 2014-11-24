@@ -47,7 +47,9 @@ One each of the following (our preference is always 1.):
 ### Tree Programs
 
 1. [FastTree2.1](http://meta.microbesonline.org/fasttree/)
-2. [PhyML 3.0](http://www.atgc-montpellier.fr/phyml/binaries.php)
+2. ~~[PhyML 3.0](http://www.atgc-montpellier.fr/phyml/binaries.php)~~ *
+
+* deprecated and no longer supported. FastTree FTW!
 
 # Program Execution
 

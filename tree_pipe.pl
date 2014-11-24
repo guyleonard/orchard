@@ -5,31 +5,28 @@ use warnings;
 #
 use autodie;                       # bIlujDI' yIchegh()Qo'; yIHegh()!
 use Cwd;                           # Gets pathname of current working directory
-use Bio::AlignIO;                  # Use Bio::Perl for Phylip Format Reading
 use Bio::DB::Fasta;                # for indexing fasta files for sequence retrieval
 use Bio::SearchIO;                 # parse blast tabular format
 use Bio::SeqIO;                    # Use Bio::Perl
 use DateTime;                      # Start and End times
 use DateTime::Format::Duration;    # Duration of processes
 use Digest::MD5;                   # Generate random string for run ID
-
-use English qw(-no_match_vars);    # No magic perl variables!
 use File::Basename;                # Remove path information and extract 8.3 filename
 use Getopt::Std;                   # Command line options, finally!
 
 #use experimental 'smartmatch';
-use feature qw{ switch }
-  ;    # Given/when instead of switch - warns in 5.18 eventually I will switch this to "for()" http://www.effectiveperlprogramming.com/2011/05/use-for-instead-of-given/
+# Given/when instead of switch - warns in 5.18 eventually I will switch this to "for()" http://www.effectiveperlprogramming.com/2011/05/use-for-instead-of-given/
+use feature qw{ switch };
 no if $] >= 5.017011, warnings => 'experimental::smartmatch';    # ignore experimental warning for 'when'
 use IO::Prompt;                                                  # User prompts
 use YAML::XS qw/LoadFile/;                                       # for the parameters file, user friendly layout
 
-#
+##
 use Data::Dumper;                                                # temporary during rewrite to dump data nicely to screen
 
 # remove ## comments before publication
 #
-our $WORKING_DIR = getcwd;
+our $WORKING_DIR = getcwd();
 our $VERSION     = '2014-10-17';
 ###########################################################
 #           Darren's Orchard Pipeline                     #
@@ -64,7 +61,6 @@ our $ALIGNMENT_THREADS = $EMPTY;
 #our $DATABASE               = $EMPTY;
 our $MASKING_CUTOFF1 = $EMPTY;
 our $MASKING_CUTOFF2 = $EMPTY;
-#our $MASKING_PROGRAM = $EMPTY;
 
 #our $PASSWORD               = $EMPTY;
 #our $PROGRAMS               = $EMPTY;
@@ -96,7 +92,7 @@ our $VERBOSE      = 1;
 
 # declare the perl command line flags/options we want to allow
 my %options = ();
-getopts( "s:t:p:hvbamoqf", \%options ) or croak display_help();    # or display_help();
+getopts( "s:t:p:hvbamof", \%options ) or croak display_help();    # or display_help();
 
 # Display the help message if the user invokes -h
 if ( $options{h} ) { display_help() }
@@ -141,7 +137,6 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     $ALIGNMENT_THREADS = $paramaters->{alignment}->{threads} || '1';
 
     # masking options
-    #$MASKING_PROGRAM = $paramaters->{masking}->{program}  || 'trimal';
     $MASKING_CUTOFF1 = $paramaters->{masking}->{cutoff_1} || '50';
     $MASKING_CUTOFF2 = $paramaters->{masking}->{cutoff_2} || '20';
 
@@ -190,12 +185,10 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
 
     # only run tree building step (o is for orchard)
     if ( $options{o} ) {
-        print "Running: Tree Reconstruction ($TREE_PROGRAM) ONLY\n";
-    }
-
-    # run b-a-m-t for each sequence sequentially
-    if ( $options{q} ) {
-        ## experimental, is it really useful?
+        print "Running: Tree Reconstruction with $TREE_PROGRAM ONLY\n";
+        my $start_time = timing('start');
+        tree_step();
+        my $end_time = timing( 'end', $start_time );
     }
 
     # run default
@@ -210,7 +203,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
         my $end_time = timing( 'end', $start_time );
 
         # Run the user selected alignment option
-        print "Running: Alignment ($ALIGNMENT_PROGRAM)\n";
+        print "Running: Alignment with $ALIGNMENT_PROGRAM\n";
         $start_time = timing('start');
         alignment_step();
         $end_time = timing( 'end', $start_time );
@@ -220,6 +213,12 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
         $start_time = timing('start');
         masking_step();
         $end_time = timing( 'end', $start_time );
+
+        # Run the user selected tree building options
+        print "Running: Tree Reconstruction with $TREE_PROGRAM\n";
+        my $start_time = timing('start');
+        tree_step();
+        my $end_time = timing( 'end', $start_time );
     }
 }
 else {
@@ -229,6 +228,51 @@ else {
 ###########################################################
 ##           Main Subroutines 	                         ##
 ###########################################################
+
+#################################################
+##           Tree Subroutines                  ##
+#################################################
+
+sub tree_step {
+
+    my $masks_directory = "$WORKING_DIR\/$USER_RUNID\/masks";
+    my $tree_directory  = "$WORKING_DIR\/$USER_RUNID\/trees";
+
+    # get list of sequences that were not excluded in previous stage
+    my @mask_file_names       = glob "$masks_directory\/*.afa-tr";
+    my $mask_file_names_total = @mask_file_names;
+
+    output_report("[INFO]\tTREE BUILDING: $mask_file_names_total alignments using $TREE_PROGRAM\n");
+
+    for ( my $i = 0 ; $i < $mask_file_names_total ; $i++ ) {
+        my ( $file, $dir, $ext ) = fileparse $mask_file_names[$i], '\.afa-tr';
+
+        &run_fasttree("$masks_directory\/$file\.afa-tr");
+    }
+}
+
+sub run_fasttree {
+    my $masked_sequences = shift;
+    my $fasttree_command = $EMPTY;
+
+    my ( $file, $dir, $ext ) = fileparse $masked_sequences, '\.afa\-tr';
+
+    print "\tCalculating FastTree on $file\n";
+
+    if ( $TREE_PROGRAM =~ /fasttreemp/ism ) {
+        $fasttree_command = "FastTreeMP $TREE_OPTIONS";
+        $fasttree_command .= " $masked_sequences";
+        $fasttree_command .= " > $WORKING_DIR\/$USER_RUNID\/trees\/$file\_FT.tree";
+    }
+    else {
+        $fasttree_command = "FastTree $TREE_OPTIONS";
+        $fasttree_command .= " $masked_sequences";
+        $fasttree_command .= " > $WORKING_DIR\/$USER_RUNID\/trees\/$file\_FT.tree";
+    }
+
+    system($fasttree_command);
+    return;
+}
 
 #################################################
 ##           Masking Subroutines               ##
@@ -253,38 +297,32 @@ sub masking_step {
 
         my ( $file, $dir, $ext ) = fileparse $current_sequences, '\.afa';
 
-        # Using an 'if/elsif' statement match here as there are 'bugs' in
-        # perl's experimental when and the lexical $_ on the match $MASKING_PRPROGRAM
-        # was being replaced by a file name after running bioperl! ANNOYING.
-        #if ( $MASKING_PROGRAM =~ /trimal/ism ) {
+        # run trimal and report mask length with -nogaps option
+        my $mask_length = &run_trimal( $current_sequences, "-nogaps" );
 
-            # run trimal and report mask length with -nogaps option
-            my $mask_length = &run_trimal( $current_sequences, "-nogaps" );
+        # if the length is less than the first limit
+        if ( $mask_length <= $MASKING_CUTOFF1 ) {
 
-            # if the length is less than the first limit
-            if ( $mask_length <= $MASKING_CUTOFF1 ) {
+            # then re-run trimal and report mask length with -automated1 option
+            $mask_length = &run_trimal( $current_sequences, "-automated1" );
 
-                # then re-run trimal and report mask length with -automated1 option
-                $mask_length = &run_trimal( $current_sequences, "-automated1" );
+            print "\t\tMask Length: $mask_length is ";
 
-                print "\t\tMask Length: $mask_length is ";
+            # if the length is less than the second limit (always the smaller)
+            if ( $mask_length <= $MASKING_CUTOFF2 ) {
+                print " not OK. Excluding sequence.\n";
 
-                # if the length is less than the second limit (always the smaller)
-                if ( $mask_length <= $MASKING_CUTOFF2 ) {
-                    print " not OK. Excluding sequence.\n";
-
-                    # then abandon this sequence, report it, move to excluded
-                    output_report("[WARN]\t$file does not satisfy trimal cutoffs ($MASKING_CUTOFF1 or $MASKING_CUTOFF2). Moved to excluded directory.\n");
-                    system "mv $WORKING_DIR\/$USER_RUNID\/masks\/$file\.afa-tr $WORKING_DIR\/$USER_RUNID\/excluded\/$file\.afa-tr";
-                }
-                else {
-                    print " OK.\n";
-                }
+                # then abandon this sequence, report it, move to excluded
+                output_report("[WARN]\t$file does not satisfy trimal cutoffs ($MASKING_CUTOFF1 or $MASKING_CUTOFF2). Moved to excluded directory.\n");
+                system "mv $WORKING_DIR\/$USER_RUNID\/masks\/$file\.afa-tr $WORKING_DIR\/$USER_RUNID\/excluded\/$file\.afa-tr";
             }
             else {
-                print "\t\tMask Length: $mask_length is OK 1\n";
+                print " OK.\n";
             }
-        #}
+        }
+        else {
+            print "\t\tMask Length: $mask_length is OK 1\n";
+        }
     }
 }
 
@@ -317,15 +355,9 @@ sub mask_check {
     # I want to silence the "MSG: Got a sequence without letters. Could not guess alphabet"
     # when trimal/gblock produce an alignment with 0 letters...as I deal with it above
     # anybody have any ideas as verbose -1 isn't working!
-    #my $phylipstream = Bio::AlignIO->new( '-file' => $aligned_sequences, -verbose => -1 );
-
     my $phylipstream = Bio::SeqIO->new( '-file' => $aligned_sequences, -verbose => -1 );
-
-    # get the length of the first sequence...
-    #my $seqobj = $phylipstream->next_aln;
-    my $seqobj = $phylipstream->next_seq;
-
-    my $length = $seqobj->length;
+    my $seqobj       = $phylipstream->next_seq;
+    my $length       = $seqobj->length;
 
     return $length;
 }
