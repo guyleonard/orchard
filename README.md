@@ -64,7 +64,6 @@ Other paramaters:
 	-a alignment only
 	-m mask only
 	-o tree building only
-	-q run sequentially
 ```
 
 Order preference of parameters is ignored: i.e. specificy '-ab' will run blasts then alignments.
