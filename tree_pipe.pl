@@ -64,7 +64,7 @@ our $ALIGNMENT_THREADS = $EMPTY;
 #our $DATABASE               = $EMPTY;
 our $MASKING_CUTOFF1 = $EMPTY;
 our $MASKING_CUTOFF2 = $EMPTY;
-our $MASKING_PROGRAM = $EMPTY;
+#our $MASKING_PROGRAM = $EMPTY;
 
 #our $PASSWORD               = $EMPTY;
 #our $PROGRAMS               = $EMPTY;
@@ -141,7 +141,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     $ALIGNMENT_THREADS = $paramaters->{alignment}->{threads} || '1';
 
     # masking options
-    $MASKING_PROGRAM = $paramaters->{masking}->{program}  || 'trimal';
+    #$MASKING_PROGRAM = $paramaters->{masking}->{program}  || 'trimal';
     $MASKING_CUTOFF1 = $paramaters->{masking}->{cutoff_1} || '50';
     $MASKING_CUTOFF2 = $paramaters->{masking}->{cutoff_2} || '20';
 
@@ -182,7 +182,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
 
     # only run mask step
     if ( $options{m} ) {
-        print "Running: Masking with $MASKING_PROGRAM ONLY\n";
+        print "Running: Masking with trimal ONLY\n";
         my $start_time = timing('start');
         masking_step();
         my $end_time = timing( 'end', $start_time );
@@ -216,7 +216,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
         $end_time = timing( 'end', $start_time );
 
         # Run the user selected masking option
-        print "Running: Masking with $MASKING_PROGRAM\n";
+        print "Running: Masking with trimal\n";
         $start_time = timing('start');
         masking_step();
         $end_time = timing( 'end', $start_time );
@@ -245,7 +245,7 @@ sub masking_step {
     my $algn_file_names_total = @algn_file_names;
 
     # iterate through the stream of sequences and perform each search
-    output_report("[INFO]\tStarting $algn_file_names_total alignments using $MASKING_PROGRAM\n");
+    output_report("[INFO]\tMASKING: $algn_file_names_total alignments using trimal\n");
 
     for ( my $i = 0 ; $i < $algn_file_names_total ; $i++ ) {
 
@@ -256,7 +256,7 @@ sub masking_step {
         # Using an 'if/elsif' statement match here as there are 'bugs' in
         # perl's experimental when and the lexical $_ on the match $MASKING_PRPROGRAM
         # was being replaced by a file name after running bioperl! ANNOYING.
-        if ( $MASKING_PROGRAM =~ /trimal/ism ) {
+        #if ( $MASKING_PROGRAM =~ /trimal/ism ) {
 
             # run trimal and report mask length with -nogaps option
             my $mask_length = &run_trimal( $current_sequences, "-nogaps" );
@@ -274,8 +274,8 @@ sub masking_step {
                     print " not OK. Excluding sequence.\n";
 
                     # then abandon this sequence, report it, move to excluded
-                    output_report("[WARN]\t$file does not satisfy $MASKING_PROGRAM cutoffs ($MASKING_CUTOFF1 or $MASKING_CUTOFF2). Moved to excluded directory.\n");
-                    system "mv $WORKING_DIR\/$USER_RUNID\/masks\/$file\.afa-tr $WORKING_DIR\/$USER_RUNID\/excluded\/$file\.afa-tr"
+                    output_report("[WARN]\t$file does not satisfy trimal cutoffs ($MASKING_CUTOFF1 or $MASKING_CUTOFF2). Moved to excluded directory.\n");
+                    system "mv $WORKING_DIR\/$USER_RUNID\/masks\/$file\.afa-tr $WORKING_DIR\/$USER_RUNID\/excluded\/$file\.afa-tr";
                 }
                 else {
                     print " OK.\n";
@@ -284,7 +284,7 @@ sub masking_step {
             else {
                 print "\t\tMask Length: $mask_length is OK 1\n";
             }
-        }
+        #}
     }
 }
 
@@ -345,7 +345,7 @@ sub alignment_step {
     my $seq_file_names_total = @seq_file_names;
 
     # iterate through the stream of sequences and perform each search
-    output_report("[INFO]\tStarting $seq_file_names_total alignments using $ALIGNMENT_PROGRAM\n");
+    output_report("[INFO]\tALIGNING: $seq_file_names_total alignments using $ALIGNMENT_PROGRAM\n");
 
     for ( my $i = 0 ; $i < $seq_file_names_total ; $i++ ) {
 

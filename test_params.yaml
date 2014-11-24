@@ -29,8 +29,6 @@ alignment:
  threads: 4
 
 masking:
- # trimal, gblocks
- program: trimal
  cutoff_1: 500
  cutoff_2: 300
 
