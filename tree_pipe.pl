@@ -289,6 +289,8 @@ sub masking_step {
             # then re-run trimal and report mask length with -automated1 option
             $mask_length = &run_trimal( $current_sequences, "-automated1" );
 
+            print "Mask Length is ($mask_length) and is"
+
             # if the length is less than the second limit (always the smaller)
             if ( $mask_length <= $MASKING_CUTOFF2 ) {
                 print " not OK. Excluding sequence.\n";
