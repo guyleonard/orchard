@@ -23,10 +23,12 @@ cpan[1]> install prerequisit_name
 
 ## Standalone Programs
 
+One each of the following (our preference is always 1.):
+
 ### Search Programs
 
-1. [Legacy Blast](http://blast.ncbi.nlm.nih.gov/Blast.cgi/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
-2. [Blast+](http://blast.ncbi.nlm.nih.gov/Blast.cgi/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
+1. [Blast+](http://blast.ncbi.nlm.nih.gov/Blast.cgi/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
+2. [Legacy Blast](http://blast.ncbi.nlm.nih.gov/Blast.cgi/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
 3. [Blat](https://genome.ucsc.edu/FAQ/FAQblat.html)
 4. [USEARCH](http://www.drive5.com/usearch/)
 
