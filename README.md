@@ -32,7 +32,7 @@ A choice of either:
 
 Program Execution
 =================
-
+```
 Required files for input:
 	-s sequence(s) file
 	-t taxa file
@@ -44,6 +44,7 @@ Other paramaters:
 	-m mask only
 	-t tree building only
 	-q run sequentially
+```
 
 Updates
 =======
