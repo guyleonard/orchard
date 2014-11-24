@@ -30,6 +30,20 @@ A choice of either:
 3. [Blat](https://genome.ucsc.edu/FAQ/FAQblat.html)
 4. [USEARCH](http://www.drive5.com/usearch/)
 
+Program Execution
+=================
+
+Required files for input:
+	-s sequence(s) file
+	-t taxa file
+	-p paramaters file
+Example: perl tree_pipe.pl -s sequences.fasta -t taxa_list.txt -p paramaters.yaml
+Other paramaters:
+	-b blast only
+	-a alignment only
+	-m mask only
+	-t tree building only
+	-q run sequentially
 
 Updates
 =======
