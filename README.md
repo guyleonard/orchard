@@ -63,7 +63,7 @@ Other paramaters:
 	-b blast only
 	-a alignment only
 	-m mask only
-	-t tree building only
+	-o tree building only
 	-q run sequentially
 ```
 
