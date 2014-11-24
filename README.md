@@ -40,7 +40,9 @@ One each of the following (our preference is always 1.):
 ### Masking Programs
 
 1. [trimAl v1.3](http://trimal.cgenomics.org/)
-2. [Gblocks](http://molevol.cmima.csic.es/castresana/Gblocks.html)
+2. ~~[Gblocks](http://molevol.cmima.csic.es/castresana/Gblocks.html)~~ *
+
+* deprecated and no longer supported. trimAl FTW!
 
 ### Tree Programs
 
