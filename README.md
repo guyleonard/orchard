@@ -1,13 +1,13 @@
-Darren's Orchard
-=======
+# Darren's Orchard
+
 A Quick Phylogenetic Tree Building Pipeline
 
-Prerequisites
-=============
+# Prerequisites
+
 There are quite a few programs and other prerequisites you will need to have installed in your path.
 
-Perl Modules
-------------
+## Perl Modules
+
 * Bundle::Bioperl
 * Bio::DB::Fasta (sometimes I find this isn't installed with BioPerl !?)
 * Digest::MD5
@@ -21,17 +21,22 @@ $ sudo -MCPAN -e shell
 cpan[1]> install prerequisit_name
 ```
 
-Standalone Programs
--------------------
-A choice of either:
+## Standalone Programs
+
+### Search Programs
 
 1. [Legacy Blast](http://blast.ncbi.nlm.nih.gov/Blast.cgi/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
 2. [Blast+](http://blast.ncbi.nlm.nih.gov/Blast.cgi/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
 3. [Blat](https://genome.ucsc.edu/FAQ/FAQblat.html)
 4. [USEARCH](http://www.drive5.com/usearch/)
 
-Program Execution
-=================
+### Alignment Programs
+
+1. MAFFT
+2. MUSCLE
+
+# Program Execution
+
 ```
 Required files for input:
 	-s sequence(s) file
@@ -48,8 +53,8 @@ Other paramaters:
 
 Order preference of parameters is ignored: i.e. specificy '-ab' will run blasts then alignments.
 
-Updates
-=======
+# Updates
+
 This is going to be a somewhat full re-write of the "'Darren's Orchard'" Pipeline.
 
 I am going to attempt to pull most of the scripts in to the main script.
