@@ -10,15 +10,15 @@ search:
  # blastp, blastx, ublast, blat, etc
  subprogram: blastp
  threads: 4
- other: # any special commands, must be exact correct format!
+ other: # any special commands - not implemented
  # values below are only supported by blast/blast+/usearch
- evalue: 1e-05
- top_hits: 1
+ evalue: 1e-10
+ top_hits: 5
  # values below are only supported by blast/blast+
  max_length: 3000
  # must be a comma separated list of taxa names or blank
  special_taxa: Acanthamoeba castellanii str. Neff,Allomyces macrogynus atcc 38327
- special_top_hits: 10
+ special_top_hits: 5
 
 alignment:
  # mafft, muscle
@@ -40,14 +40,14 @@ trees:
  # phyml = -4 for aLRT SH, fasttree = -bionj -slow
  options: -bionj -slow
  # number of taxa to make a tree from
- min_taxa: 40
+ min_taxa: 5
 
-database:
- user: orchard
- password: password
- server: 144.173.27.211
- database: new_proteins
- tablename: cider
+#database:
+# user: orchard
+# password: password
+# server: 144.173.27.211
+# database: new_proteins
+# tablename: cider
 
 directories:
  # prerequistie programs location or PATH

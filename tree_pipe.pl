@@ -8,15 +8,15 @@ use Cwd;               # Gets pathname of current working directory
 use Bio::DB::Fasta;    # for indexing fasta files for sequence retrieval
 use Bio::SearchIO;     # parse blast tabular format
 use Bio::SeqIO;        # Use Bio::Perl
-use DateTime;
-use DateTime::Format::Duration;
+use DateTime;          # Start and End times
+use DateTime::Format::Duration; # Duration of processes
 use Digest::MD5;                   # Generate random string for run ID
-use English qw(-no_match_vars);    # No magic perl variables!
+#use English qw(-no_match_vars);    # No magic perl variables!
 use File::Basename;                # Remove path information and extract 8.3 filename
 use Getopt::Std;                   # Command line options, finally!
-use feature qw{ switch };          # Given/when instead of switch - warns in 5.18
-no warnings 'experimental::smartmatch'
-  ; # ignore warning - eventually I will switch this to "for()" http://www.effectiveperlprogramming.com/2011/05/use-for-instead-of-given/
+#use feature qw{ switch };          # Given/when instead of switch - warns in 5.18
+#no warnings 'experimental::smartmatch'
+#  ; # ignore warning - eventually I will switch this to "for()" http://www.effectiveperlprogramming.com/2011/05/use-for-instead-of-given/
 use IO::Prompt;               # User prompts
 use YAML::XS qw/LoadFile/;    # for the parameters file, user friendly layout
 
@@ -126,7 +126,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     $SEARCH_TOPHITS    = $paramaters->{search}->{top_hits}   || '1';
     $SEARCH_MAXLENGTH  = $paramaters->{search}->{max_length} || '3000';
     @SEARCH_SPECIAL_TAXA    = split(/,/, $paramaters->{search}->{special_taxa});        # no default
-    print Dumper @SEARCH_SPECIAL_TAXA;
+    ## print Dumper @SEARCH_SPECIAL_TAXA;
     $SEARCH_SPECIAL_TOPHITS = $paramaters->{search}->{special_top_hits} || $SEARCH_TOPHITS;
     $SEARCH_THREADS         = $paramaters->{search}->{threads} || '1';
     $SEARCH_OTHER           = $paramaters->{search}->{other};               # no default
@@ -161,6 +161,10 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     # only run search (blast) step
     if ( $options{b} ) {
         print "Running: Search ($SEARCH_PROGRAM) ONLY\n";
+        # Run the user selected sequence search option
+        my $start_time = timing('start');
+        search_step( \@taxa_array, $input_seqs_fname );
+        my $end_time = timing( 'end', $start_time );
     }
 
     # only run alignment step
@@ -235,8 +239,6 @@ sub search_step {
         # Get Sequence Name
         $sequence_name = $seq->id;
 
-        #$sequence_name =~ s/\s+/\_/gms;    # Replace spaces with '_'
-
         # Output Query Sequence
         my $query_out = Bio::SeqIO->new(
             -file   => ">$sequence_name\_query.fas",
@@ -251,13 +253,13 @@ sub search_step {
         );
         $hits_out->write_seq($seq);
 
-        given ($SEARCH_PROGRAM) {
+        for ($SEARCH_PROGRAM) {
             when (/BLAST\+/ism) {
 
                 $num_hit_seqs = run_blast_plus( \@taxa_array, $input_seqs_fname, $sequence_name );
                 print "\tRunning: blast+ on $sequence_name\n";
             }
-            when (/BLAST/ism) {
+            when (/^BLAST$/ism) {
 
                 $num_hit_seqs = run_blast_legacy( \@taxa_array, $input_seqs_fname, $sequence_name );
                 print "\tRunning: legacy blast\n";
@@ -275,7 +277,7 @@ sub search_step {
             default {
 
                 $num_hit_seqs = run_blast_plus( \@taxa_array, $input_seqs_fname, $sequence_name );
-                print "\tRunning: blast+ on $sequence_name\n";
+                print "\tRunning: (default) blast+ on $sequence_name\n";
             }
         }
         $input_seqs_count++;
@@ -328,6 +330,8 @@ sub run_blast_plus {
 
             my $database = $taxa_name_for_blast . ".fas";
 
+            # In the future I might consider replacing grep with List:MoreUtils 'any' to save
+            # large searches
             if (grep { $_ eq $taxa_name } @SEARCH_SPECIAL_TAXA) {
 
                 # blast(x) from blast+ package command
@@ -341,7 +345,6 @@ sub run_blast_plus {
                 $blast_command .= " -outfmt 6";
                 $blast_command .= " -max_target_seqs $SEARCH_SPECIAL_TOPHITS";
                 $blast_command .= " -num_threads $SEARCH_THREADS";
-
                 #$blast_command .= " $SEARCH_OTHER";
 
                 system($blast_command);
@@ -595,8 +598,6 @@ sub parse_search_output {
     # open file for seq retrieval
     # this will create an index file on the first run, this may slow things down once
     # it may also cause issues if the index is not rebuilt for updated *.fas files
-    # I may need to include a user option of reindex, as below...
-    # my $sequence_file = Bio::DB::Fasta->new( "$SEQ_DATA\/$taxa_name\.fas", -reindex );
     my $sequence_file;
     if ( $USER_REINDEX eq 'y' ) {
         $sequence_file = Bio::DB::Fasta->new( "$SEQ_DATA\/$taxa_name_for_blast\.fas", -reindex );
@@ -639,9 +640,6 @@ sub parse_search_output {
             $hit_count = 1;
         }
     }
-
-    # lets do something when there is no hit
-    # if ( $hit_count == 0 ) { print "\t\t\tNo hit!\n" }
 
     # move the files once we are finished to the report directory
     # we may need to make it first
