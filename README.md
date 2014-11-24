@@ -4,7 +4,7 @@ A Quick Phylogenetic Tree Building Pipeline
 
 # Prerequisites
 
-There are quite a few programs and other prerequisites you will need to have installed in your path.
+There are quite a few programs and other prerequisites you will need to have installed in your *environment path*, i.e. you will need to be able to call a program from the commandline without specifying the directory to run it from.
 
 ## Perl Modules
 
@@ -32,8 +32,13 @@ cpan[1]> install prerequisit_name
 
 ### Alignment Programs
 
-1. MAFFT
-2. MUSCLE
+1. [MAFFT](http://mafft.cbrc.jp/alignment/software/)
+2. [MUSCLE](http://www.drive5.com/muscle/)
+
+### Masking Programs
+
+1. [trimAl](http://trimal.cgenomics.org/)
+2. [Gblocks](http://molevol.cmima.csic.es/castresana/Gblocks.html)
 
 # Program Execution
 
