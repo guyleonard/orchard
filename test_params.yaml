@@ -23,32 +23,23 @@ search:
 alignment:
  # mafft, muscle
  program: mafft
- # mafft = --auto --quiet
- # muscle = -maxiters 2 -quiet
- options: 
+ # mafft = --auto --quiet --reorder
+ # muscle = -maxiters 2 -quiet -group
+ options: --auto --quiet --reorder
  threads: 4
 
 masking:
- cutoff_1: 500
- cutoff_2: 300
+ cutoff_1: 50
+ cutoff_2: 30
 
 trees:
- # fasttree, fasttreemp
+ # FastTree, FastTreeMP
  program: FastTreeMP
- # fasttree = -bionj -slow
+ # e.g. -bionj -slow
  options: -bionj -slow -quiet
- # number of taxa to make a tree from
+ # min number of taxa to make a tree from
  min_taxa: 5
 
-#database:
-# user: orchard
-# password: password
-# server: 144.173.27.211
-# database: new_proteins
-# tablename: cider
-
 directories:
- # prerequistie programs location or PATH
- location: /usr/bin
- # The location of the *.fasta predicted protein files
+ # the location of the *.fasta predicted protein files
  database: /home/cs02gl/Desktop/genomes/cider

@@ -145,17 +145,8 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     $TREE_OPTIONS = $paramaters->{trees}->{options};                               # no default
     $TREE_MINTAXA = $paramaters->{trees}->{min_taxa} || '4';
 
-    # database options
-    # completely removing this from the equation
-    # my $username  = $paramaters->{database}->{user};
-    # my $password  = $paramaters->{database}->{password};
-    # my $server_ip = $paramaters->{database}->{server};
-    # my $database  = $paramaters->{database}->{database};
-    # my $tablename = $paramaters->{database}->{tablename};
-
     # directory options
-    # my $programs = $paramaters->{directories}->{location} || '/usr/bin';
-    $SEQ_DATA = $paramaters->{directories}->{database};    # no default
+    $SEQ_DATA = $paramaters->{directories}->{database};                            # no default
 
     # only run search (blast) step
     if ( $options{b} ) {
@@ -216,9 +207,9 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
 
         # Run the user selected tree building options
         print "Running: Tree Reconstruction with $TREE_PROGRAM\n";
-        my $start_time = timing('start');
+        $start_time = timing('start');
         tree_step();
-        my $end_time = timing( 'end', $start_time );
+        $end_time = timing( 'end', $start_time );
     }
 }
 else {
@@ -300,13 +291,12 @@ sub masking_step {
         # run trimal and report mask length with -nogaps option
         my $mask_length = &run_trimal( $current_sequences, "-nogaps" );
 
+        print "First MASK: $mask_length\n";
         # if the length is less than the first limit
         if ( $mask_length <= $MASKING_CUTOFF1 ) {
 
             # then re-run trimal and report mask length with -automated1 option
             $mask_length = &run_trimal( $current_sequences, "-automated1" );
-
-            print "\t\tMask Length: $mask_length is ";
 
             # if the length is less than the second limit (always the smaller)
             if ( $mask_length <= $MASKING_CUTOFF2 ) {
@@ -387,17 +377,15 @@ sub alignment_step {
 
         for ($ALIGNMENT_PROGRAM) {
             when (/mafft/ism) {
-                my $mafft_command = "mafft --auto --quiet";
+                my $mafft_command = "mafft $ALIGNMENT_OPTIONS";
                 $mafft_command .= " --thread $ALIGNMENT_THREADS";
-                $mafft_command .= " --reorder";
                 $mafft_command .= " $current_sequences > $alignments_directory\/$file\.afa";
 
                 system($mafft_command);
             }
             when (/muscle/ism) {
 
-                my $muscle_command = "muscle -maxiters 2 -quiet";
-                $muscle_command .= " -group";
+                my $muscle_command = "muscle $ALIGNMENT_OPTIONS";
                 $muscle_command .= " -in $current_sequences -out $alignments_directory\/$file\.afa";
 
                 system($muscle_command);
