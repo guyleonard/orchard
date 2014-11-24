@@ -42,6 +42,11 @@ One each of the following (our preference is always 1.):
 1. [trimAl](http://trimal.cgenomics.org/)
 2. [Gblocks](http://molevol.cmima.csic.es/castresana/Gblocks.html)
 
+### Tree Programs
+
+1. [FastTree2.1](http://meta.microbesonline.org/fasttree/)
+2. [PhyML 3.0](http://www.atgc-montpellier.fr/phyml/binaries.php)
+
 # Program Execution
 
 ```
