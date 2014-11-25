@@ -60,13 +60,18 @@ our $DIR_TAXDUMP = $EMPTY;
 
 # declare the perl command line flags/options we want to allow
 my %options = ();
-getopts( "p:sxnamrc", \%options ) or croak display_help();    # or display_help();
+getopts( "p:sxnamrc", \%options ) or display_help();    # or display_help();
 
 # Display the help message if the user invokes -h
 if ( $options{h} ) { display_help() }
-if ( $options{v} ) { print "Orchard $VERSION\n"; }
+if ( $options{v} ) { print "Orchard Accessories $VERSION\n"; }
 
 if ( defined $options{p} ) {
+
+    unless ($options{s} || $options{x} || $options{n}) {
+        print "Missing option: what task do you want to do.\n";
+        print display_help();
+    }
 
     # read in parameters from YAML file and/or set defaults
     # user options
@@ -184,7 +189,7 @@ sub display_help {
     print "Other parameters:\n";
     print "SVG Trees:\n\t-s Build SVG Trees (requires Dendroscope)\n\t-x Build SVG Trees (no Dendroscope)\n";
     print "Renaming:\n\t-n Rename taxa in newick trees\n\t-a Rename taxa in unmasked alignments\n\t-m Rename taxa in masked alignments\n\t-r Rename taxa in SVG trees\n";
-    print "Colouring Taxonomy:\n\t-c Colourise taxon names in SVG trees";
+    print "Colouring Taxonomy:\n\t-c Colourise taxon names in SVG trees\n";
     exit(1);
 }
 
