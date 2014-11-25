@@ -68,7 +68,7 @@ if ( $options{v} ) { print "Orchard Accessories $VERSION\n"; }
 
 if ( defined $options{p} ) {
 
-    unless ($options{s} || $options{x} || $options{n}) {
+    unless ( $options{s} || $options{x} || $options{n} || $options{a} || $options{m} || $options{r} || $options{c} ) {
         print "Missing option: what task do you want to do.\n";
         print display_help();
     }
@@ -155,14 +155,14 @@ sub retrieve_taxa_name {
     # on the first run, if it hasn't already been done
     # check for 'directory.index'
 
-    unless ( -e "$DIR_SEQS\/directory.index") { print "Indexing Directory: This may take some time!\n"}
+    unless ( -e "$DIR_SEQS\/directory.index" ) { print "Indexing Directory: This may take some time!\n" }
 
     # read in directory of '.fas' files and create an index
     # 'glob' => '*.{fa,FA,fasta,FASTA,fast,FAST,dna,DNA,fna,FNA,faa,FAA,fsa,FSA}',
     # we have to modify it to include '.fas' as it's not a 'standard' FASTA extension
     # apparently
-    my $sequences_db = Bio::DB::Fasta->new("$DIR_SEQS", -glob => "*.fas");
-    my @ids          = $sequences_db->get_all_primary_ids;
+    my $sequences_db = Bio::DB::Fasta->new( "$DIR_SEQS", -glob => "*.fas" );
+    my @ids = $sequences_db->get_all_primary_ids;
 
     print Dumper $sequences_db;
 
