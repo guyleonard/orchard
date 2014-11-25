@@ -102,7 +102,7 @@ Order preference of parameters is ignored but you cannot colourise trees if you 
 
 This is going to be a somewhat full re-write of the "'Darren's Orchard'" Pipeline.
 
-I have decided to split the pipeline in to two scripts, the main script "orchard.pl" will control the creation of the trees via blast searches, alignment and masking, and an accessory script "orchard_accessories.pl" which will handle all the renaming of taxon IDs to genus/species, the creation of SVG trees and the colorising and renaming of those SVGs.
+I have decided to split the pipeline in to two scripts, the main script "orchard.pl" will control the creation of the trees via blast searches, alignment and masking, and an accessory script "orchard_accessories.pl" which will handle all the renaming of taxon IDs to genus/species, the creation of SVG trees and the colorising and renaming of those SVGs. I have also created a parameters file option in YAML - this allows for a very easy to read settings file for the user and also allows to record better the options used on each run!
 
 I am going to try and do away with the reliance on the mysql database. It doesn't do anything that I can't do with a directory of files and the taxdump files from NCBI. It's a pain to continue building it and doesn't help other users getting to use the pipeline. It's not really faster anymore either. It will rely on the user having up to date copies of the taxdump files though...I will also still support the 'remote' option.
 

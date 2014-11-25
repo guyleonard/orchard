@@ -45,6 +45,11 @@ our $VERSION     = '2014-10-17';
 #     It is currently hosted here:
 #     https://github.com/guyleonard/orchard
 #
+#     Phylogenomic Analysis Demonstrates a Pattern of Rare 
+#     and Ancient Horizontal Gene Transfer between 
+#     Plants and Fungi
+#     doi: 10.1105/tpc.109.065805
+#
 ###########################################################
 
 ###########################################################

@@ -43,3 +43,4 @@ trees:
 directories:
  # the location of the *.fasta predicted protein files
  database: /home/cs02gl/Desktop/genomes/cider
+ taxdump: /home/cs02gl/Desktop/genomes/taxonomy

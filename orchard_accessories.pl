@@ -7,7 +7,6 @@ use autodie;                       # bIlujDI' yIchegh()Qo'; yIHegh()!
 use Cwd;                           # Gets pathname of current working directory
 use DateTime;                      # Start and End times
 use DateTime::Format::Duration;    # Duration of processes
-use Digest::MD5;                   # Generate random string for run ID
 use File::Basename;                # Remove path information and extract 8.3 filename
 use Getopt::Std;                   # Command line options, finally!
 use feature qw{ switch };
@@ -33,6 +32,11 @@ our $VERSION     = '2014-10-17';
 #     It is currently hosted here:
 #     https://github.com/guyleonard/orchard
 #
+#     Phylogenomic Analysis Demonstrates a Pattern of Rare 
+#     and Ancient Horizontal Gene Transfer between 
+#     Plants and Fungi
+#     doi: 10.1105/tpc.109.065805
+#
 ###########################################################
 
 ###########################################################
@@ -41,8 +45,10 @@ our $VERSION     = '2014-10-17';
 # These options are global and will be set from the user YAML
 # file read in below, globals to avoid passing multiple values
 # to sub routines, they should not be edited once set.
-our $EMPTY             = q{};
-our $USER_RUNID   = $EMPTY;
+our $EMPTY       = q{};
+our $USER_RUNID  = $EMPTY;
+our $DIR_SEQS    = $EMPTY;
+our $DIR_TAXDUMP = $EMPTY;
 
 ###########################################################
 ##           Main Program Flow                           ##
@@ -50,12 +56,55 @@ our $USER_RUNID   = $EMPTY;
 
 # declare the perl command line flags/options we want to allow
 my %options = ();
-getopts( "s:t:p:hvbamof", \%options ) or croak display_help();    # or display_help();
+getopts( "p:sxnamrc", \%options ) or croak display_help();    # or display_help();
 
 # Display the help message if the user invokes -h
 if ( $options{h} ) { display_help() }
 if ( $options{v} ) { print "Orchard $VERSION\n"; }
 
+if ( defined $options{p} ) {
+
+    # read in parameters from YAML file and/or set defaults
+    # user options
+    # modify the md5_hex to ten chars from pos 0 if none given in YAML
+    my $paramaters = LoadFile("$options{p}");
+
+    $DIR_SEQS    = $paramaters->{directories}->{database};    # no default
+    $DIR_TAXDUMP = $paramaters->{directories}->{taxdump};
+
+    # Tell the user they haven't set the taxdump directory properly
+    # Ideally we should also check if the directory exists...
+    if ( $DIR_TAXDUMP eq $EMPTY ) { print "User must specify taxdump directory!\n"; }
+
+    # we don't want to generate a random ID here, the user must have one previously!
+    # so therefore let's check and output help if not...
+    $USER_RUNID = $paramaters->{user}->{run_id};
+
+    if ( $USER_RUNID ne $EMPTY ) {
+
+        my $run_directory = "$WORKING_DIR\/$USER_RUNID";
+
+        # Now we can make the directories
+        setup_main_directories( $run_directory, $options{f} );
+
+        # Report
+        output_report("[INFO]\tRun ID: $USER_RUNID\n[INFO]\tDirectory: $run_directory\n");
+
+        # directory options
+        $DIR_SEQS = $paramaters->{directories}->{database};    # no default
+
+        if ( $options{b} ) {
+
+        }
+    }
+    else {
+        print "User must specify a USER ID in paramaters files!\n";
+        display_help();
+    }
+}
+else {
+    display_help();
+}
 
 ###########################################################
 ##           Accessory Subroutines                       ##
