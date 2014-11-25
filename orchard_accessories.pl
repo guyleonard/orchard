@@ -65,7 +65,7 @@ sub output_report {
 
     # Append messages to report file
     my $message   = shift;
-    my $file_name = "$WORKING_DIR\/$USER_RUNID\_report.txt";
+    my $file_name = "$WORKING_DIR\/$USER_RUNID\_accessory\_report.txt";
     open my $report, ">>", $file_name;
     print $report $message;
     close($report);
@@ -74,14 +74,16 @@ sub output_report {
 
 sub display_help {
 
-    print "Required files for input:\n\t-s sequence(s) file\n\t-t taxa file\n\t-p paramaters file\n";
-    print "Example: perl orchard.pl -s sequences.fasta -t taxa_list.txt -p paramaters.yaml\n";
-    print "Other paramaters:\n\t-b blast only\n\t-a alignment only\n\t-m mask only\n\t-o tree building only\n\t-q run sequentially\n\t-f force yes\n";
+    print "Required input:\n\t-p parameters file\n";
+    print "Other parameters:\n";
+    print "SVG Trees:\n\t-s Build SVG Trees (requires Dendroscope)\n\t-x Build SVG Trees (no Dendroscope)\n";
+    print "Renaming:\n\t-n Rename taxa in newick trees\n\t-a Rename taxa in unmasked alignments\n\t-m Rename taxa in masked alignments\n\t-r Rename taxa in SVG trees\n";
+    print "Colouring Taxonomy:\n\t-c Colourise taxon names in SVG trees";
     exit(1);
 }
 
-# this checks to see if the directories needed for file output
-# are available, if not it creates them all - for now.
+# this will need some reworking as the directories should already be set up
+# and depending on which option you choose you won't need some of them anyway
 sub setup_main_directories {
 
     my $run_directory = shift;

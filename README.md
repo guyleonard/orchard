@@ -23,7 +23,7 @@ cpan[1]> install prerequisit_name
 
 ## Standalone Programs
 
-One each of the following (our preference is always 1.):
+One each of the following, our preference is always #1 and if you wish to add your own to the line up then please feel free to do so and submit a pull request:
 
 ### orchard.pl
 
@@ -57,7 +57,7 @@ One each of the following (our preference is always 1.):
 
 #### Renaming Taxa
 
-1. [NCBI Taxonomy](ftp://ftp.ncbi.nih.gov/pub/taxonomy) - FTP retrieve 'taxdump.tar.gz'
+1. [NCBI Taxonomy](ftp://ftp.ncbi.nih.gov/pub/taxonomy) - FTP retrieve 'taxdump.tar.gz' from ftp://ftp.ncbi.nih.gov/pub/taxonomy
 
 #### SVG Tree Creation
 
