@@ -91,7 +91,7 @@ our $USER_RUNID   = $EMPTY;
 
 # declare the perl command line flags/options we want to allow
 my %options = ();
-getopts( "s:t:p:hvbamof", \%options ) or croak display_help();    # or display_help();
+getopts( "s:t:p:hvbamof", \%options ) or display_help();    # or display_help();
 
 # Display the help message if the user invokes -h
 if ( $options{h} ) { display_help() }
