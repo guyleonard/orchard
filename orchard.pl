@@ -70,6 +70,7 @@ our $SEARCH_SPECIAL_TOPHITS = $EMPTY;
 our $SEARCH_SUBPROGRAM      = $EMPTY;
 our $SEARCH_THREADS         = $EMPTY;
 our $SEARCH_TOPHITS         = $EMPTY;
+
 our $SEQ_DATA               = $EMPTY;
 
 our $TREE_MINTAXA = $EMPTY;
@@ -940,13 +941,11 @@ sub setup_main_directories {
             if ( !-d $repo_dir ) { mkdir $repo_dir }
         }
     }
-
-    #}
+    
     return;
 }
 
-# Handles output of start/end and duration times of
-# different steps
+# Handles output of start/end and duration times of different steps
 sub timing {
 
     my $time_operation = shift;
