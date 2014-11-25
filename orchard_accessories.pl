@@ -3,7 +3,8 @@ use strict;
 use warnings;
 
 #
-use autodie;                       # bIlujDI' yIchegh()Qo'; yIHegh()!
+use autodie;    # bIlujDI' yIchegh()Qo'; yIHegh()!
+use Bio::DB::Fasta;
 use Cwd;                           # Gets pathname of current working directory
 use DateTime;                      # Start and End times
 use DateTime::Format::Duration;    # Duration of processes
@@ -13,6 +14,9 @@ use feature qw{ switch };
 no if $] >= 5.017011, warnings => 'experimental::smartmatch';    # ignore experimental warning for 'when'
 use IO::Prompt;                                                  # User prompts
 use YAML::XS qw/LoadFile/;                                       # for the parameters file, user friendly layout
+
+##
+use Data::Dumper;                                                # temporary during rewrite to dump data nicely to screen
 
 our $WORKING_DIR = getcwd();
 our $VERSION     = '2014-10-17';
@@ -32,8 +36,8 @@ our $VERSION     = '2014-10-17';
 #     It is currently hosted here:
 #     https://github.com/guyleonard/orchard
 #
-#     Phylogenomic Analysis Demonstrates a Pattern of Rare 
-#     and Ancient Horizontal Gene Transfer between 
+#     Phylogenomic Analysis Demonstrates a Pattern of Rare
+#     and Ancient Horizontal Gene Transfer between
 #     Plants and Fungi
 #     doi: 10.1105/tpc.109.065805
 #
@@ -74,36 +78,89 @@ if ( defined $options{p} ) {
 
     # Tell the user they haven't set the taxdump directory properly
     # Ideally we should also check if the directory exists...
-    if ( $DIR_TAXDUMP eq $EMPTY ) { print "User must specify taxdump directory!\n"; }
+    if ( $DIR_TAXDUMP eq $EMPTY ) { print "User must specify taxdump directory!\n"; display_help(); }
 
     # we don't want to generate a random ID here, the user must have one previously!
     # so therefore let's check and output help if not...
     $USER_RUNID = $paramaters->{user}->{run_id};
+    if ( $USER_RUNID eq $EMPTY ) { print "User must specify a USER ID in paramaters files!\n"; display_help(); }
 
-    if ( $USER_RUNID ne $EMPTY ) {
+    my $run_directory = "$WORKING_DIR\/$USER_RUNID";
 
-        my $run_directory = "$WORKING_DIR\/$USER_RUNID";
+    # Now we can make the directories
+    # setup_main_directories( $run_directory, $options{f} );
 
-        # Now we can make the directories
-        setup_main_directories( $run_directory, $options{f} );
+    # Report
+    output_report("[INFO]\tRun ID: $USER_RUNID\n[INFO]\tDirectory: $run_directory\n");
 
-        # Report
-        output_report("[INFO]\tRun ID: $USER_RUNID\n[INFO]\tDirectory: $run_directory\n");
+    # directory options
+    $DIR_SEQS = $paramaters->{directories}->{database};    # no default
 
-        # directory options
-        $DIR_SEQS = $paramaters->{directories}->{database};    # no default
-
-        if ( $options{b} ) {
-
-        }
-    }
-    else {
-        print "User must specify a USER ID in paramaters files!\n";
-        display_help();
+    # rename newick trees
+    if ( $options{n} ) {
+        print "Renaming: Newick Trees\n";
+        my $start_time = timing('start');
+        rename_newick_trees();
+        my $end_time = timing( 'end', $start_time );
     }
 }
 else {
     display_help();
+}
+
+###########################################################
+##           Renaming Subroutines                        ##
+###########################################################
+
+# In order to rename any of the non-standard accessions
+# used throughout the 'orchard' we will first have to lookup
+# which taxa file they are located in, then the file name is
+# the taxonomy
+#
+# for colouring based on taxonomy then go and lookup
+# the taxon ID and then the taxonomy information from NCBI
+#
+# previously we could query the mysql database and get this
+# information all together but the previous steps had to be
+# done in the creation of the mysql db, and as I have alluded
+# to elsewhere, that was getting tiresome to build, update and
+# add new genomes to, compared to just adding a file to a folder
+
+sub rename_newick_trees {
+
+    # directory variables
+    my $mask_directory  = "$WORKING_DIR\/$USER_RUNID\/mask";
+    my $trees_directory = "$WORKING_DIR\/$USER_RUNID\/trees";
+
+    # get list of all completed tree files
+    my @trees_file_names = glob "$trees_directory\/*.tree";
+
+    print Dumper @trees_file_names;
+
+    retrieve_taxa_name();
+}
+
+# so I am going to do this with BioPerl at first
+# but I may also try grep which may or may not be faster
+sub retrieve_taxa_name {
+
+    print "$DIR_SEQS and $DIR_TAXDUMP\n";
+
+    # may need to warn users that a large DB will take some time to index
+    # on the first run, if it hasn't already been done
+    # check for 'directory.index'
+
+    unless ( -e "$DIR_SEQS\/directory.index") { print "Indexing Directory: This may take some time!\n"}
+
+    # read in directory of '.fas' files and create an index
+    # 'glob' => '*.{fa,FA,fasta,FASTA,fast,FAST,dna,DNA,fna,FNA,faa,FAA,fsa,FSA}',
+    # we have to modify it to include '.fas' as it's not a 'standard' FASTA extension
+    # apparently
+    my $sequences_db = Bio::DB::Fasta->new("$DIR_SEQS", -glob => "*.fas");
+    my @ids          = $sequences_db->get_all_primary_ids;
+
+    print Dumper $sequences_db;
+
 }
 
 ###########################################################
