@@ -25,36 +25,47 @@ cpan[1]> install prerequisit_name
 
 One each of the following (our preference is always 1.):
 
-### Search Programs
+### orchard.pl
+
+#### Search Programs
 
 1. [Blast+](http://blast.ncbi.nlm.nih.gov/Blast.cgi/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
 2. [Legacy Blast](http://blast.ncbi.nlm.nih.gov/Blast.cgi/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
 3. [Blat](https://genome.ucsc.edu/FAQ/FAQblat.html)
 4. [USEARCH](http://www.drive5.com/usearch/)
 
-### Alignment Programs
+#### Alignment Programs
 
 1. [MAFFT](http://mafft.cbrc.jp/alignment/software/)
 2. [MUSCLE](http://www.drive5.com/muscle/)
 
-### Masking Programs
+#### Masking Programs
 
 1. [trimAl v1.3](http://trimal.cgenomics.org/)
 2. ~~[Gblocks](http://molevol.cmima.csic.es/castresana/Gblocks.html)~~ *
 
 * deprecated and no longer supported. trimAl FTW!
 
-### Tree Programs
+#### Tree Programs
 
 1. [FastTree2.1](http://meta.microbesonline.org/fasttree/)
 2. ~~[PhyML 3.0](http://www.atgc-montpellier.fr/phyml/binaries.php)~~ *
 
 * deprecated and no longer supported. FastTree FTW!
 
+### orchard_accessories.pl
+
+#### Renaming Taxa
+
+1. [NCBI Taxonomy](ftp://ftp.ncbi.nih.gov/pub/taxonomy) - FTP retrieve 'taxdump.tar.gz'
+
+#### SVG Tree Creation
+
+1. [Dendroscope 3](http://ab.inf.uni-tuebingen.de/software/dendroscope/)
+
 # Program Execution
 
 ## orchard.pl
-
 ```
 Required files for input:
 	-s sequence(s) file
@@ -70,7 +81,6 @@ Other paramaters:
 Order preference of parameters is ignored: i.e. specificy '-ab' will run blasts then alignments.
 
 ## orchard_accessories.pl
-
 ```
 Required input:
 	-p parameters file
@@ -85,7 +95,7 @@ Renaming:
 	-r Rename taxa in SVG trees
 Colouring Taxonomy:
 	-c Colourise taxon names in SVG trees
-
+```
 Order preference of parameters is ignored but you cannot colourise trees if you have not created them first!
 
 # Updates
