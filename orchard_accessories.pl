@@ -5,10 +5,12 @@ use warnings;
 #
 use autodie;    # bIlujDI' yIchegh()Qo'; yIHegh()!
 use Bio::DB::Fasta;
+use Bio::TreeIO;
 use Cwd;                           # Gets pathname of current working directory
 use DateTime;                      # Start and End times
 use DateTime::Format::Duration;    # Duration of processes
 use File::Basename;                # Remove path information and extract 8.3 filename
+#use File::Grep qw( fgrep fmap fdo );
 use Getopt::Std;                   # Command line options, finally!
 use feature qw{ switch };
 no if $] >= 5.017011, warnings => 'experimental::smartmatch';    # ignore experimental warning for 'when'
@@ -54,6 +56,8 @@ our $USER_RUNID  = $EMPTY;
 our $DIR_SEQS    = $EMPTY;
 our $DIR_TAXDUMP = $EMPTY;
 
+#our $USER_RETRIEVE = $EMTPY;
+
 ###########################################################
 ##           Main Program Flow                           ##
 ###########################################################
@@ -80,6 +84,8 @@ if ( defined $options{p} ) {
 
     $DIR_SEQS    = $paramaters->{directories}->{database};    # no default
     $DIR_TAXDUMP = $paramaters->{directories}->{taxdump};
+
+    #$USER_RETRIEVE = $paramaters->{user}->{retrieve} || 'grep'; #default grep
 
     # Tell the user they haven't set the taxdump directory properly
     # Ideally we should also check if the directory exists...
@@ -140,22 +146,65 @@ sub rename_newick_trees {
     # get list of all completed tree files
     my @trees_file_names = glob "$trees_directory\/*.tree";
 
+    #my ( $file, $dir, $ext ) = fileparse $aligned_sequences, '\.tree';
+
     print Dumper @trees_file_names;
 
-    retrieve_taxa_name();
+    foreach my $tree_file (@trees_file_names) {
+
+        my $treeio = Bio::TreeIO->new(
+            -format => 'newick',
+            -file     => $tree_file
+        );
+
+        #my $tree = $input->next_tree;
+        while ( my $tree = $treeio->next_tree ) {
+            
+            #my @tree_leafs = $tree->get_leaf_nodes;
+            for my $node ( grep { $_->is_Leaf } $tree->get_nodes ) {
+
+                print "Node is " . $node->id . "\t";
+                my @new_node = retrieve_taxa_name($node->id);
+                print "from @new_node\n";
+            }
+
+            #print Dumper @tree_leafs;
+        }
+    }
+
+    #retrieve_taxa_name_bioperl();
+    
+}
+
+# Jeez this is also really really slow
+sub retrieve_taxa_name {
+
+    my $search_node = shift;
+    my @search_files = glob "$DIR_SEQS\/*.fas";
+    #my $return_node = $EMPTY;
+    
+    my @return_node = system "grep $search_node $DIR_SEQS\/*.fas";
+
+    #my $return_node = grep {$_ eq $search_node} @search_files;
+
+    return @return_node;
+
 }
 
 # so I am going to do this with BioPerl at first
 # but I may also try grep which may or may not be faster
-sub retrieve_taxa_name {
+# might abandom this method - it takes 5 hours to build an
+# index and then a long time to load it back in to memory
+sub retrieve_taxa_name_bioperl {
 
-    print "$DIR_SEQS and $DIR_TAXDUMP\n";
+    #print "$DIR_SEQS and $DIR_TAXDUMP\n";
 
     # may need to warn users that a large DB will take some time to index
     # on the first run, if it hasn't already been done
     # check for 'directory.index'
+    # with 1110 genomes it took 5 hours to index!
 
-    unless ( -e "$DIR_SEQS\/directory.index" ) { print "Indexing Directory: This may take some time!\n" }
+    unless ( -e "$DIR_SEQS\/directory.index" ) { print "Indexing Directory: This may take some time (1K genomes ~ 5 hours)!\n" }
 
     # read in directory of '.fas' files and create an index
     # 'glob' => '*.{fa,FA,fasta,FASTA,fast,FAST,dna,DNA,fna,FNA,faa,FAA,fsa,FSA}',
@@ -164,8 +213,7 @@ sub retrieve_taxa_name {
     my $sequences_db = Bio::DB::Fasta->new( "$DIR_SEQS", -glob => "*.fas" );
     my @ids = $sequences_db->get_all_primary_ids;
 
-    print Dumper $sequences_db;
-
+    #print Dumper $sequences_db;
 }
 
 ###########################################################
