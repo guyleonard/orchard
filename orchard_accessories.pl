@@ -65,7 +65,7 @@ our $DIR_TAXDUMP = $EMPTY;
 
 # declare the perl command line flags/options we want to allow
 my %options = ();
-getopts( "p:sxnamrcf", \%options ) or display_help();    # or display_help();
+getopts( "p:sxnamrcfd", \%options ) or display_help();    # or display_help();
 
 # Display the help message if the user invokes -h
 if ( $options{h} ) { display_help() }
@@ -151,8 +151,11 @@ else {
 # svg/ is now a folder under the main /trees directory
 # pdfs/ will also be a sub-folder to /trees
 # renamed trees will be named "renamed" instead of "fixed"
-# pdfs can only be made once svgs have been produced, except
-# for a pdf of the original tree...
+#
+# pdfs can be created from original newick and 'renamed'
+# newick trees via dendroscope, however, any *renamed_taxonomy
+# must be converted with inkscape
+#
 # ~/ID/trees/
 #           svg/
 #               accession1_hits_FT.svg
@@ -196,7 +199,8 @@ sub dendroscope_trees {
 
         # strip further filename information to get 'accession' to search in tree
         my $accession = $file;
-        $accession =~ s/\_hits\_FT//is;
+        $accession =~ s/\_hits\_FT//ism;
+        $accession =~ s/\_hits\_renamed//ism;
 
         # with version 3.0+ of Dendroscope I can't get it to accept this as one string
         # therefore I have to output it to a "command file" and then run the program
@@ -206,7 +210,7 @@ sub dendroscope_trees {
         $dendroscope_execute .= "zoom what=expand\;\nset sparselabels=false\;\n";                                     # expand zoom to full tree, show all BS labels
         $dendroscope_execute .= "select nodes=labeled\;\nset labelcolor=255 0 0\;\n";                                 # colour all labels red (includes BS results)
         $dendroscope_execute .= "deselect all\;\nselect nodes=leaves\;\nset labelcolor=0 0 0\;\ndeselect all\;\n";    # colour leaves back to black
-        $dendroscope_execute .= "find searchtext=$accession target=Nodes\;\nset labelfillcolor=76 175 80\;\ndeselect all\;\n";        # find accession and colour red
+        $dendroscope_execute .= "find searchtext=$accession\;\nset labelfillcolor=76 175 80\;\ndeselect all\;\n";        # find accession and colour red
         $dendroscope_execute .= "exportimage file=$output_directory/$file\.$type_of_image format=$type_of_image replace=true\;\n";    # export $type_of_image, overwrite
         $dendroscope_execute .= "quit\;\n";                                                                                           # finish up
 
@@ -223,6 +227,8 @@ sub dendroscope_trees {
         # delete command file - consider moving to report?
         unlink "$dir\/$file\.cmd";
     }
+
+    return;
 }
 
 ###########################################################
@@ -280,6 +286,7 @@ sub rename_newick_trees {
 
     #retrieve_taxa_name_bioperl();
 
+    return;
 }
 
 # Jeez this is also really really slow
@@ -321,6 +328,8 @@ sub retrieve_taxa_name_bioperl {
     my @ids = $sequences_db->get_all_primary_ids;
 
     #print Dumper $sequences_db;
+
+    return;
 }
 
 ###########################################################
@@ -342,9 +351,10 @@ sub display_help {
 
     print "Required input:\n\t-p parameters file\n";
     print "Other parameters:\n";
-    print "SVG Trees:\n\t-s Build SVG Trees (requires Dendroscope)\n\t-x Build SVG Trees (no Dendroscope)\n";
+    print "SVG Trees:\n\t-s Build SVG Trees (requires Dendroscope)\n\t-x Build SVG Trees (requires BioPerl)\n";
     print "Renaming:\n\t-n Rename taxa in newick trees\n\t-a Rename taxa in unmasked alignments\n\t-m Rename taxa in masked alignments\n\t-r Rename taxa in SVG trees\n";
-    print "Colouring Taxonomy:\n\t-c Colourise taxon names in SVG trees\n";
+    print "PDF Trees:\n\t-f Build PDF Trees of all newick trees (requires Dendroscope)\n\t-d Build PDFs of annotated SVG trees (requires Inkscape)\n";
+    print "Annotating Taxonomy:\n\t-c Colourise taxon names in SVG trees\n";
     exit(1);
 }
 
