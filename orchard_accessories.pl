@@ -10,6 +10,7 @@ use Cwd;                           # Gets pathname of current working directory
 use DateTime;                      # Start and End times
 use DateTime::Format::Duration;    # Duration of processes
 use File::Basename;                # Remove path information and extract 8.3 filename
+
 #use File::Grep qw( fgrep fmap fdo );
 use Getopt::Std;                   # Command line options, finally!
 use feature qw{ switch };
@@ -114,10 +115,118 @@ if ( defined $options{p} ) {
         rename_newick_trees();
         my $end_time = timing( 'end', $start_time );
     }
+
+    # SVG Trees
+    if ( $options{s} ) {
+        print "SVG: Using Dendroscope to Build Trees\n";
+        my $start_time = timing('start');
+        svg_dendroscope_trees();
+        my $end_time = timing( 'end', $start_time );
+    }
 }
 else {
     display_help();
 }
+
+###########################################################
+##           SVG Creation Subroutines                    ##
+###########################################################
+
+# the original pipeline focused heavily on the use of
+# dendroscope, that is continued here, however, I would
+# also like to include trees drawn by bioperl and possibly
+# other newick to SVG style programs
+# the output should be editable as text and so it *should*
+# be trivial as to which program has created the SVG
+
+# folder layout is going to change from the original pipeline
+# svg/ is now a folder under the main /trees directory
+# pdfs/ will also be a sub-folder to /trees
+# renamed trees will be named "renamed" instead of "fixed"
+# pdfs can only be made once svgs have been produced, except
+# for a pdf of the original tree
+# ~/ID/trees/
+#           svg/
+#               accession1_hits_FT.svg
+#               accession1_hits_FT_renamed.svg
+#               accession1_hits_FT_renamed_taxonomy.svg
+#           pdf/
+#               accession1_hits_FT.pdf
+#               accession1_hits_FT_renamed.pdf
+#               accession1_hits_FT_renamed_taxonomy.pdf
+#           accession1_hits_FT.tree
+#           accession1_hits_FT_renamed.tree
+
+sub svg_dendroscope_trees {
+
+    # get list of all completed tree files
+    my $trees_directory  = "$WORKING_DIR\/$USER_RUNID\/trees";
+    my @trees_file_names = glob "$trees_directory\/*.tree";
+
+    my $svg_directory = "$trees_directory\/svg";
+
+    if ( !-d $svg_directory ) {
+        output_report("[INFO]\tCreating SVG Directory: $svg_directory\n");
+        print "Creating SVG Directory at $svg_directory\n";
+        mkdir $svg_directory;
+    }
+
+    foreach my $tree_file (@trees_file_names) {
+
+        my ( $file, $dir, $ext ) = fileparse( $tree_file, '.tree' );
+
+        # strip further filename information to get 'accession' to search in tree
+        my $accession = $file;
+        $accession =~ s/\_hits\_FT//is;
+
+        # with version 3.0+ of Dendroscope I can't get it to accept this as one string
+        # therefore I have to output it to a "command file" and then run the program
+        # and then tidy up
+        my $dendroscope_execute = "open file=$tree_file\;\n";    # open current tree file
+        $dendroscope_execute .= "set drawer=RectangularPhylogram\;\nladderize=left\;\n";                               # set to phylogram tree drawer, ladderise the tree left
+        $dendroscope_execute .= "zoom what=expand\;\nset sparselabels=false\;\n";                                      # expand zoom to full tree, show all BS labels
+        $dendroscope_execute .= "select nodes=labeled\;\nset labelcolor=255 0 0\;\n";                                  # colour all labels red (includes BS results)
+        $dendroscope_execute .= "deselect all\;\nselect nodes=leaves\;\nset labelcolor=0 0 0\;\ndeselect all\;\n";     # colour leaves back to black
+        $dendroscope_execute .= "find searchtext=$accession target=Nodes\;\nset labelfillcolor=76 175 80\;\ndeselect all\;\n";    # find accession and colour red
+        $dendroscope_execute .= "exportimage file=$svg_directory/$file\.svg format=SVG replace=true\;\n";              # export SVG, overwrite
+        $dendroscope_execute .= "quit\;\n";                                                                            # finish up
+
+        # output command file
+        open my $command_file, '>', "$dir\/$file\.cmd";
+        print $command_file $dendroscope_execute;
+        close $command_file;
+
+        # run dendroscope with previous command file
+        my $dendroscope_command = "Dendroscope -g true";                                                               # run without GUI
+        $dendroscope_command .= " -c $dir\/$file\.cmd";                                                                # execute following command
+        system($dendroscope_command);
+
+        # delete command file - consider moving to report?
+        unlink "$dir\/$file\.cmd";
+    }
+}
+
+# sub pdf_dendroscope_trees {
+
+#     # get list of all completed tree files
+#     my $trees_directory  = "$WORKING_DIR\/$USER_RUNID\/trees";
+#     my @trees_file_names = glob "$trees_directory\/*.tree";
+
+#     foreach $tree_file (@tree_files) {
+
+#         my ( $file, $dir, $ext ) = fileparse( $tree_file, '\_FT.tree' );
+
+#         #print "\n\t $file - $dir - $ext\n";
+#         $file2 = $file;
+#         $file2 =~ s/\_FT//is;
+
+#         # PDF as well!?
+#         $cmd =
+# "$pd_programs/Dendroscope +g false -x \"open file=$dir$file$ext;set drawer=RectangularPhylogram;ladderize=left;zoom expand;select labelednodes;set labelcolor=255 0 0;deselect all;select leaves;set labelcolor=0 0 0;deselect all;find searchtext=$file target=Nodes;set labelcolor=255 0 0;deselect all;exportgraphics format=PDF replace=true title= file=$svg_trees/$file2\.pdf;quit;\"";
+#         system($cmd);
+
+#     }
+# }
 
 ###########################################################
 ##           Renaming Subroutines                        ##
@@ -154,17 +263,17 @@ sub rename_newick_trees {
 
         my $treeio = Bio::TreeIO->new(
             -format => 'newick',
-            -file     => $tree_file
+            -file   => $tree_file
         );
 
         #my $tree = $input->next_tree;
         while ( my $tree = $treeio->next_tree ) {
-            
+
             #my @tree_leafs = $tree->get_leaf_nodes;
             for my $node ( grep { $_->is_Leaf } $tree->get_nodes ) {
 
                 print "Node is " . $node->id . "\t";
-                my @new_node = retrieve_taxa_name($node->id);
+                my @new_node = retrieve_taxa_name( $node->id );
                 print "from @new_node\n";
             }
 
@@ -173,16 +282,17 @@ sub rename_newick_trees {
     }
 
     #retrieve_taxa_name_bioperl();
-    
+
 }
 
 # Jeez this is also really really slow
 sub retrieve_taxa_name {
 
-    my $search_node = shift;
+    my $search_node  = shift;
     my @search_files = glob "$DIR_SEQS\/*.fas";
+
     #my $return_node = $EMPTY;
-    
+
     my @return_node = system "grep $search_node $DIR_SEQS\/*.fas";
 
     #my $return_node = grep {$_ eq $search_node} @search_files;
