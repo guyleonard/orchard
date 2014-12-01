@@ -65,7 +65,7 @@ our $DIR_TAXDUMP = $EMPTY;
 
 # declare the perl command line flags/options we want to allow
 my %options = ();
-getopts( "p:sxnamrc", \%options ) or display_help();    # or display_help();
+getopts( "p:sxnamrcf", \%options ) or display_help();    # or display_help();
 
 # Display the help message if the user invokes -h
 if ( $options{h} ) { display_help() }
@@ -73,7 +73,7 @@ if ( $options{v} ) { print "Orchard Accessories $VERSION\n"; }
 
 if ( defined $options{p} ) {
 
-    unless ( $options{s} || $options{x} || $options{n} || $options{a} || $options{m} || $options{r} || $options{c} ) {
+    unless ( $options{s} || $options{x} || $options{n} || $options{a} || $options{m} || $options{r} || $options{c} || $options{f}) {
         print "Missing option: what task do you want to do.\n";
         print display_help();
     }
@@ -120,7 +120,15 @@ if ( defined $options{p} ) {
     if ( $options{s} ) {
         print "SVG: Using Dendroscope to Build Trees\n";
         my $start_time = timing('start');
-        svg_dendroscope_trees();
+        dendroscope_trees('svg');
+        my $end_time = timing( 'end', $start_time );
+    }
+
+    # PDFs of Newick Trees
+    if ( $options{f} ) {
+        print "PDF: Using Dendroscope to Build Trees\n";
+        my $start_time = timing('start');
+        dendroscope_trees('pdf');
         my $end_time = timing( 'end', $start_time );
     }
 }
@@ -135,7 +143,7 @@ else {
 # the original pipeline focused heavily on the use of
 # dendroscope, that is continued here, however, I would
 # also like to include trees drawn by bioperl and possibly
-# other newick to SVG style programs
+# other newick to SVG style programs...
 # the output should be editable as text and so it *should*
 # be trivial as to which program has created the SVG
 
@@ -144,7 +152,7 @@ else {
 # pdfs/ will also be a sub-folder to /trees
 # renamed trees will be named "renamed" instead of "fixed"
 # pdfs can only be made once svgs have been produced, except
-# for a pdf of the original tree
+# for a pdf of the original tree...
 # ~/ID/trees/
 #           svg/
 #               accession1_hits_FT.svg
@@ -157,18 +165,29 @@ else {
 #           accession1_hits_FT.tree
 #           accession1_hits_FT_renamed.tree
 
-sub svg_dendroscope_trees {
+# the nodes are coloured red and the seed accession background
+# is coloured green, these are hard set but could be user variables
+# in the future
+
+# the Dendroscope manual suggest running this
+# xvfb-run --auto-servernum --server-num=1 Dendroscope +g
+# to stop the window appearing or so it can be run on a server
+# will require the user to install XVFB
+
+sub dendroscope_trees {
+
+    my $type_of_image = shift;
 
     # get list of all completed tree files
     my $trees_directory  = "$WORKING_DIR\/$USER_RUNID\/trees";
     my @trees_file_names = glob "$trees_directory\/*.tree";
 
-    my $svg_directory = "$trees_directory\/svg";
+    my $output_directory = "$trees_directory\/$type_of_image";
 
-    if ( !-d $svg_directory ) {
-        output_report("[INFO]\tCreating SVG Directory: $svg_directory\n");
-        print "Creating SVG Directory at $svg_directory\n";
-        mkdir $svg_directory;
+    if ( !-d $output_directory ) {
+        output_report("[INFO]\tCreating $type_of_image Directory: $output_directory\n");
+        print "Creating $type_of_image Directory at $output_directory\n";
+        mkdir $output_directory;
     }
 
     foreach my $tree_file (@trees_file_names) {
@@ -183,13 +202,13 @@ sub svg_dendroscope_trees {
         # therefore I have to output it to a "command file" and then run the program
         # and then tidy up
         my $dendroscope_execute = "open file=$tree_file\;\n";    # open current tree file
-        $dendroscope_execute .= "set drawer=RectangularPhylogram\;\nladderize=left\;\n";                               # set to phylogram tree drawer, ladderise the tree left
-        $dendroscope_execute .= "zoom what=expand\;\nset sparselabels=false\;\n";                                      # expand zoom to full tree, show all BS labels
-        $dendroscope_execute .= "select nodes=labeled\;\nset labelcolor=255 0 0\;\n";                                  # colour all labels red (includes BS results)
-        $dendroscope_execute .= "deselect all\;\nselect nodes=leaves\;\nset labelcolor=0 0 0\;\ndeselect all\;\n";     # colour leaves back to black
-        $dendroscope_execute .= "find searchtext=$accession target=Nodes\;\nset labelfillcolor=76 175 80\;\ndeselect all\;\n";    # find accession and colour red
-        $dendroscope_execute .= "exportimage file=$svg_directory/$file\.svg format=SVG replace=true\;\n";              # export SVG, overwrite
-        $dendroscope_execute .= "quit\;\n";                                                                            # finish up
+        $dendroscope_execute .= "set drawer=RectangularPhylogram\;\nladderize=left\;\n";                              # set to phylogram tree drawer, ladderise the tree left
+        $dendroscope_execute .= "zoom what=expand\;\nset sparselabels=false\;\n";                                     # expand zoom to full tree, show all BS labels
+        $dendroscope_execute .= "select nodes=labeled\;\nset labelcolor=255 0 0\;\n";                                 # colour all labels red (includes BS results)
+        $dendroscope_execute .= "deselect all\;\nselect nodes=leaves\;\nset labelcolor=0 0 0\;\ndeselect all\;\n";    # colour leaves back to black
+        $dendroscope_execute .= "find searchtext=$accession target=Nodes\;\nset labelfillcolor=76 175 80\;\ndeselect all\;\n";        # find accession and colour red
+        $dendroscope_execute .= "exportimage file=$output_directory/$file\.$type_of_image format=$type_of_image replace=true\;\n";    # export $type_of_image, overwrite
+        $dendroscope_execute .= "quit\;\n";                                                                                           # finish up
 
         # output command file
         open my $command_file, '>', "$dir\/$file\.cmd";
@@ -197,36 +216,14 @@ sub svg_dendroscope_trees {
         close $command_file;
 
         # run dendroscope with previous command file
-        my $dendroscope_command = "Dendroscope -g true";                                                               # run without GUI
-        $dendroscope_command .= " -c $dir\/$file\.cmd";                                                                # execute following command
+        my $dendroscope_command = "Dendroscope -g true";                                                                              # run without GUI
+        $dendroscope_command .= " -c $dir\/$file\.cmd";                                                                               # execute following command
         system($dendroscope_command);
 
         # delete command file - consider moving to report?
         unlink "$dir\/$file\.cmd";
     }
 }
-
-# sub pdf_dendroscope_trees {
-
-#     # get list of all completed tree files
-#     my $trees_directory  = "$WORKING_DIR\/$USER_RUNID\/trees";
-#     my @trees_file_names = glob "$trees_directory\/*.tree";
-
-#     foreach $tree_file (@tree_files) {
-
-#         my ( $file, $dir, $ext ) = fileparse( $tree_file, '\_FT.tree' );
-
-#         #print "\n\t $file - $dir - $ext\n";
-#         $file2 = $file;
-#         $file2 =~ s/\_FT//is;
-
-#         # PDF as well!?
-#         $cmd =
-# "$pd_programs/Dendroscope +g false -x \"open file=$dir$file$ext;set drawer=RectangularPhylogram;ladderize=left;zoom expand;select labelednodes;set labelcolor=255 0 0;deselect all;select leaves;set labelcolor=0 0 0;deselect all;find searchtext=$file target=Nodes;set labelcolor=255 0 0;deselect all;exportgraphics format=PDF replace=true title= file=$svg_trees/$file2\.pdf;quit;\"";
-#         system($cmd);
-
-#     }
-# }
 
 ###########################################################
 ##           Renaming Subroutines                        ##
