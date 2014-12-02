@@ -87,13 +87,16 @@ Required input:
 Other parameters:
 SVG Trees:
 	-s Build SVG Trees (requires Dendroscope)
-	-x Build SVG Trees (no Dendroscope)
+	-x Build SVG Trees (requires BioPerl)
 Renaming:
 	-n Rename taxa in newick trees
 	-a Rename taxa in unmasked alignments
 	-m Rename taxa in masked alignments
 	-r Rename taxa in SVG trees
-Colouring Taxonomy:
+PDF Trees:
+	-f Build PDF Trees of all newick trees (requires Dendroscope)
+	-d Build PDFs of annotated SVG trees (requires Inkscape)
+Annotating Taxonomy:
 	-c Colourise taxon names in SVG trees
 ```
 Order preference of parameters is ignored but you cannot colourise trees if you have not created them first!
