@@ -56,6 +56,8 @@ our $EMPTY       = q{};
 our $USER_RUNID  = $EMPTY;
 our $DIR_SEQS    = $EMPTY;
 our $DIR_TAXDUMP = $EMPTY;
+our $TREES_NODE_COLOUR = $EMPTY;
+our $TREES_SEED_COLOUR = $EMPTY;
 
 #our $USER_RETRIEVE = $EMTPY;
 
@@ -85,6 +87,9 @@ if ( defined $options{p} ) {
 
     $DIR_SEQS    = $paramaters->{directories}->{database};    # no default
     $DIR_TAXDUMP = $paramaters->{directories}->{taxdump};
+
+    $TREES_NODE_COLOUR = $paramaters->{trees}->{node_colout} || '0 0 0'
+    $TREES_SEED_COLOUR = $paramaters->{trees}->{seed_colour} || '76 175 80';
 
     #$USER_RETRIEVE = $paramaters->{user}->{retrieve} || 'grep'; #default grep
 
@@ -208,9 +213,9 @@ sub dendroscope_trees {
         my $dendroscope_execute = "open file=$tree_file\;\n";    # open current tree file
         $dendroscope_execute .= "set drawer=RectangularPhylogram\;\nladderize=left\;\n";                              # set to phylogram tree drawer, ladderise the tree left
         $dendroscope_execute .= "zoom what=expand\;\nset sparselabels=false\;\n";                                     # expand zoom to full tree, show all BS labels
-        $dendroscope_execute .= "select nodes=labeled\;\nset labelcolor=255 0 0\;\n";                                 # colour all labels red (includes BS results)
+        $dendroscope_execute .= "select nodes=labeled\;\nset labelcolor=$TREES_NODE_COLOUR\;\n";                                 # colour all labels red (includes BS results)
         $dendroscope_execute .= "deselect all\;\nselect nodes=leaves\;\nset labelcolor=0 0 0\;\ndeselect all\;\n";    # colour leaves back to black
-        $dendroscope_execute .= "find searchtext=$accession\;\nset labelfillcolor=76 175 80\;\ndeselect all\;\n";        # find accession and colour red
+        $dendroscope_execute .= "find searchtext=$accession\;\nset labelfillcolor=$TREES_SEED_COLOUR\;\ndeselect all\;\n";        # find accession and colour red
         $dendroscope_execute .= "exportimage file=$output_directory/$file\.$type_of_image format=$type_of_image replace=true\;\n";    # export $type_of_image, overwrite
         $dendroscope_execute .= "quit\;\n";                                                                                           # finish up
 
