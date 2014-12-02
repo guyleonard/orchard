@@ -40,8 +40,8 @@ trees:
  options: -bionj -slow -quiet
  # min number of taxa to make a tree from
  min_taxa: 5
- node_colour: 255 0 0
- seed_colour: 76 175 80
+ node_colour: 255 0 0 # r g b (only, no hex)
+ seed_colour: 76 175 80 # r g b (only, no hex)
 
 directories:
  # the location of the *.fasta predicted protein files
