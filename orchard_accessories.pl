@@ -159,22 +159,22 @@ else {
 # ~/ID/trees/
 #           svg/
 #               accession1_hits_FT.svg
-#               accession1_hits_FT_renamed.svg
-#               accession1_hits_FT_renamed_taxonomy.svg
+#               accession1_hits_renamed.svg
+#               accession1_hits_renamed_taxonomy.svg
 #           pdf/
 #               accession1_hits_FT.pdf
-#               accession1_hits_FT_renamed.pdf
-#               accession1_hits_FT_renamed_taxonomy.pdf
+#               accession1_hits_renamed.pdf
+#               accession1_hits_renamed_taxonomy.pdf
 #           accession1_hits_FT.tree
-#           accession1_hits_FT_renamed.tree
+#           accession1_hits_renamed.tree
 
 # the nodes are coloured red and the seed accession background
 # is coloured green, these are hard set but could be user variables
 # in the future
 
-# the Dendroscope manual suggest running this
+# the Dendroscope manual suggests running this
 # xvfb-run --auto-servernum --server-num=1 Dendroscope +g
-# to stop the window appearing or so it can be run on a server
+# to stop the window appearing & so it can be run on a server
 # will require the user to install XVFB
 
 sub dendroscope_trees {
