@@ -3,19 +3,25 @@ use strict;
 use warnings;
 
 #
-use autodie;    # bIlujDI' yIchegh()Qo'; yIHegh()!
-use Bio::DB::Fasta;
-use Bio::TreeIO;
-use Cwd;                           # Gets pathname of current working directory
-use DateTime;                      # Start and End times
-use DateTime::Format::Duration;    # Duration of processes
-use File::Basename;                # Remove path information and extract 8.3 filename
-
-#use File::Grep qw( fgrep fmap fdo );
-use Getopt::Std;                   # Command line options, finally!
-use feature qw{ switch };
 no if $] >= 5.017011, warnings => 'experimental::smartmatch';    # ignore experimental warning for 'when'
+use autodie;                                                     # bIlujDI' yIchegh()Qo'; yIHegh()!
+use Bio::DB::Fasta;
+use Bio::Taxon;
+use Bio::Tree::Tree;
+use Bio::TreeIO;
+use Cwd;                                                         # Gets pathname of current working directory
+use DateTime::Format::Duration;                                  # Duration of processes
+use DateTime;                                                    # Start and End times
+use feature qw{ switch };
+use File::Basename;                                              # Remove path information and extract 8.3 filename
+use Getopt::Std;                                                 # Command line options, finally!
 use IO::Prompt;                                                  # User prompts
+use Scalar::Util qw(looks_like_number);
+use SVG::Parser;
+use XML::LibXML;
+use XML::Parser;
+use XML::Simple;
+use XML::Twig;
 use YAML::XS qw/LoadFile/;                                       # for the parameters file, user friendly layout
 
 ##
@@ -136,9 +142,93 @@ if ( defined $options{p} ) {
         dendroscope_trees('pdf');
         my $end_time = timing( 'end', $start_time );
     }
+
+    # annotate svg trees
+    if ( $options{c} ) {
+        print "Annotating SVG Trees\n";
+        my $start_time = timing('start');
+        annotate_renamed_svgs();
+        my $end_time = timing( 'end', $start_time );
+    }
 }
 else {
     display_help();
+}
+
+###########################################################
+##           Annotation Subroutines                      ##
+###########################################################
+
+sub annotate_renamed_svgs {
+
+    # only glob in the renamed svg trees!
+    my $trees_directory  = "$WORKING_DIR\/$USER_RUNID\/trees\/svg";
+    my @trees_file_names = glob "$trees_directory\/*renamed.svg";
+
+    foreach my $svg_tree (@trees_file_names) {
+
+        my ( $file, $dir, $ext ) = fileparse( $svg_tree, '\.svg' );
+
+        print "Parsing: $file\n";
+
+        # 'svggraph' can only be used as an output format
+        # so we cannot use Bio:TreeIO here
+        # SVG:Parser doesn't like reading Dendroscope SVG
+        # complains "not well-formed (invalid token)"
+        # so as SVG is really a form of XML we are going to
+        ## try and use XML::Twig to parse it in tree mode
+        ## XML::Parser
+        ## XML::Simple
+        # XML::LibXML
+
+        my $parser = XML::LibXML->new();
+        my $dom    = $parser->parse_file($svg_tree);
+        my @text   = $dom->getElementsByTagName("text");
+
+        foreach my $t (@text) {
+
+            # get the text node inside the <title> element, and print its value
+            #print $t->firstChild->data, "\n";
+
+            my $content = $t->firstChild->data;
+            if ( ! looks_like_number($content) ) {
+                print "Taxa: $content\n";
+            }
+        }
+
+        #my $xml = new XML::Simple( KeyAttr => 'text', ForceArray => 1);
+        # read XML file
+        #my $data = $xml->XMLin($svg_tree);
+        #print "" . $data->{text}->{content} . "\n";
+        #print Dumper $data;
+
+        #my $twig = XML::Twig->new();    # create the twig
+        #$twig->parsefile($svg_tree);    # build it
+        #$twig->print;                   # output the twig
+
+        #my $p1 = new XML::Parser( Style => 'Debug' );
+        #$p1->parsefile($svg_tree);
+
+        #print Dumper $p1;
+
+        # we know that in our SVG document taxa are represented
+        # dendroscope svg
+        # <text xml:space="preserve" x="785" y="255" stroke="none">Drosophila melanogaster_[FBpp0110210]</text>
+        # bioperl svg
+        # other svg
+        # but our BS values are also in <text> tags
+        # <text fill="rgb(245,0,87)" xml:space="preserve" x="698" y="279" stroke="none">0.923</text>
+
+        #my $root    = $twig->root;        # get the root of the twig (stats)
+        #my @players = $root->children;    # get the player list
+
+        #foreach my $player (@players)     # the sorted list
+        #{
+        #    my $blk= $player->first_child('g')->text;  # get the text of blk
+        #    print "\n";
+        #}
+
+    }
 }
 
 ###########################################################
