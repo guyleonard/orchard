@@ -2,21 +2,20 @@
 use strict;
 use warnings;
 
-use autodie;                       # bIlujDI' yIchegh()Qo'; yIHegh()!
-use Cwd;                           # Gets pathname of current working directory
-use Bio::DB::Fasta;                # for indexing fasta files for sequence retrieval
-use Bio::SearchIO;                 # parse blast tabular format
-use Bio::SeqIO;                    # Use Bio::Perl
-use DateTime;                      # Start and End times
-use DateTime::Format::Duration;    # Duration of processes
-use Digest::MD5;                   # Generate random string for run ID
-use File::Basename;                # Remove path information and extract 8.3 filename
-use Getopt::Std;                   # Command line options, finally!
-
-#use experimental 'smartmatch';
 # Given/when instead of switch - warns in 5.18 eventually I will switch this to "for()" http://www.effectiveperlprogramming.com/2011/05/use-for-instead-of-given/
-use feature qw{ switch };
+#use experimental 'smartmatch';
 no if $] >= 5.017011, warnings => 'experimental::smartmatch';    # ignore experimental warning for 'when'
+use autodie;                                                     # bIlujDI' yIchegh()Qo'; yIHegh()!
+use Bio::DB::Fasta;                                              # for indexing fasta files for sequence retrieval
+use Bio::SearchIO;                                               # parse blast tabular format
+use Bio::SeqIO;                                                  # Use Bio::Perl
+use Cwd;                                                         # Gets pathname of current working directory
+use DateTime::Format::Duration;                                  # Duration of processes
+use DateTime;                                                    # Start and End times
+use Digest::MD5;                                                 # Generate random string for run ID
+use feature qw{ switch };
+use File::Basename;                                              # Remove path information and extract 8.3 filename
+use Getopt::Std;                                                 # Command line options, finally!
 use IO::Prompt;                                                  # User prompts
 use YAML::XS qw/LoadFile/;                                       # for the parameters file, user friendly layout
 
@@ -132,7 +131,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
 
     # alignment options
     $ALIGNMENT_PROGRAM = $paramaters->{alignment}->{program} || 'mafft';
-    $ALIGNMENT_OPTIONS = $paramaters->{alignment}->{options};                      # no default
+    $ALIGNMENT_OPTIONS = $paramaters->{alignment}->{options};                        # no default
     $ALIGNMENT_THREADS = $paramaters->{alignment}->{threads} || '1';
 
     # masking options
@@ -141,19 +140,26 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
 
     # tree building options
     $TREE_PROGRAM = $paramaters->{trees}->{program} || 'FastTreeMP';
-    $TREE_OPTIONS = $paramaters->{trees}->{options};                               # no default
+    $TREE_OPTIONS = $paramaters->{trees}->{options};                                 # no default
     $TREE_MINTAXA = $paramaters->{trees}->{min_taxa} || '4';
 
     # directory options
-    $SEQ_DATA = $paramaters->{directories}->{database};                            # no default
+    $SEQ_DATA = $paramaters->{directories}->{database};                              # no default
 
     # only run search (blast) step
     if ( $options{b} ) {
-        print "Running: Search ($SEARCH_PROGRAM) ONLY\n";
 
         # Run the user selected sequence search option
         my $start_time = timing('start');
-        search_step( \@taxa_array, $input_seqs_fname );
+
+        if ( -d $input_seqs_fname ) {
+            print "Running: Search ($SEARCH_PROGRAM) from Ortho Groups Directory ONLY\n";
+            #search_step_ortho_groups( \@taxa_array, $input_seqs_fname );
+        }
+        else {
+            print "Running: Search ($SEARCH_PROGRAM) ONLY\n";
+            search_step( \@taxa_array, $input_seqs_fname );
+        }
         my $end_time = timing( 'end', $start_time );
     }
 
@@ -229,11 +235,11 @@ sub tree_step {
     my $tree_directory  = "$WORKING_DIR\/$USER_RUNID\/trees";
 
     # get list of sequences that were not excluded in previous stage
-    my @mask_file_names       = glob "$masks_directory\/*.afa-tr";
+    my @mask_file_names = glob "$masks_directory\/*.afa-tr";
 
     output_report("[INFO]\tTREE BUILDING: $#mask_file_names alignments using $TREE_PROGRAM\n");
 
-    for my $i (0..$#mask_file_names) {
+    for my $i ( 0 .. $#mask_file_names ) {
         my ( $file, $dir, $ext ) = fileparse $mask_file_names[$i], '\.afa-tr';
 
         run_fasttree("$masks_directory\/$file\.afa-tr");
@@ -276,12 +282,12 @@ sub masking_step {
     my $masks_directory      = "$WORKING_DIR\/$USER_RUNID\/masks";
 
     # get list of sequences that were not excluded in previous stage
-    my @algn_file_names       = glob "$alignments_directory\/*.afa";
+    my @algn_file_names = glob "$alignments_directory\/*.afa";
 
     # iterate through the stream of sequences and perform each search
     output_report("[INFO]\tMASKING: $#algn_file_names alignments using trimal\n");
 
-    for my $i (0..$#algn_file_names) {
+    for my $i ( 0 .. $#algn_file_names ) {
         my $current_sequences = $algn_file_names[$i];
 
         my ( $file, $dir, $ext ) = fileparse $current_sequences, '\.afa';
@@ -297,8 +303,8 @@ sub masking_step {
 
             print "Mask Length is ($mask_length) and is";
 
-              # if the length is less than the second limit (always the smaller)
-              if ( $mask_length <= $MASKING_CUTOFF2 ) {
+            # if the length is less than the second limit (always the smaller)
+            if ( $mask_length <= $MASKING_CUTOFF2 ) {
                 print " not OK. Excluding sequence.\n";
 
                 # then abandon this sequence, report it, move to excluded
@@ -364,12 +370,12 @@ sub alignment_step {
     my $alignments_directory = "$WORKING_DIR\/$USER_RUNID\/alignments";
 
     # get list of sequences that were not excluded in previous stage
-    my @seq_file_names       = glob "$sequence_directory\/*.fas";
+    my @seq_file_names = glob "$sequence_directory\/*.fas";
 
     # iterate through the stream of sequences and perform each search
     output_report("[INFO]\tALIGNING: $#seq_file_names alignments using $ALIGNMENT_PROGRAM\n");
 
-    for my $i (0..$#seq_file_names) {
+    for my $i ( 0 .. $#seq_file_names ) {
         my $current_sequences = $seq_file_names[$i];
 
         my ( $file, $dir, $ext ) = fileparse $current_sequences, '\.fas';
@@ -398,6 +404,99 @@ sub alignment_step {
 #################################################
 ##           Search Subroutines                ##
 #################################################
+sub search_step_ortho_groups {
+
+    # get all of the values passed to the sub...
+    my ( $taxa_array_ref, $input_seqs_fname ) = @_;
+
+    # dereference the array
+    my @taxa_array = @{$taxa_array_ref};
+
+    # we should always have one sequence, right!?
+    my $input_seqs_count = 1;
+
+    #
+    my $num_hit_seqs  = 0;
+    my $sequence_name = $EMPTY;
+
+    # open bioperl seqio object with user input sequences
+    my $seq_in = Bio::SeqIO->new( -file => "<$input_seqs_fname" );
+
+    # I am still relying on 'grep' to count the number of sequences
+    # there is no way to get this directly from the Bio::Seq object
+    # without needless iteration. Anyone?
+    chomp( my $input_seqs_total = `grep -c ">" $input_seqs_fname` );
+
+    # iterate through the stream of sequences and perform each search
+    output_report("[INFO]\tStarting $input_seqs_total searches using $SEARCH_PROGRAM($SEARCH_SUBPROGRAM)\n");
+    while ( my $seq = $seq_in->next_seq() ) {
+
+        print "Processing: $input_seqs_count of $input_seqs_total\n";
+
+        # Get Sequence Name
+        $sequence_name = $seq->id;
+
+        # Output Query Sequence
+        my $query_out = Bio::SeqIO->new(
+            -file   => ">$sequence_name\_query.fas",
+            -format => 'fasta'
+        );
+        $query_out->write_seq($seq);
+
+        # Running total of hits, note '>>' append
+        my $hits_out = Bio::SeqIO->new(
+            -file   => ">>$sequence_name\_hits.fas",
+            -format => 'fasta'
+        );
+        $hits_out->write_seq($seq);
+
+        for ($SEARCH_PROGRAM) {
+            when (/BLAST[+]/ism) {
+
+                $num_hit_seqs = run_blast_plus( \@taxa_array, $input_seqs_fname, $sequence_name );
+                print "\tRunning: blast+ on $sequence_name\n";
+            }
+            when (/^BLAST$/ism) {
+
+                $num_hit_seqs = run_blast_legacy( \@taxa_array, $input_seqs_fname, $sequence_name );
+                print "\tRunning: legacy blast\n";
+            }
+            when (/BLAT/ism) {
+
+                $num_hit_seqs = run_blat( \@taxa_array, $input_seqs_fname, $sequence_name );
+                print "\tRunning: blat\n";
+            }
+            when (/USEARCH/ism) {
+
+                $num_hit_seqs = run_usearch( \@taxa_array, $input_seqs_fname, $sequence_name );
+                print "\tRunning: usearch\n";
+            }
+            default {
+
+                $num_hit_seqs = run_blast_plus( \@taxa_array, $input_seqs_fname, $sequence_name );
+                print "\tRunning: (default) blast+ on $sequence_name\n";
+            }
+        }
+        $input_seqs_count++;
+
+        if ( $num_hit_seqs <= $TREE_MINTAXA ) {
+            output_report("[WARN]\t$sequence_name: Too few hits\n");
+            unlink "$WORKING_DIR\/$sequence_name\_query.fas";
+            system "mv $sequence_name\_hits.fas $WORKING_DIR\/$USER_RUNID\/excluded\/";
+        }
+        else {
+            unlink "$WORKING_DIR\/$sequence_name\_query.fas";
+            system "mv $sequence_name\_hits.fas $WORKING_DIR\/$USER_RUNID\/seqs\/";
+
+            # remove selenocystein and non-alpha numeric characters as they cause BLAST/MAFFT
+            # to complain/crash (and the --anysymbol option produces terrible alignments)
+            # I have to check for this as some genome projects are just full of junk!
+            system "sed -i \'/^>/! s/U|\\w/X/g\' $WORKING_DIR\/$USER_RUNID\/seqs\/$sequence_name\_hits.fas";
+        }
+    }
+    return;
+}
+
 sub search_step {
 
     # get all of the values passed to the sub...
@@ -485,7 +584,7 @@ sub search_step {
             # remove selenocystein and non-alpha numeric characters as they cause BLAST/MAFFT
             # to complain/crash (and the --anysymbol option produces terrible alignments)
             # I have to check for this as some genome projects are just full of junk!
-            system "sed -i '/^>/! s/U|\w/X/g' $WORKING_DIR\/$USER_RUNID\/seqs\/$sequence_name\_hits.fas";
+            system "sed -i \'/^>/! s/U|\\w/X/g\' $WORKING_DIR\/$USER_RUNID\/seqs\/$sequence_name\_hits.fas";
         }
     }
     return;
