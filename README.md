@@ -80,6 +80,8 @@ Other paramaters:
 ```
 Order preference of parameters is ignored: i.e. specificy '-ab' will run blasts then alignments.
 
+-s can also be a folder of multiple files with multiple fasta sequences in each, which can be used for either a) importing a bunch of files which only have one sequence in each (although you would be better concatenating them to one FASTA file and using the normal approach) or b) multiple related sequences grouped or clustered where you wish for only one tree to be generated but from all the blast hits to each seed sequence in one file - for example, we use this to look at orthologous groups of genes.
+
 ## orchard_accessories.pl
 ```
 Required input:
