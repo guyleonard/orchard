@@ -8,7 +8,7 @@ This pipeline was first reported in Richards et. al. (2009) as a "an automated g
 
 This is an attempt to do better and make available a newer version of this process. It won't be entirely modular with easy switch in/out of other programs in the pipeline but it should be in a state where any other user can clone the repository, set up a databse of their own genomes, install the relevant programs, and start making 100s of phylogenetic guide trees very easily. An attempt has been made to reduce the number of accessory scripts, simplify the process of supplying options - by using YAML (human readable parameter files) and command line options instead of having to edit any code!
 
-It should also be noted that [Finlay Maguire](https://github.com/fmaguire) 'forked' the initial code but ended up rewriting it in Python in an attempt to parallelise many of the steps, but still relying on the original database, which you may prefer to use.
+It should also be noted that [Finlay Maguire](https://github.com/fmaguire) 'forked' the initial code but ended up rewriting it in Python, when he grew his hipster beard, in an attempt to parallelise many of the steps, but still relying on the original database, which you may prefer to use.
 
 NB - In many of our publications we have used an accessory script to plot PFAM domains on to our trees at the relevant taxa leafs, this script is unfortunately not available in this version as it is under copyright of [Bill Wickstead](http://www.wicksteadlab.co.uk/).
 
@@ -67,7 +67,7 @@ One each of the following, our preference is always #1 and if you wish to add yo
 
 #### Renaming Taxa
 
-1. [NCBI Taxonomy](ftp://ftp.ncbi.nih.gov/pub/taxonomy) - FTP retrieve 'taxdump.tar.gz' from ftp://ftp.ncbi.nih.gov/pub/taxonomy
+1. [NCBI Taxonomy](ftp://ftp.ncbi.nih.gov/pub/taxonomy) - retrieve 'taxdump.tar.gz' from ftp://ftp.ncbi.nih.gov/pub/taxonomy and put expand it to a central directory (you will then add the lcoation to your parameters file)
 
 #### SVG Tree Creation
 
@@ -112,6 +112,59 @@ Annotating Taxonomy:
 	-c Colourise taxon names in SVG trees
 ```
 Order preference of parameters is ignored but you cannot colourise trees if you have not created them first!
+
+## Example Parameters File
+```
+user:
+ run_id: test_ortho # give your run an ID
+ reindex: n # force reindex of search db y/n
+ retrieve: bioperl # bioperl or grep
+
+search:
+ # blast, blast+, blat, usearch
+ # in some cases legacy blast is 'faster' than blast+ but occasionally returns
+ # fewer hits than the newer version...
+ program: blast+
+ # blastp, blastx, ublast, blat, etc
+ subprogram: blastp
+ threads: 4
+ other: # any special commands - not implemented
+ # values below are only supported by blast/blast+/usearch
+ evalue: 1e-10
+ top_hits: 5
+ # values below are only supported by blast/blast+
+ max_length: 3000
+ # must be a comma separated list of taxa names or blank
+ special_taxa: Acanthamoeba castellanii str. Neff,Allomyces macrogynus atcc 38327
+ special_top_hits: 5
+
+alignment:
+ # mafft, muscle
+ program: mafft
+ # mafft = --auto --quiet --reorder
+ # muscle = -maxiters 2 -quiet -group
+ options: --auto --quiet --reorder
+ threads: 4
+
+masking:
+ cutoff_1: 50
+ cutoff_2: 30
+
+trees:
+ # FastTree, FastTreeMP
+ program: FastTreeMP
+ # e.g. -bionj -slow
+ options: -bionj -slow -quiet
+ # min number of taxa to make a tree from
+ min_taxa: 5
+ node_colour: 255 0 0 # r g b (only, no hex)
+ seed_colour: 76 175 80 # r g b (only, no hex)
+
+directories:
+ # the location of the *.fasta predicted protein files
+ database: /home/cs02gl/Desktop/genomes/cider
+ taxdump: /home/cs02gl/Desktop/genomes/taxonomy
+ ```
 
 # Updates
 
