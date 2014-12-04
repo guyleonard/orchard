@@ -114,7 +114,7 @@ Annotating Taxonomy:
 Order preference of parameters is ignored but you cannot colourise trees if you have not created them first!
 
 ## Example Parameters File
-```
+```yaml
 user:
  run_id: test_ortho # give your run an ID
  reindex: n # force reindex of search db y/n
