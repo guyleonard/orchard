@@ -412,7 +412,7 @@ sub search_step_ortho_groups {
     my ( $taxa_array_ref, $input_seqs_fname ) = @_;
 
     # files from orthogroup/multi-seq directory
-    my @file_names = glob "$input_seqs_fname\/*.fasta";
+    my @file_names        = glob "$input_seqs_fname\/*.fasta";
     my $ortho_files_total = @file_names;
 
     # dereference the array
@@ -623,28 +623,28 @@ sub search_step {
         for ($SEARCH_PROGRAM) {
             when (/BLAST[+]/ism) {
 
-                $num_hit_seqs = run_blast_plus( \@taxa_array, $input_seqs_fname, $sequence_name );
                 print "\tRunning: blast+ on $sequence_name\n";
+                $num_hit_seqs = run_blast_plus( \@taxa_array, $input_seqs_fname, $sequence_name );
             }
             when (/^BLAST$/ism) {
 
-                $num_hit_seqs = run_blast_legacy( \@taxa_array, $input_seqs_fname, $sequence_name );
                 print "\tRunning: legacy blast\n";
+                $num_hit_seqs = run_blast_legacy( \@taxa_array, $input_seqs_fname, $sequence_name );
             }
             when (/BLAT/ism) {
 
-                $num_hit_seqs = run_blat( \@taxa_array, $input_seqs_fname, $sequence_name );
                 print "\tRunning: blat\n";
+                $num_hit_seqs = run_blat( \@taxa_array, $input_seqs_fname, $sequence_name );
             }
             when (/USEARCH/ism) {
 
-                $num_hit_seqs = run_usearch( \@taxa_array, $input_seqs_fname, $sequence_name );
                 print "\tRunning: usearch\n";
+                $num_hit_seqs = run_usearch( \@taxa_array, $input_seqs_fname, $sequence_name );
             }
             default {
 
-                $num_hit_seqs = run_blast_plus( \@taxa_array, $input_seqs_fname, $sequence_name );
                 print "\tRunning: (default) blast+ on $sequence_name\n";
+                $num_hit_seqs = run_blast_plus( \@taxa_array, $input_seqs_fname, $sequence_name );
             }
         }
         $input_seqs_count++;
