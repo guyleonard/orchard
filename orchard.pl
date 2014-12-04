@@ -162,6 +162,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
             print "Running: Search ($SEARCH_PROGRAM) ONLY\n";
             search_step( \@taxa_array, $input_seqs_fname );
         }
+        
         my $end_time = timing( 'end', $start_time );
     }
 
@@ -197,7 +198,17 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
 
         # Run the user selected sequence search option
         my $start_time = timing('start');
-        search_step( \@taxa_array, $input_seqs_fname );
+
+        if ( -d $input_seqs_fname ) {
+            print "Running: Search ($SEARCH_PROGRAM) from Ortho Groups Directory ONLY\n";
+
+            search_step_ortho_groups( \@taxa_array, $input_seqs_fname );
+        }
+        else {
+            print "Running: Search ($SEARCH_PROGRAM) ONLY\n";
+            search_step( \@taxa_array, $input_seqs_fname );
+        }
+        
         my $end_time = timing( 'end', $start_time );
 
         # Run the user selected alignment option
@@ -990,8 +1001,6 @@ sub parse_search_output {
         while ( my $hit = $result->next_hit ) {
             my $hit_name = $hit->name;
 
-            ##print "\t\t\tHit: " . $hit->name . " :\n" if $VERBOSE == 1;
-
             # get the sequence from the file stream
             my $sequence = $sequence_file->seq($hit_name);
 
@@ -1032,7 +1041,6 @@ sub parse_search_output {
 
     system "mv $search_output $report_dir\/$SEARCH_SUBPROGRAM";
 
-    # return
     return;
 }
 
