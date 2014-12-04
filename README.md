@@ -121,26 +121,19 @@ user:
  retrieve: bioperl # bioperl or grep
 
 search:
- # blast, blast+, blat, usearch
- # in some cases legacy blast is 'faster' than blast+ but occasionally returns
- # fewer hits than the newer version...
- program: blast+
- # blastp, blastx, ublast, blat, etc
- subprogram: blastp
- threads: 4
- other: # any special commands - not implemented
- # values below are only supported by blast/blast+/usearch
+ program: blast+ # blast, blast+, blat, usearch
+ subprogram: blastp # blastp, blastx, ublast, blat
+ threads: 4 # it will be 1 if you don't specify
+ ## values below are only supported by blast/blast+/usearch
  evalue: 1e-10
  top_hits: 5
- # values below are only supported by blast/blast+
+ ## values below are only supported by blast/blast+
  max_length: 3000
- # must be a comma separated list of taxa names or blank
- special_taxa: Acanthamoeba castellanii str. Neff,Allomyces macrogynus atcc 38327
+ special_taxa: # must be a comma separated list of taxa names or blank
  special_top_hits: 5
 
 alignment:
- # mafft, muscle
- program: mafft
+ program: mafft  # mafft, muscle
  # mafft = --auto --quiet --reorder
  # muscle = -maxiters 2 -quiet -group
  options: --auto --quiet --reorder
@@ -151,19 +144,17 @@ masking:
  cutoff_2: 30
 
 trees:
- # FastTree, FastTreeMP
- program: FastTreeMP
+ program: FastTreeMP # FastTree, FastTreeMP
  # e.g. -bionj -slow
  options: -bionj -slow -quiet
- # min number of taxa to make a tree from
- min_taxa: 5
+ min_taxa: 5 # min number of taxa to make a tree from
  node_colour: 255 0 0 # r g b (only, no hex)
  seed_colour: 76 175 80 # r g b (only, no hex)
 
 directories:
  # the location of the *.fasta predicted protein files
- database: /home/cs02gl/Desktop/genomes/cider
- taxdump: /home/cs02gl/Desktop/genomes/taxonomy
+ database: /home/genomes/cider
+ taxdump: /home/genomes/taxonomy
  ```
 
 # Updates
