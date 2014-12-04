@@ -413,16 +413,22 @@ sub search_step_ortho_groups {
 
     # files from orthogroup/multi-seq directory
     my @file_names = glob "$input_seqs_fname\/*.fasta";
+    my $ortho_files_total = @file_names;
 
     # dereference the array
     my @taxa_array = @{$taxa_array_ref};
 
     # we should always have one sequence, right!?
-    my $input_seqs_count = @file_names;
+    my $ortho_files_count = 1;
 
     foreach my $orthofile (@file_names) {
 
-        print "Processing: $orthofile\n";
+        # we should always have one sequence, right!?
+        my $input_seqs_count = 1;
+
+        print "Starting: $ortho_files_count of $ortho_files_total = $orthofile\n";
+        output_report("[INFO]\tStarting $ortho_files_count of $ortho_files_total = $orthofile\n");
+
         our ( $ortho_file, $ortho_dir, $ortho_ext ) = fileparse( $orthofile, ".fasta" );
 
         #
@@ -442,7 +448,8 @@ sub search_step_ortho_groups {
 
         while ( my $seq = $seq_in->next_seq() ) {
 
-            print "Processing: $input_seqs_count of $input_seqs_total\n";
+            print "\tProcessing: $input_seqs_count of $input_seqs_total\n";
+            output_report("[INFO]\tProcessing: $input_seqs_count of $input_seqs_total\n");
 
             # Get Sequence Name
             $sequence_name = $seq->id;
@@ -512,6 +519,7 @@ sub search_step_ortho_groups {
             # then get rid of the query file as we don't need it anymore
             unlink "$WORKING_DIR\/$sequence_name\_hits.fas";
         }
+        $ortho_files_count++;
 
         # now we can remove duplicate sequences based on accession only
         remove_duplicate_sequences("$WORKING_DIR\/$ortho_file\_ortho\_hits.fas");
@@ -533,7 +541,6 @@ sub search_step_ortho_groups {
             # I have to check for this as some genome projects are just full of junk!
             system "sed -i \'/^>/! s/U|\\w/X/g\' $WORKING_DIR\/$USER_RUNID\/seqs\/$ortho_file\_hits.fas";
         }
-
     }
 
     return;
