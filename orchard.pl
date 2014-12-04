@@ -13,6 +13,7 @@ use Cwd;                                                         # Gets pathname
 use DateTime::Format::Duration;                                  # Duration of processes
 use DateTime;                                                    # Start and End times
 use Digest::MD5;                                                 # Generate random string for run ID
+use Digest::MD5 'md5_hex';
 use feature qw{ switch };
 use File::Basename;                                              # Remove path information and extract 8.3 filename
 use Getopt::Std;                                                 # Command line options, finally!
@@ -154,7 +155,8 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
 
         if ( -d $input_seqs_fname ) {
             print "Running: Search ($SEARCH_PROGRAM) from Ortho Groups Directory ONLY\n";
-            #search_step_ortho_groups( \@taxa_array, $input_seqs_fname );
+
+            search_step_ortho_groups( \@taxa_array, $input_seqs_fname );
         }
         else {
             print "Running: Search ($SEARCH_PROGRAM) ONLY\n";
@@ -409,98 +411,166 @@ sub search_step_ortho_groups {
     # get all of the values passed to the sub...
     my ( $taxa_array_ref, $input_seqs_fname ) = @_;
 
+    # files from orthogroup/multi-seq directory
+    my @file_names = glob "$input_seqs_fname\/*.fasta";
+
     # dereference the array
     my @taxa_array = @{$taxa_array_ref};
 
     # we should always have one sequence, right!?
-    my $input_seqs_count = 1;
+    my $input_seqs_count = @file_names;
 
-    #
-    my $num_hit_seqs  = 0;
-    my $sequence_name = $EMPTY;
+    foreach my $orthofile (@file_names) {
 
-    # open bioperl seqio object with user input sequences
-    my $seq_in = Bio::SeqIO->new( -file => "<$input_seqs_fname" );
+        print "Processing: $orthofile\n";
+        our ( $ortho_file, $ortho_dir, $ortho_ext ) = fileparse( $orthofile, ".fasta" );
 
-    # I am still relying on 'grep' to count the number of sequences
-    # there is no way to get this directly from the Bio::Seq object
-    # without needless iteration. Anyone?
-    chomp( my $input_seqs_total = `grep -c ">" $input_seqs_fname` );
+        #
+        my $num_hit_seqs  = 0;
+        my $sequence_name = $EMPTY;
 
-    # iterate through the stream of sequences and perform each search
-    output_report("[INFO]\tStarting $input_seqs_total searches using $SEARCH_PROGRAM($SEARCH_SUBPROGRAM)\n");
-    while ( my $seq = $seq_in->next_seq() ) {
+        # open bioperl seqio object with user input sequences
+        my $seq_in = Bio::SeqIO->new( -file => "<$orthofile" );
 
-        print "Processing: $input_seqs_count of $input_seqs_total\n";
+        # I am still relying on 'grep' to count the number of sequences
+        # there is no way to get this directly from the Bio::Seq object
+        # without needless iteration. Anyone?
+        chomp( my $input_seqs_total = `grep -c ">" $orthofile` );
 
-        # Get Sequence Name
-        $sequence_name = $seq->id;
+        # iterate through the stream of sequences and perform each search
+        output_report("[INFO]\tStarting $input_seqs_total searches using $SEARCH_PROGRAM($SEARCH_SUBPROGRAM)\n");
 
-        # Output Query Sequence
-        my $query_out = Bio::SeqIO->new(
-            -file   => ">$sequence_name\_query.fas",
-            -format => 'fasta'
-        );
-        $query_out->write_seq($seq);
+        while ( my $seq = $seq_in->next_seq() ) {
 
-        # Running total of hits, note '>>' append
-        my $hits_out = Bio::SeqIO->new(
-            -file   => ">>$sequence_name\_hits.fas",
-            -format => 'fasta'
-        );
-        $hits_out->write_seq($seq);
+            print "Processing: $input_seqs_count of $input_seqs_total\n";
 
-        for ($SEARCH_PROGRAM) {
-            when (/BLAST[+]/ism) {
+            # Get Sequence Name
+            $sequence_name = $seq->id;
 
-                $num_hit_seqs = run_blast_plus( \@taxa_array, $input_seqs_fname, $sequence_name );
-                print "\tRunning: blast+ on $sequence_name\n";
+            # orthofroups have a pipe symbol that throws off commands
+            # replace it with an underscore
+            $sequence_name =~ s/\|/\_/;
+
+            # Output Query Sequence
+            my $query_out = Bio::SeqIO->new(
+                -file   => ">$sequence_name\_query.fas",
+                -format => 'fasta'
+            );
+            $query_out->write_seq($seq);
+
+            # Running total of hits, note '>>' append
+            my $hits_out = Bio::SeqIO->new(
+                -file   => ">>$sequence_name\_hits.fas",
+                -format => 'fasta'
+            );
+            $hits_out->write_seq($seq);
+
+            # This has been added to catch the results of all sequence blasts
+            # for each of the orthogroups, look for the sort/uniq step below too...
+            my $ortho_seqs_out = Bio::SeqIO->new(
+                -file   => ">>$ortho_file\_ortho\_hits.fas",
+                -format => 'fasta'
+            );
+            $ortho_seqs_out->write_seq($seq);
+
+            for ($SEARCH_PROGRAM) {
+                when (/BLAST[+]/ism) {
+
+                    print "\tRunning: blast+ on $sequence_name\n";
+                    run_blast_plus( \@taxa_array, "$sequence_name\_query.fas", $sequence_name );
+                }
+                when (/^BLAST$/ism) {
+
+                    print "\tRunning: legacy blast\n";
+                    run_blast_legacy( \@taxa_array, "$sequence_name\_query.fas", $sequence_name );
+                }
+                when (/BLAT/ism) {
+
+                    print "\tRunning: blat\n";
+                    run_blat( \@taxa_array, "$sequence_name\_query.fas", $sequence_name );
+                }
+                when (/USEARCH/ism) {
+
+                    print "\tRunning: usearch\n";
+                    run_usearch( \@taxa_array, "$sequence_name\_query.fas", $sequence_name );
+                }
+                default {
+
+                    print "\tRunning: (default) blast+ on $sequence_name\n";
+                    run_blast_plus( \@taxa_array, "$sequence_name\_query.fas", $sequence_name );
+                }
             }
-            when (/^BLAST$/ism) {
+            $input_seqs_count++;
 
-                $num_hit_seqs = run_blast_legacy( \@taxa_array, $input_seqs_fname, $sequence_name );
-                print "\tRunning: legacy blast\n";
-            }
-            when (/BLAT/ism) {
+            # remove the query hits after each run as they are now stored
+            # in the *ortho_seqs.fas file
+            unlink "$WORKING_DIR\/$sequence_name\_query.fas";
 
-                $num_hit_seqs = run_blat( \@taxa_array, $input_seqs_fname, $sequence_name );
-                print "\tRunning: blat\n";
-            }
-            when (/USEARCH/ism) {
+            # append the current seed sequence's hits to the ortho_seqs.fas file
+            system "cat $WORKING_DIR\/$sequence_name\_hits.fas >> $WORKING_DIR\/$ortho_file\_ortho\_hits.fas";
 
-                $num_hit_seqs = run_usearch( \@taxa_array, $input_seqs_fname, $sequence_name );
-                print "\tRunning: usearch\n";
-            }
-            default {
-
-                $num_hit_seqs = run_blast_plus( \@taxa_array, $input_seqs_fname, $sequence_name );
-                print "\tRunning: (default) blast+ on $sequence_name\n";
-            }
+            # then get rid of the query file as we don't need it anymore
+            unlink "$WORKING_DIR\/$sequence_name\_hits.fas";
         }
-        $input_seqs_count++;
+
+        # now we can remove duplicate sequences based on accession only
+        remove_duplicate_sequences("$WORKING_DIR\/$ortho_file\_ortho\_hits.fas");
+
+        # get the number of sequences in the file
+        chomp( $num_hit_seqs = `grep -c ">" $WORKING_DIR\/$ortho_file\_ortho\_hits.fas` );
 
         if ( $num_hit_seqs <= $TREE_MINTAXA ) {
-            output_report("[WARN]\t$sequence_name: Too few hits\n");
-            unlink "$WORKING_DIR\/$sequence_name\_query.fas";
-            system "mv $sequence_name\_hits.fas $WORKING_DIR\/$USER_RUNID\/excluded\/";
+            output_report("[WARN]\t$ortho_file: Too few hits\n");
+            unlink "$WORKING_DIR\/$ortho_file\_ortho\_hits.fas";
+            system "mv $WORKING_DIR\/$ortho_file\_ortho\_non\_redundant\_hits.fas $WORKING_DIR\/$USER_RUNID\/excluded\/";
         }
         else {
-            unlink "$WORKING_DIR\/$sequence_name\_query.fas";
-            system "mv $sequence_name\_hits.fas $WORKING_DIR\/$USER_RUNID\/seqs\/";
+            unlink "$WORKING_DIR\/$ortho_file\_ortho\_hits.fas";
+            system "mv $WORKING_DIR\/$ortho_file\_ortho\_non\_redundant\_hits.fas $WORKING_DIR\/$USER_RUNID\/seqs\/$ortho_file\_hits.fas";
 
             # remove selenocystein and non-alpha numeric characters as they cause BLAST/MAFFT
             # to complain/crash (and the --anysymbol option produces terrible alignments)
             # I have to check for this as some genome projects are just full of junk!
-            system "sed -i \'/^>/! s/U|\\w/X/g\' $WORKING_DIR\/$USER_RUNID\/seqs\/$sequence_name\_hits.fas";
+            system "sed -i \'/^>/! s/U|\\w/X/g\' $WORKING_DIR\/$USER_RUNID\/seqs\/$ortho_file\_hits.fas";
+        }
+
+    }
+
+    return;
+}
+
+sub remove_duplicate_sequences {
+
+    # based on IDs, this keeps our ortholog/multi-seq original seqs
+    # in the file, as duplicates, but shouldn't affect align/tree
+    my $file_name = shift;
+    my ( $FILE, $DIR, $EXT ) = fileparse( $file_name, "\_hits.fas" );
+
+    my %digests;
+    my $in = Bio::SeqIO->new(
+        - file   => "$file_name",
+        - format => 'fasta'
+    );
+
+    my $out = Bio::SeqIO->new(
+        - file   => ">$WORKING_DIR\/$FILE\_non_redundant$EXT",
+        - format => 'fasta'
+    );
+
+    while ( my $seq = $in->next_seq ) {
+        $digests{ md5_hex( $seq->id ) }++;
+        if ( $digests{ md5_hex( $seq->id ) } == 1 ) {
+            $out->write_seq($seq);
         }
     }
-    return;
 }
 
 sub search_step {
 
     # get all of the values passed to the sub...
     my ( $taxa_array_ref, $input_seqs_fname ) = @_;
+
+    print "XXXX $input_seqs_fname XXXX\n";
 
     # dereference the array
     my @taxa_array = @{$taxa_array_ref};
