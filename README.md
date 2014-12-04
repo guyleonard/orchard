@@ -76,7 +76,7 @@ One each of the following, our preference is always #1 and if you wish to add yo
 # Program Execution
 
 ## orchard.pl
-```
+```bash
 Required files for input:
 	-s sequence(s) file
 	-t taxa file
@@ -93,7 +93,7 @@ Order preference of parameters is ignored: i.e. specificy '-ab' will run blasts 
 -s can also be a folder of multiple files with multiple fasta sequences in each, which can be used for either a) importing a bunch of files which only have one sequence in each (although you would be better concatenating them to one FASTA file and using the normal approach) or b) multiple related sequences grouped or clustered where you wish for only one tree to be generated but from all the blast hits to each seed sequence in one file - for example, we use this to look at orthologous groups of genes.
 
 ## orchard_accessories.pl
-```
+```bash
 Required input:
 	-p parameters file
 Other parameters:
