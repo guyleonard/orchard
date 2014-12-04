@@ -1,5 +1,5 @@
 user:
- run_id: test # give your run an ID
+ run_id: test_ortho # give your run an ID
  reindex: n # force reindex of search db y/n
  retrieve: bioperl # bioperl or grep
 
