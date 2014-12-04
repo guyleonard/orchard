@@ -162,7 +162,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
             print "Running: Search ($SEARCH_PROGRAM) ONLY\n";
             search_step( \@taxa_array, $input_seqs_fname );
         }
-        
+
         my $end_time = timing( 'end', $start_time );
     }
 
@@ -389,7 +389,10 @@ sub alignment_step {
     output_report("[INFO]\tALIGNING: $#seq_file_names alignments using $ALIGNMENT_PROGRAM\n");
 
     for my $i ( 0 .. $#seq_file_names ) {
+
         my $current_sequences = $seq_file_names[$i];
+
+        print "Aligning $current_sequences with $ALIGNMENT_PROGRAM\n";
 
         my ( $file, $dir, $ext ) = fileparse $current_sequences, '\.fas';
 
@@ -423,7 +426,7 @@ sub search_step_ortho_groups {
     my ( $taxa_array_ref, $input_seqs_fname ) = @_;
 
     # files from orthogroup/multi-seq directory
-    my @file_names        = glob "$input_seqs_fname\/*.fasta";
+    my @file_names        = glob "$input_seqs_fname\/*.fasta $input_seqs_fname\/*.fas";
     my $ortho_files_total = @file_names;
 
     # dereference the array
@@ -440,7 +443,7 @@ sub search_step_ortho_groups {
         print "Starting: $ortho_files_count of $ortho_files_total = $orthofile\n";
         output_report("[INFO]\tStarting $ortho_files_count of $ortho_files_total = $orthofile\n");
 
-        our ( $ortho_file, $ortho_dir, $ortho_ext ) = fileparse( $orthofile, ".fasta" );
+        our ( $ortho_file, $ortho_dir, $ortho_ext ) = fileparse( $orthofile, qr'\..*' );
 
         #
         my $num_hit_seqs  = 0;
@@ -587,8 +590,6 @@ sub search_step {
 
     # get all of the values passed to the sub...
     my ( $taxa_array_ref, $input_seqs_fname ) = @_;
-
-    print "XXXX $input_seqs_fname XXXX\n";
 
     # dereference the array
     my @taxa_array = @{$taxa_array_ref};
