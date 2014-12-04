@@ -174,7 +174,7 @@ sub annotate_renamed_svgs {
         # 'svggraph' can only be used as an output format
         # so we cannot use Bio:TreeIO here
         # SVG:Parser doesn't like reading Dendroscope SVG
-        # complains "not well-formed (invalid token)"
+        # it complains "not well-formed (invalid token)"
         # so as SVG is really a form of XML we are going to
         ## try and use XML::Twig to parse it in tree mode
         ## XML::Parser
@@ -186,9 +186,6 @@ sub annotate_renamed_svgs {
         my @text   = $dom->getElementsByTagName("text");
 
         foreach my $t (@text) {
-
-            # get the text node inside the <title> element, and print its value
-            #print $t->firstChild->data, "\n";
 
             my $content = $t->firstChild->data;
             if ( ! looks_like_number($content) ) {
