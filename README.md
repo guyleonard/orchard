@@ -56,16 +56,12 @@ One each of the following, our preference is always #1 and if you wish to add yo
 #### Masking Programs
 
 1. [trimAl v1.3](http://trimal.cgenomics.org/)
-2. ~~[Gblocks](http://molevol.cmima.csic.es/castresana/Gblocks.html)~~ *
-
-* no longer supported. trimAl FTW!
+2. ~~[Gblocks](http://molevol.cmima.csic.es/castresana/Gblocks.html)~~ no longer supported. trimAl FTW!
 
 #### Tree Programs
 
 1. [FastTree2.1](http://meta.microbesonline.org/fasttree/)
-2. ~~[PhyML 3.0](http://www.atgc-montpellier.fr/phyml/binaries.php)~~ *
-
-* no longer supported. FastTree FTW!
+2. ~~[PhyML 3.0](http://www.atgc-montpellier.fr/phyml/binaries.php)~~ no longer supported. FastTree FTW!
 
 ### orchard_accessories.pl
 

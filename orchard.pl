@@ -510,6 +510,7 @@ sub search_step_ortho_groups {
                     print "\tRunning: blat\n";
                     run_blat( \@taxa_array, "$sequence_name\_query.fas", $sequence_name );
                 }
+
                 #when (/VSEARCH/ism) {
                 #    print "\tRunning: vsearch\n";
                 #    run_vsearch( \@taxa_array, "$sequence_name\_query.fas", $sequence_name );
@@ -656,6 +657,7 @@ sub search_step {
                 print "\tRunning: blat\n";
                 $num_hit_seqs = run_blat( \@taxa_array, $input_seqs_fname, $sequence_name );
             }
+
             #when (/VSEARCH/ism) {
             #    print "\tRunning: vsearch\n";
             #    run_vsearch( \@taxa_array, "$sequence_name\_query.fas", $sequence_name );
@@ -818,24 +820,52 @@ sub run_blast_legacy {
 
             my $database = $taxa_name_for_blast . '.fas';
 
-            # blast(x) from legacy blast package command
-            # we will use tabulated output as it's smaller than XML
-            # and we don't really need much information other than the hit ID
-            my $blast_command = "blastall -p $SEARCH_SUBPROGRAM";
-            $blast_command .= " -d $SEQ_DATA\/$database";
-            $blast_command .= " -i $sequence_name_for_blast\_query.fas";
-            $blast_command .= " -o $search_output";
-            $blast_command .= " -e $SEARCH_EVALUE";
-            $blast_command .= ' -m 8';
-            $blast_command .= " -b $SEARCH_TOPHITS";
+            # In the future I might consider replacing grep with List:MoreUtils 'any' to save
+            # large searches
+            if ( grep { $_ eq $taxa_name } @SEARCH_SPECIAL_TAXA ) {
 
-            #$blast_command .= " -v $SEARCH_TOPHITS";
-            $blast_command .= " -a $SEARCH_THREADS";
+                # blast(x) from legacy blast package command
+                # we will use tabulated output as it's smaller than XML
+                # and we don't really need much information other than the hit ID
+                my $blast_command = "blastall -p $SEARCH_SUBPROGRAM";
+                $blast_command .= " -d $SEQ_DATA\/$database";
+                $blast_command .= " -i $sequence_name_for_blast\_query.fas";
+                $blast_command .= " -o $search_output";
+                $blast_command .= " -e $SEARCH_EVALUE";
+                $blast_command .= ' -m 8';
+                $blast_command .= " -b $SEARCH_SPECIAL_TOPHITS";
 
-            #$blast_command .= " $SEARCH_OTHER";
+                #$blast_command .= " -v $SEARCH_TOPHITS";
+                $blast_command .= " -a $SEARCH_THREADS";
 
-            system($blast_command);
-            parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
+                #$blast_command .= " $SEARCH_OTHER";
+
+                system($blast_command);
+                parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
+
+                output_report("[INFO]\t$sequence_name: Using special -max_target_seqs $SEARCH_SPECIAL_TOPHITS for $taxa_name\n");
+
+            }
+            else {
+                # blast(x) from legacy blast package command
+                # we will use tabulated output as it's smaller than XML
+                # and we don't really need much information other than the hit ID
+                my $blast_command = "blastall -p $SEARCH_SUBPROGRAM";
+                $blast_command .= " -d $SEQ_DATA\/$database";
+                $blast_command .= " -i $sequence_name_for_blast\_query.fas";
+                $blast_command .= " -o $search_output";
+                $blast_command .= " -e $SEARCH_EVALUE";
+                $blast_command .= ' -m 8';
+                $blast_command .= " -b $SEARCH_TOPHITS";
+
+                #$blast_command .= " -v $SEARCH_TOPHITS";
+                $blast_command .= " -a $SEARCH_THREADS";
+
+                #$blast_command .= " $SEARCH_OTHER";
+
+                system($blast_command);
+                parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
+            }
 
             $taxa_count++;
         }
