@@ -1,6 +1,6 @@
 # Darren's Orchard
 
-A Quick Phylogenetic Tree Building Pipeline
+A Quick Phylogenetic Tree Building Pipeline...
 
 Seed Sequences --> BLASTp --> Alignment --> Masking --> Phylogenetic Tree Reconstruction --> SVG/PDF Tree Images --> Taxon Annotation
 
