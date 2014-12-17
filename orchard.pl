@@ -900,6 +900,69 @@ sub run_blat {
     return $hit_seqs_total;
 }
 
+sub run_vsearch {
+
+    my ( $taxa_array_ref, $input_seqs_fname, $sequence_name ) = @_;
+
+    my @taxa_array = @{$taxa_array_ref};
+    my $taxa_total = @taxa_array;
+    my $taxa_count = 1;
+
+    my $sequence_name_for_blast = $sequence_name;
+    $sequence_name_for_blast =~ s/\s+/\_/gms;    # Replace spaces with '_'
+
+    while (@taxa_array) {
+
+        # Current Taxa Name
+        my $taxa_name = shift(@taxa_array);
+
+        my $taxa_name_for_blast = $taxa_name;
+        $taxa_name_for_blast =~ s/\s+/\_/gms;    # Replace spaces with '_'
+
+        if ( $taxa_name =~ m/^#/sm ) {
+            print "\t\tSkipping commented out $taxa_name\n";
+            output_report("[INFO]\t$sequence_name: Skipping commented out $taxa_name\n");
+            $taxa_count++;
+        }
+        else {
+
+            # Blast Output Filename
+            my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$SEARCH_SUBPROGRAM";
+
+            # BLAST Output Progress
+            printf "\t\t>: $SEARCH_SUBPROGRAM: $taxa_count of $taxa_total\n\e[A";    # Progress...
+
+            my $database = $taxa_name_for_blast . '.fas';
+
+            # ublast from usearch package command
+            # we will use tabulated output as it's smaller than XML
+            # and we don't really need much information other than the hit ID
+            my $usearch_command = 'usearch -ublast';
+            $usearch_command .= " $sequence_name_for_blast\_query.fas";              # query file
+            $usearch_command .= " -db $SEQ_DATA\/$database";
+            $usearch_command .= " -evalue $SEARCH_EVALUE";                           # this should be a user option eventually
+            $usearch_command .= " -blast6out $search_output";                        # output filename
+            $usearch_command .= " -threads $SEARCH_THREADS";
+            $usearch_command .= " -maxaccepts $SEARCH_TOPHITS";
+
+            system($usearch_command);
+            parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
+
+            $taxa_count++;
+        }
+    }
+
+    # Find total number of hits
+    # I am still relying on 'grep' to count the number of sequences
+    # there is no way to get this directly from the Bio::Seq object
+    # without needless iteration. Anyone?
+    chomp( my $hit_seqs_total = `grep -c ">" $sequence_name\_hits.fas` );
+
+    #
+    print "\n\tNumber of Sequences found = $hit_seqs_total\n";
+    return $hit_seqs_total;
+}
+
 sub run_usearch {
 
     my ( $taxa_array_ref, $input_seqs_fname, $sequence_name ) = @_;

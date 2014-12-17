@@ -23,6 +23,7 @@ There are quite a few programs and other prerequisites you will need to have ins
 * Digest::MD5
 * IO::Prompt
 * YAML::XS
+* Perl4::CoreLibs ???
 
 You can install these by typing:
 
@@ -42,7 +43,8 @@ One each of the following, our preference is always #1 and if you wish to add yo
 1. [Blast+](http://blast.ncbi.nlm.nih.gov/Blast.cgi/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
 2. [Legacy Blast](http://blast.ncbi.nlm.nih.gov/Blast.cgi/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
 3. [Blat](https://genome.ucsc.edu/FAQ/FAQblat.html)
-4. [USEARCH](http://www.drive5.com/usearch/)
+4. [VSEARCH](https://github.com/torognes/vsearch) - usearch_global
+5. [USEARCH](http://www.drive5.com/usearch/) - ublast only
 
 #### Alignment Programs
 
@@ -54,14 +56,14 @@ One each of the following, our preference is always #1 and if you wish to add yo
 1. [trimAl v1.3](http://trimal.cgenomics.org/)
 2. ~~[Gblocks](http://molevol.cmima.csic.es/castresana/Gblocks.html)~~ *
 
-* deprecated and no longer supported. trimAl FTW!
+* no longer supported. trimAl FTW!
 
 #### Tree Programs
 
 1. [FastTree2.1](http://meta.microbesonline.org/fasttree/)
 2. ~~[PhyML 3.0](http://www.atgc-montpellier.fr/phyml/binaries.php)~~ *
 
-* deprecated and no longer supported. FastTree FTW!
+* no longer supported. FastTree FTW!
 
 ### orchard_accessories.pl
 
