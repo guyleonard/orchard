@@ -208,7 +208,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
             print "Running: Search ($SEARCH_PROGRAM) ONLY\n";
             search_step( \@taxa_array, $input_seqs_fname );
         }
-        
+
         my $end_time = timing( 'end', $start_time );
 
         # Run the user selected alignment option
@@ -510,6 +510,10 @@ sub search_step_ortho_groups {
                     print "\tRunning: blat\n";
                     run_blat( \@taxa_array, "$sequence_name\_query.fas", $sequence_name );
                 }
+                #when (/VSEARCH/ism) {
+                #    print "\tRunning: vsearch\n";
+                #    run_vsearch( \@taxa_array, "$sequence_name\_query.fas", $sequence_name );
+                #}
                 when (/USEARCH/ism) {
 
                     print "\tRunning: usearch\n";
@@ -518,6 +522,10 @@ sub search_step_ortho_groups {
                 default {
 
                     print "\tRunning: (default) blast+ on $sequence_name\n";
+
+                    # lets just make sure we are using the defaults and not user passed variables
+                    $SEARCH_PROGRAM    = 'blast+';
+                    $SEARCH_SUBPROGRAM = 'blastp';
                     run_blast_plus( \@taxa_array, "$sequence_name\_query.fas", $sequence_name );
                 }
             }
@@ -648,13 +656,19 @@ sub search_step {
                 print "\tRunning: blat\n";
                 $num_hit_seqs = run_blat( \@taxa_array, $input_seqs_fname, $sequence_name );
             }
+            #when (/VSEARCH/ism) {
+            #    print "\tRunning: vsearch\n";
+            #    run_vsearch( \@taxa_array, "$sequence_name\_query.fas", $sequence_name );
+            #}
             when (/USEARCH/ism) {
 
                 print "\tRunning: usearch\n";
                 $num_hit_seqs = run_usearch( \@taxa_array, $input_seqs_fname, $sequence_name );
             }
             default {
-
+                # lets just make sure we are using the defaults and not user passed variables
+                $SEARCH_PROGRAM    = 'blast+';
+                $SEARCH_SUBPROGRAM = 'blastp';
                 print "\tRunning: (default) blast+ on $sequence_name\n";
                 $num_hit_seqs = run_blast_plus( \@taxa_array, $input_seqs_fname, $sequence_name );
             }
@@ -937,13 +951,13 @@ sub run_vsearch {
             # ublast from usearch package command
             # we will use tabulated output as it's smaller than XML
             # and we don't really need much information other than the hit ID
-            my $usearch_command = 'usearch -ublast';
+            my $usearch_command = 'vsearch --usearch_global';
             $usearch_command .= " $sequence_name_for_blast\_query.fas";              # query file
-            $usearch_command .= " -db $SEQ_DATA\/$database";
-            $usearch_command .= " -evalue $SEARCH_EVALUE";                           # this should be a user option eventually
-            $usearch_command .= " -blast6out $search_output";                        # output filename
-            $usearch_command .= " -threads $SEARCH_THREADS";
-            $usearch_command .= " -maxaccepts $SEARCH_TOPHITS";
+            $usearch_command .= " --db $SEQ_DATA\/$database";
+            $usearch_command .= " --id 0.9";
+            $usearch_command .= " --blast6out $search_output";                       # output filename
+            $usearch_command .= " --threads $SEARCH_THREADS";
+            $usearch_command .= " --maxaccepts $SEARCH_TOPHITS";
 
             system($usearch_command);
             parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
