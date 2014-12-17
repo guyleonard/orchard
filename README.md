@@ -43,10 +43,10 @@ One each of the following, our preference is always #1 and if you wish to add yo
 1. [Blast+](http://blast.ncbi.nlm.nih.gov/Blast.cgi/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
 2. [Legacy Blast](http://blast.ncbi.nlm.nih.gov/Blast.cgi/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
 3. [Blat](https://genome.ucsc.edu/FAQ/FAQblat.html)
+4. [USEARCH](http://www.drive5.com/usearch/) - ublast only
 
-~~4. [VSEARCH](https://github.com/torognes/vsearch) - usearch_global~~ No amino acid support :(
+~~X. [VSEARCH](https://github.com/torognes/vsearch) - usearch_global~~ No amino acid support :(
 
-5. [USEARCH](http://www.drive5.com/usearch/) - ublast only
 
 #### Alignment Programs
 
