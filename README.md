@@ -72,6 +72,9 @@ One each of the following, our preference is always #1 and if you wish to add yo
 #### SVG Tree Creation
 
 1. [Dendroscope 3](http://ab.inf.uni-tuebingen.de/software/dendroscope/)
+1.1. XVFB - If you are running this on a server, you will not have a graphics interface which Dendroscope needs (even in command line mode), so please install XVFB.
+1.2. e.g. sudo apt-get install xvfb
+1.3. Dendroscope is run: xvfb-run --auto-servernum --server-num=1 Dendroscope +g
 
 # Program Execution
 
