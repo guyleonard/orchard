@@ -18,7 +18,7 @@ There are quite a few programs and other prerequisites you will need to have ins
 
 ## Perl Modules
 
-* Bundle::Bioperl
+* Bundle::BioPerl
 * Bio::DB::Fasta (sometimes I find this isn't installed with BioPerl !?)
 * Digest::MD5
 * IO::Prompt
@@ -28,8 +28,7 @@ There are quite a few programs and other prerequisites you will need to have ins
 You can install these by typing:
 
 ```
-$ sudo -MCPAN -e shell
-cpan[1]> install prerequisit_name
+$ sudo cpanm Bundle::BioPerl Bio::DB::Fasta Digest::MD5 IO::Prompt YAML::XS Perl4::CoreLibs
 ```
 
 ## Standalone Programs
