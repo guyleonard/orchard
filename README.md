@@ -20,6 +20,7 @@ There are quite a few programs and other prerequisites you will need to have ins
 
 * Bundle::BioPerl
 * Bio::DB::Fasta (sometimes I find this isn't installed with BioPerl !?)
+* DateTime::Format::Duration
 * Digest::MD5
 * IO::Prompt
 * YAML::XS
