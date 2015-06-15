@@ -20,8 +20,9 @@ There are quite a few programs and other prerequisites you will need to have ins
 
 ## Perl Modules
 
-* Bundle::Bioperl
+* Bundle::BioPerl
 * Bio::DB::Fasta (sometimes I find this isn't installed with BioPerl !?)
+* DateTime::Format::Duration
 * Digest::MD5
 * IO::Prompt
 * YAML::XS
@@ -30,8 +31,7 @@ There are quite a few programs and other prerequisites you will need to have ins
 You can install these by typing:
 
 ```
-$ sudo -MCPAN -e shell
-cpan[1]> install prerequisit_name
+$ sudo cpanm Bundle::BioPerl Bio::DB::Fasta Digest::MD5 IO::Prompt YAML::XS Perl4::CoreLibs
 ```
 
 ## Standalone Programs
@@ -46,8 +46,7 @@ One each of the following, our preference is always #1 and if you wish to add yo
 2. [Legacy Blast](http://blast.ncbi.nlm.nih.gov/Blast.cgi/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
 3. [Blat](https://genome.ucsc.edu/FAQ/FAQblat.html)
 4. [USEARCH](http://www.drive5.com/usearch/) - ublast only
-
-~~X. [VSEARCH](https://github.com/torognes/vsearch) - usearch_global~~ No amino acid support :(
+~~5. [VSEARCH](https://github.com/torognes/vsearch) - usearch_global~~ No amino acid support :(
 
 
 #### Alignment Programs
@@ -74,6 +73,9 @@ One each of the following, our preference is always #1 and if you wish to add yo
 #### SVG Tree Creation
 
 1. [Dendroscope 3](http://ab.inf.uni-tuebingen.de/software/dendroscope/)
+  1. XVFB - If you are running this on a server, you will not have a graphics interface which Dendroscope needs (even in command line mode), so please install XVFB.
+  2. e.g. sudo apt-get install xvfb
+  3. Dendroscope is run: xvfb-run --auto-servernum --server-num=1 Dendroscope +g
 
 #### PDF Creation (SVG to PDF)
 
