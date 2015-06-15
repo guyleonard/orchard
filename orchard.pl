@@ -85,13 +85,15 @@ our $TREE_PROGRAM = $EMPTY;
 our $USER_REINDEX = $EMPTY;
 our $USER_RUNID   = $EMPTY;
 
+our $WEED_FILE    = $EMPTY;
+
 ###########################################################
 ##           Main Program Flow                           ##
 ###########################################################
 
 # declare the perl command line flags/options we want to allow
 my %options = ();
-getopts( 's:t:p:hvbamof', \%options ) or display_help();    # or display_help();
+getopts( 's:t:p:hvbamoqfw:', \%options ) or display_help();    # or display_help();
 
 # Display the help message if the user invokes -h
 if ( $options{h} ) { display_help(); }
@@ -164,6 +166,13 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
         }
 
         my $end_time = timing( 'end', $start_time );
+    }
+
+    # w = "weed". This options removes trees that do not have hits to any
+    # members of a group of taxa or higher level classification
+    # e.g. if the potential tree does not have "plants" exclude it
+    if ( $options{w} ) {
+
     }
 
     # only run alignment step
