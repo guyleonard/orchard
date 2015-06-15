@@ -4,6 +4,8 @@ A Quick Phylogenetic Tree Building Pipeline...
 
 Seed Sequences --> BLASTp --> Alignment --> Masking --> Phylogenetic Tree Reconstruction --> SVG/PDF Tree Images --> Taxon Annotation
 
+## History
+
 This pipeline was first reported in Richards et. al. (2009) as a "an automated gene-by-gene phylogeny pipeline to generate a PhyML tree" and since then has gone through several iterations, but remains similar in its goal. Between 2009 and 2013 there were quite a few changes in the processing of the script as we had moved to another institution and took development with us, these included; new taxa added to the database along with a small redesign of the initial database, new programs added e.g. trimAl and FastTree2 instead of GBLocks and PhyML, some additional scripts to handle renaming of taxa, annotation and graphically addding PFAM domains, along with plenty of other code changes. None of these were particularly well documented, other than in internal code comments, although at all times the code were available on request and it became quite messy to clone and to get other people to use.
 
 This is an attempt to do better and make available a newer version of this process. It won't be entirely modular with easy switch in/out of other programs in the pipeline but it should be in a state where any other user can clone the repository, set up a databse of their own genomes, install the relevant programs, and start making 100s of phylogenetic guide trees very easily. An attempt has been made to reduce the number of accessory scripts, simplify the process of supplying options - by using YAML (human readable parameter files) and command line options instead of having to edit any code!
@@ -72,6 +74,10 @@ One each of the following, our preference is always #1 and if you wish to add yo
 #### SVG Tree Creation
 
 1. [Dendroscope 3](http://ab.inf.uni-tuebingen.de/software/dendroscope/)
+
+#### PDF Creation (SVG to PDF)
+
+1. [Inkscape](https://www.inkscape.org/en/)
 
 # Program Execution
 
