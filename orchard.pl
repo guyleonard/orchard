@@ -93,7 +93,7 @@ our $WEED_FILE    = $EMPTY;
 
 # declare the perl command line flags/options we want to allow
 my %options = ();
-getopts( 's:t:p:hvbamoqfw:', \%options ) or display_help();    # or display_help();
+getopts( 's:t:p:hvbamoqfw', \%options ) or display_help();    # or display_help();
 
 # Display the help message if the user invokes -h
 if ( $options{h} ) { display_help(); }
@@ -149,6 +149,9 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     # directory options
     $SEQ_DATA = $paramaters->{directories}->{database};                              # no default
 
+    # weeding options
+    $WEED_FILE = $paramaters->{weed}->{filename};                              # no default
+
     # only run search (blast) step
     if ( $options{b} ) {
 
@@ -172,7 +175,10 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     # members of a group of taxa or higher level classification
     # e.g. if the potential tree does not have "plants" exclude it
     if ( $options{w} ) {
-
+        print "Running: Weeding pre-alignments that don't contain taxa/groups from $WEED_FILE\n";
+        my $start_time = timing('start');
+        weed_step();
+        my $end_time = timing( 'end', $start_time );
     }
 
     # only run alignment step
@@ -246,6 +252,14 @@ else {
 ###########################################################
 ##           Main Subroutines 	                         ##
 ###########################################################
+
+#################################################
+##           Weeding Subroutine                ##
+#################################################
+
+sub weed_step {
+
+}
 
 #################################################
 ##           Tree Subroutines                  ##
