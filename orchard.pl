@@ -21,7 +21,7 @@ use IO::Prompt;                                                  # User prompts
 use YAML::XS qw/LoadFile/;                                       # for the parameters file, user friendly layout
 
 ##
-use Data::Dumper;                                                # temporary during rewrite to dump data nicely to screen
+use Data::Dumper;    # temporary during rewrite to dump data nicely to screen
 
 # remove ## comments before publication
 #
@@ -87,7 +87,7 @@ our $TREE_BS      = $EMPTy;
 our $USER_REINDEX = $EMPTY;
 our $USER_RUNID   = $EMPTY;
 
-our $WEED_FILE    = $EMPTY;
+our $WEED_FILE = $EMPTY;
 
 ###########################################################
 ##           Main Program Flow                           ##
@@ -154,7 +154,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     $SEQ_DATA = $paramaters->{directories}->{database};                              # no default
 
     # weeding options
-    $WEED_FILE = $paramaters->{weed}->{filename};                              # no default
+    $WEED_FILE = $paramaters->{weed}->{filename};                                    # no default
 
     # only run search (blast) step
     if ( $options{b} ) {
@@ -279,37 +279,46 @@ sub tree_step {
 
     output_report("[INFO]\tTREE BUILDING: $#mask_file_names alignments using $TREE_PROGRAM\n");
 
-    for my $i ( 0 .. $#mask_file_names ) {
-        my ( $file, $dir, $ext ) = fileparse $mask_file_names[$i], '\.afa-tr';
+    if ( $TREE_PROGRAM =~ /fasttree/ism ) {
+        for my $i ( 0 .. $#mask_file_names ) {
+            my ( $file, $dir, $ext ) = fileparse $mask_file_names[$i], '\.afa-tr';
 
-        run_fasttree("$masks_directory\/$file\.afa-tr");
+            run_fasttree("$masks_directory\/$file\.afa-tr");
+        }
+    }
+    else {
+        for my $i ( 0 .. $#mask_file_names ) {
+            my ( $file, $dir, $ext ) = fileparse $mask_file_names[$i], '\.afa-tr';
+
+            run_raxml_ml_rapid_bd("$masks_directory\/$file\.afa-tr");
+        }
     }
 }
 
 sub run_raxml_ml_rapid_bd {
-    my $masked_sequences = shift;
+    my $masked_sequences  = shift;
     my $raxmltree_command = $EMPTY;
 
     my ( $file, $dir, $ext ) = fileparse $masked_sequences, '\.afa\-tr';
 
     if ( $TREE_PROGRAM =~ /raxmlHPC-PTHREADS/ism ) {
         $raxmltree_command = "raxmlHPC-PTHREADS";
-        $raxmltree_command = " -f a"; # fast ML
-        $raxmltree_command = " -m $TREE_MODEL"; # auto model + gamma
-        $raxmltree_command = " -p " . int(rand(10000)) . " -x " . int(rand(10000)) . ""; # rapid BS mode
-        $raxmltree_command = " -# $TREE_BS" # e.g. 100 BS
-        $raxmltree_command = " -s $masked_sequences"; # masked alignment
+        $raxmltree_command = " -f a";                                                           # fast ML
+        $raxmltree_command = " -m $TREE_MODEL";                                                 # model
+        $raxmltree_command = " -p " . int( rand(10000) ) . " -x " . int( rand(10000) ) . "";    # rapid BS mode
+        $raxmltree_command = " -# $TREE_BS";                                                    # e.g. 100 BS
+        $raxmltree_command = " -s $masked_sequences";                                           # masked alignment
     }
     else {
-        #$fasttree_command = "FastTree $TREE_OPTIONS";
-        #$fasttree_command .= " $masked_sequences";
-        #$fasttree_command .= " > $WORKING_DIR\/$USER_RUNID\/trees\/$file\_FT.tree";
+        $raxmltree_command = "raxmlHPC";
+        $raxmltree_command = " -f a";                                                           # fast ML
+        $raxmltree_command = " -m $TREE_MODEL";                                                 # model
+        $raxmltree_command = " -p " . int( rand(10000) ) . " -x " . int( rand(10000) ) . "";    # rapid BS mode
+        $raxmltree_command = " -# $TREE_BS";                                                    # e.g. 100 BS
+        $raxmltree_command = " -s $masked_sequences";                                           # masked alignment
     }
 
     system($raxmltree_command);
-
-    #raxmlHPC -f a -m PROTGAMMAAUTO -p 12345 -x 12345 -# 100 -s dna.phy
-
 }
 
 sub run_fasttree {
@@ -371,8 +380,11 @@ sub masking_step {
                 print " not OK. Excluding sequence.\n";
 
                 # then abandon this sequence, report it, move to excluded
-                output_report("[WARN]\t$file does not satisfy trimal cutoffs ($MASKING_CUTOFF1 or $MASKING_CUTOFF2). Moved to excluded directory.\n");
-                system "mv $WORKING_DIR\/$USER_RUNID\/masks\/$file\.afa-tr $WORKING_DIR\/$USER_RUNID\/excluded\/$file\.afa-tr";
+                output_report(
+"[WARN]\t$file does not satisfy trimal cutoffs ($MASKING_CUTOFF1 or $MASKING_CUTOFF2). Moved to excluded directory.\n"
+                );
+                system
+"mv $WORKING_DIR\/$USER_RUNID\/masks\/$file\.afa-tr $WORKING_DIR\/$USER_RUNID\/excluded\/$file\.afa-tr";
             }
             else {
                 print " OK.\n";
@@ -599,11 +611,13 @@ sub search_step_ortho_groups {
         if ( $num_hit_seqs <= $TREE_MINTAXA ) {
             output_report("[WARN]\t$ortho_file: Too few hits\n");
             unlink "$WORKING_DIR\/$ortho_file\_ortho\_hits.fas";
-            system "mv $WORKING_DIR\/$ortho_file\_ortho\_non\_redundant\_hits.fas $WORKING_DIR\/$USER_RUNID\/excluded\/";
+            system
+              "mv $WORKING_DIR\/$ortho_file\_ortho\_non\_redundant\_hits.fas $WORKING_DIR\/$USER_RUNID\/excluded\/";
         }
         else {
             unlink "$WORKING_DIR\/$ortho_file\_ortho\_hits.fas";
-            system "mv $WORKING_DIR\/$ortho_file\_ortho\_non\_redundant\_hits.fas $WORKING_DIR\/$USER_RUNID\/seqs\/$ortho_file\_hits.fas";
+            system
+"mv $WORKING_DIR\/$ortho_file\_ortho\_non\_redundant\_hits.fas $WORKING_DIR\/$USER_RUNID\/seqs\/$ortho_file\_hits.fas";
 
             # remove selenocystein and non-alpha numeric characters as they cause BLAST/MAFFT
             # to complain/crash (and the --anysymbol option produces terrible alignments)
@@ -769,7 +783,8 @@ sub run_blast_plus {
             my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$SEARCH_SUBPROGRAM";
 
             # BLAST Output Progress
-            printf "\t\t>: $SEARCH_SUBPROGRAM: $taxa_count of $taxa_total\n\e[A";    # - $taxa_name\n\e[A";    # Progress...
+            printf
+              "\t\t>: $SEARCH_SUBPROGRAM: $taxa_count of $taxa_total\n\e[A";    # - $taxa_name\n\e[A";    # Progress...
 
             my $database = $taxa_name_for_blast . '.fas';
 
@@ -794,7 +809,8 @@ sub run_blast_plus {
                 system($blast_command);
                 parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
 
-                output_report("[INFO]\t$sequence_name: Using special -max_target_seqs $SEARCH_SPECIAL_TOPHITS for $taxa_name\n");
+                output_report(
+                    "[INFO]\t$sequence_name: Using special -max_target_seqs $SEARCH_SPECIAL_TOPHITS for $taxa_name\n");
             }
             else {
                 # blast(x) from blast+ package command
@@ -887,7 +903,8 @@ sub run_blast_legacy {
                 system($blast_command);
                 parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
 
-                output_report("[INFO]\t$sequence_name: Using special -max_target_seqs $SEARCH_SPECIAL_TOPHITS for $taxa_name\n");
+                output_report(
+                    "[INFO]\t$sequence_name: Using special -max_target_seqs $SEARCH_SPECIAL_TOPHITS for $taxa_name\n");
 
             }
             else {
@@ -964,11 +981,11 @@ sub run_blat {
             # we will use tabulated output as it's smaller than XML
             # and we don't really need much information other than the hit ID
             my $blat_command = 'blat';
-            $blat_command .= ' -prot';                                               # this should be a user option eventually
+            $blat_command .= ' -prot';                                  # this should be a user option eventually
             $blat_command .= " $SEQ_DATA\/$database";
-            $blat_command .= " $sequence_name_for_blast\_query.fas";                 # query file
+            $blat_command .= " $sequence_name_for_blast\_query.fas";    # query file
             $blat_command .= ' -out=blast8';
-            $blat_command .= " $search_output";                                      # output filename
+            $blat_command .= " $search_output";                         # output filename
 
             system($blat_command);
             parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
@@ -1089,10 +1106,10 @@ sub run_usearch {
             # we will use tabulated output as it's smaller than XML
             # and we don't really need much information other than the hit ID
             my $usearch_command = 'usearch -ublast';
-            $usearch_command .= " $sequence_name_for_blast\_query.fas";              # query file
+            $usearch_command .= " $sequence_name_for_blast\_query.fas";    # query file
             $usearch_command .= " -db $SEQ_DATA\/$database";
-            $usearch_command .= " -evalue $SEARCH_EVALUE";                           # this should be a user option eventually
-            $usearch_command .= " -blast6out $search_output";                        # output filename
+            $usearch_command .= " -evalue $SEARCH_EVALUE";                 # this should be a user option eventually
+            $usearch_command .= " -blast6out $search_output";              # output filename
             $usearch_command .= " -threads $SEARCH_THREADS";
             $usearch_command .= " -maxaccepts $SEARCH_TOPHITS";
 
@@ -1225,7 +1242,8 @@ sub display_help {
 
     print "Required files for input:\n\t-s sequence(s) file\n\t-t taxa file\n\t-p paramaters file\n";
     print "Example: perl orchard.pl -s sequences.fasta -t taxa_list.txt -p paramaters.yaml\n";
-    print "Other paramaters:\n\t-b blast only\n\t-a alignment only\n\t-m mask only\n\t-o tree building only\n\t-q run sequentially\n\t-f force yes\n";
+    print
+"Other paramaters:\n\t-b blast only\n\t-a alignment only\n\t-m mask only\n\t-o tree building only\n\t-q run sequentially\n\t-f force yes\n";
     exit(1);
 }
 
