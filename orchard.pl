@@ -302,7 +302,7 @@ sub run_raxml_ml_rapid_bd {
     my ( $file, $dir, $ext ) = fileparse $masked_sequences, '\.afa\-tr';
 
     if ( $TREE_PROGRAM =~ /raxmlHPC-PTHREADS/ism ) {
-        $raxmltree_command = "raxmlHPC-PTHREADS";
+        $raxmltree_command = "raxmlHPC-PTHREADS -T $SEARCH_THREADS";
         $raxmltree_command = " -f a";                                                           # fast ML
         $raxmltree_command = " -m $TREE_MODEL";                                                 # model
         $raxmltree_command = " -p " . int( rand(10000) ) . " -x " . int( rand(10000) ) . "";    # rapid BS mode
