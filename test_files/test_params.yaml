@@ -4,13 +4,13 @@ user:
  retrieve: bioperl # bioperl or grep
 
 search:
- # blast, blast+, blat, vsearch, usearch
+ # blast, blast+, blat, usearch
  # in some cases legacy blast is 'faster' than blast+ but occasionally returns
  # fewer hits than the newer version...
- program: vsearch
+ program: blast
  # blastp, blastx, ublast, blat, etc
- subprogram: usearch_global
- threads: 4
+ subprogram: blastp
+ threads: 8
  other: # any special commands - not implemented
  # values below are only supported by blast/blast+/usearch
  evalue: 1e-10
