@@ -81,6 +81,8 @@ our $SEQ_DATA = $EMPTY;
 our $TREE_MINTAXA = $EMPTY;
 our $TREE_OPTIONS = $EMPTY;
 our $TREE_PROGRAM = $EMPTY;
+our $TREE_MODEL   = $EMPTY;
+our $TREE_BS      = $EMPTy;
 
 our $USER_REINDEX = $EMPTY;
 our $USER_RUNID   = $EMPTY;
@@ -145,6 +147,8 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     $TREE_PROGRAM = $paramaters->{trees}->{program} || 'FastTreeMP';
     $TREE_OPTIONS = $paramaters->{trees}->{options};                                 # no default
     $TREE_MINTAXA = $paramaters->{trees}->{min_taxa} || '4';
+    $TREE_MODEL   = $paramaters->{trees}->{model} || 'PROTGAMMAAUTO';
+    $TREE_BS      = $paramaters->{trees}->{bootstraps} || '100';
 
     # directory options
     $SEQ_DATA = $paramaters->{directories}->{database};                              # no default
