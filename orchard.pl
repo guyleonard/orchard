@@ -280,8 +280,32 @@ sub tree_step {
 
         run_fasttree("$masks_directory\/$file\.afa-tr");
     }
+}
 
-    return;
+sub run_raxml_ml_rapid_bd {
+    my $masked_sequences = shift;
+    my $raxmltree_command = $EMPTY;
+
+    my ( $file, $dir, $ext ) = fileparse $masked_sequences, '\.afa\-tr';
+
+    if ( $TREE_PROGRAM =~ /raxmlHPC-PTHREADS/ism ) {
+        $raxmltree_command = "raxmlHPC-PTHREADS";
+        $raxmltree_command = " -f a"; # fast ML
+        $raxmltree_command = " -m PROTGAMMAAUTO"; # auto model + gamma
+        $raxmltree_command = " -p 12345 -x 12345" # rapid BS mode
+        $raxmltree_command = " -# 100" # 100 BS
+        $raxmltree_command = " -s $masked_sequences"; # masked alignment
+    }
+    else {
+        #$fasttree_command = "FastTree $TREE_OPTIONS";
+        #$fasttree_command .= " $masked_sequences";
+        #$fasttree_command .= " > $WORKING_DIR\/$USER_RUNID\/trees\/$file\_FT.tree";
+    }
+
+    system($raxmltree_command);
+
+    #raxmlHPC -f a -m PROTGAMMAAUTO -p 12345 -x 12345 -# 100 -s dna.phy
+
 }
 
 sub run_fasttree {
@@ -304,7 +328,6 @@ sub run_fasttree {
     }
 
     system($fasttree_command);
-    return;
 }
 
 #################################################
@@ -355,8 +378,6 @@ sub masking_step {
             print "\t\tMask Length: $mask_length is OK\n";
         }
     }
-
-    return;
 }
 
 sub run_trimal {
@@ -436,8 +457,6 @@ sub alignment_step {
             }
         }
     }
-
-    return;
 }
 
 #################################################
@@ -588,8 +607,6 @@ sub search_step_ortho_groups {
             system "sed -i \'/^>/!s/U/X/g\' $WORKING_DIR\/$USER_RUNID\/seqs\/$ortho_file\_hits.fas";
         }
     }
-
-    return;
 }
 
 sub remove_duplicate_sequences {
