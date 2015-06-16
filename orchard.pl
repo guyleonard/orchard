@@ -295,9 +295,9 @@ sub run_raxml_ml_rapid_bd {
     if ( $TREE_PROGRAM =~ /raxmlHPC-PTHREADS/ism ) {
         $raxmltree_command = "raxmlHPC-PTHREADS";
         $raxmltree_command = " -f a"; # fast ML
-        $raxmltree_command = " -m PROTGAMMAAUTO"; # auto model + gamma
-        $raxmltree_command = " -p 12345 -x 12345" # rapid BS mode
-        $raxmltree_command = " -# 100" # 100 BS
+        $raxmltree_command = " -m $TREE_MODEL"; # auto model + gamma
+        $raxmltree_command = " -p " . int(rand(10000)) . " -x " . int(rand(10000)) . ""; # rapid BS mode
+        $raxmltree_command = " -# $TREE_BS" # e.g. 100 BS
         $raxmltree_command = " -s $masked_sequences"; # masked alignment
     }
     else {
