@@ -263,17 +263,16 @@ else {
 
 sub run_hmm_stage {
 
-    my $sequence_directory   = "$WORKING_DIR\/$USER_RUNID\/seqs";
-    my $alignments_directory = "$WORKING_DIR\/$USER_RUNID\/alignments";
+    my $sequence_directory           = "$WORKING_DIR\/$USER_RUNID\/seqs";
+    my $alignments_directory         = "$WORKING_DIR\/$USER_RUNID\/alignments";
     my $reduced_alignments_directory = "$WORKING_DIR\/$USER_RUNID\/alignments\/reduced";
-    my $masks_directory      = "$WORKING_DIR\/$USER_RUNID\/masks";
-
+    my $masks_directory              = "$WORKING_DIR\/$USER_RUNID\/masks";
 
 }
 
 sub get_mask_length {
 
-    my $masks_directory      = "$WORKING_DIR\/$USER_RUNID\/masks";
+    my $masks_directory = "$WORKING_DIR\/$USER_RUNID\/masks";
 
 }
 
