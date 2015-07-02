@@ -82,7 +82,7 @@ our $TREE_MINTAXA = $EMPTY;
 our $TREE_OPTIONS = $EMPTY;
 our $TREE_PROGRAM = $EMPTY;
 our $TREE_MODEL   = $EMPTY;
-our $TREE_BS      = $EMPTy;
+our $TREE_BS      = $EMPTY;
 
 our $USER_REINDEX = $EMPTY;
 our $USER_RUNID   = $EMPTY;
@@ -256,6 +256,26 @@ else {
 ###########################################################
 ##           Main Subroutines 	                         ##
 ###########################################################
+
+#################################################
+##              HMM Subroutines                ##
+#################################################
+
+sub run_hmm_stage {
+
+    my $sequence_directory   = "$WORKING_DIR\/$USER_RUNID\/seqs";
+    my $alignments_directory = "$WORKING_DIR\/$USER_RUNID\/alignments";
+    my $reduced_alignments_directory = "$WORKING_DIR\/$USER_RUNID\/alignments\/reduced";
+    my $masks_directory      = "$WORKING_DIR\/$USER_RUNID\/masks";
+
+
+}
+
+sub get_mask_length {
+
+    my $masks_directory      = "$WORKING_DIR\/$USER_RUNID\/masks";
+
+}
 
 #################################################
 ##           Weeding Subroutine                ##
@@ -437,6 +457,9 @@ sub mask_check {
 #################################################
 
 sub alignment_step {
+
+    ## need to add a stage to copy files from orthogroup dir to seqs
+    ## if we are going to be bypassing the search step...
 
     # directory variables
     my $sequence_directory   = "$WORKING_DIR\/$USER_RUNID\/seqs";
