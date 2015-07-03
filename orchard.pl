@@ -95,7 +95,7 @@ our $WEED_FILE = $EMPTY;
 
 # declare the perl command line flags/options we want to allow
 my %options = ();
-getopts( 's:t:p:hvbamoqf', \%options ) or display_help();    # or display_help();
+getopts( 's:t:p:hvbfamoq', \%options ) or display_help();    # or display_help();
 
 # Display the help message if the user invokes -h
 if ( $options{h} ) { display_help(); }
@@ -154,7 +154,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     $SEQ_DATA = $paramaters->{directories}->{database};                              # no default
 
     # filtering options
-    $FILTER_FILE = $paramaters->{filter}->{filename};                                    # no default
+    $FILTER_FILE = $paramaters->{filter}->{filename};                                # no default
 
     # only run search (blast) step
     if ( $options{b} ) {
@@ -341,6 +341,104 @@ sub build_hmm_models {
 
 sub filtering_step {
 
+    # directories
+    my $sequence_directory = "$WORKING_DIR\/$USER_RUNID\/seqs";
+    my $excluded_directory = "$WORKING_DIR\/$USER_RUNID\/excluded";
+
+    # get list of sequences that were not excluded in previous stage
+    my @seq_file_names = glob "$sequence_directory\/*.fas";
+
+    # iterate through the stream of sequences and perform each search
+    output_report("[INFO]\tFILTERING: $#seq_file_names sequence files using $FILTER_FILE\n");
+
+    for my $i ( 0 .. $#seq_file_names ) {
+
+        my $current_sequences = $seq_file_names[$i];
+        my ( $file, $dir, $ext ) = fileparse $current_sequences, '\.fas';
+
+        print "Filtering $file with $FILTER_FILE\n";
+
+        my @taxa_array = get_taxa_list("$sequence_directory\/$current_sequences");
+
+        foreach my $taxa (@taxa_array) {
+
+            my $taxonomy = get_taxonomy("$taxa");
+
+        }
+    }
+
+}
+
+sub get_taxonomy {
+
+    my $taxon_name = shift;
+
+    ## Eventually I will deprecate the web interface
+    ## as it is slow and go to using local caches files
+    ## but not today!
+    ### Bio::Taxon
+    ## Local Files from ftp://ftp.ncbi.nih.gov/pub/taxonomy/ - taxcat
+    #my $dbh = Bio::DB::Taxonomy->new(
+    #    -source    => 'flatfile',
+    #    -nodesfile => "$working_directory/taxonomy/nodes.dmp",
+    #    -namesfile => "$working_directory/taxonomy/names.dmp"
+    #);
+
+    ## Entrez providing stable connection.
+    my $dbh = Bio::DB::Taxonomy->new( -source => 'entrez' );
+
+    # Retreive taxon_name
+    my $unknown = $dbh->get_taxon( -name => "$taxon_name" );
+
+    # build an empty tree
+    my $tree_functions = Bio::Tree::Tree->new();
+
+    # and get the lineage of the taxon_name
+    my @lineage = $tree_functions->get_lineage_nodes($unknown);
+
+    # Then we can extract the name of each node, which will give us the Taxonomy lineages...
+    my $taxonomy = $EMPTY;
+    foreach my $item (@lineage) {
+        my $name = $item->node_name;
+        my $rank = $item->rank;
+        $taxonomy = "$taxonomy$name,";
+    }
+
+    return $taxonomy;
+}
+
+# this gets all accessions from a a file
+# returned in an array
+sub get_accession_list {
+
+    $filename = shift;
+    my @taxa_array = ();
+
+    my $input_stream = Bio::SeqIO->new( '-file' => $filename );
+    while ( my $seq = $input_stream->next_seq() ) {
+        my $seq_id = $seq->id;
+        push( @taxa_array, $seq_id );
+    }
+    return @taxa_array;
+}
+
+# return the taxa name from the given accession
+# this currently runs with the mysql database
+# in future this will become depracated
+# but I can't give it up just yet
+sub get_taxon_names {
+
+    my $seqID      = shift;
+    my $taxon_name = "";
+
+    $statement = $dbh->prepare("SELECT species FROM protein where protein_ID='$seqID'")
+      or die "\nError ($DBI::err):$DBI::errstr\n";
+    $statement->execute or die "\nError ($DBI::err):$DBI::errstr\n";
+    ($taxon_name) = $statement->fetchrow_array;
+    if ( $taxon_name eq "" ) {
+        $taxon_name = "$seqID";
+    }
+    return "$taxon_name";
 }
 
 #################################################
