@@ -95,7 +95,7 @@ our $WEED_FILE = $EMPTY;
 
 # declare the perl command line flags/options we want to allow
 my %options = ();
-getopts( 's:t:p:hvbamoqfw', \%options ) or display_help();    # or display_help();
+getopts( 's:t:p:hvbamoqf', \%options ) or display_help();    # or display_help();
 
 # Display the help message if the user invokes -h
 if ( $options{h} ) { display_help(); }
@@ -153,8 +153,8 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     # directory options
     $SEQ_DATA = $paramaters->{directories}->{database};                              # no default
 
-    # weeding options
-    $WEED_FILE = $paramaters->{weed}->{filename};                                    # no default
+    # filtering options
+    $FILTER_FILE = $paramaters->{filter}->{filename};                                    # no default
 
     # only run search (blast) step
     if ( $options{b} ) {
@@ -175,13 +175,13 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
         my $end_time = timing( 'end', $start_time );
     }
 
-    # w = "weed". This options removes trees that do not have hits to any
+    # Filtering step. This options removes trees that do not have hits to any
     # members of a group of taxa or higher level classification
     # e.g. if the potential tree does not have "plants" exclude it
-    if ( $options{w} ) {
-        print "Running: Weeding pre-alignments that don't contain taxa/groups from $WEED_FILE\n";
+    if ( $options{f} ) {
+        print "Running: Filtering pre-aligned seqs that don't contain taxa/groups from $WEED_FILE\n";
         my $start_time = timing('start');
-        weed_step();
+        filter_step();
         my $end_time = timing( 'end', $start_time );
     }
 
@@ -263,24 +263,83 @@ else {
 
 sub run_hmm_stage {
 
-    my $sequence_directory           = "$WORKING_DIR\/$USER_RUNID\/seqs";
+    # location of required seq files/directory
+    my $seqs_directory         = "$WORKING_DIR\/$USER_RUNID\/seqs";
+    my $reduced_seqs_directory = "$WORKING_DIR\/$USER_RUNID\/seqs\/reduced";
+
+    # make the directory as it won't exist yet
+    if ( !-d $reduced_alignments_directory ) { mkdir $reduced_alignments_directory }
+
+    # location of required alignment files/directory
     my $alignments_directory         = "$WORKING_DIR\/$USER_RUNID\/alignments";
     my $reduced_alignments_directory = "$WORKING_DIR\/$USER_RUNID\/alignments\/reduced";
-    my $masks_directory              = "$WORKING_DIR\/$USER_RUNID\/masks";
+    if ( !-d $reduced_alignments_directory ) { mkdir $reduced_alignments_directory }
 
+    # location of required masks files/directory
+    my $masks_directory         = "$WORKING_DIR\/$USER_RUNID\/masks";
+    my $reduced_masks_directory = "$WORKING_DIR\/$USER_RUNID\/masks\/reduced";
+
+    # get list of aligned sequences
+    my @aligned_file_names = glob "$alignments_directory\/*.afa";
+
+    # get list of masked sequences
+    my @masked_file_names = glob "$masks_directory\/*.afa-tr";
+
+    # reduce the aligned seqs by removing seqs that are < the
+    # corresponding file's mask length
+    foreach my $masked_filename (@masked_file_names) {
+
+        # get the length of the masked alignment
+        my $mask_length = mask_check($masked_filename);
+
+        # get the correspoding aligned sequence by replacement
+        my ( $file, $dir, $ext ) = fileparse $masked_filename, '\.afa-tr';
+        my $reduced_aligned_seqs = "$reduced_alignments_directory\/$file$ext";
+        my $aligned_sequences    = $masked_filename;
+        $aligned_sequences =~ s/masks/alignments/;
+        $aligned_sequences =~ s/-tr//;
+
+        # read in the alignment (not mask)
+        my $inseq = Bio::SeqIO->new(
+            -file    => $aligned_sequences,
+            -verbose => -1
+        );
+
+        # while each sequence
+        while ( my $seq = $inseq->next_seq ) {
+
+            # output kept sequences to "reduced" folder
+            my $seq_out = Bio::SeqIO->new(
+                -file   => ">reduced_aligned_seqs",
+                -format => 'fasta',
+            );
+
+            my $current_seq_length = $seq->length;
+
+            # check if the current sequence is greater than
+            # the masked size of the alignment
+            if ( $current_seq_length >= $mask_length ) {
+
+                # output the sequence
+                $seq_out->write_seq($seq);
+            }
+        }
+    }
+
+    #  hmmbuild <hmmfile_out> <msafile>
 }
 
-sub get_mask_length {
+sub build_hmm_models {
 
-    my $masks_directory = "$WORKING_DIR\/$USER_RUNID\/masks";
-
+    # build hmms from the reduced seqs
+    # that have been realigned and remasked/trimmed
 }
 
 #################################################
-##           Weeding Subroutine                ##
+##           Filtering Subroutine              ##
 #################################################
 
-sub weed_step {
+sub filtering_step {
 
 }
 
@@ -1265,7 +1324,7 @@ sub display_help {
     print "Required files for input:\n\t-s sequence(s) file\n\t-t taxa file\n\t-p paramaters file\n";
     print "Example: perl orchard.pl -s sequences.fasta -t taxa_list.txt -p paramaters.yaml\n";
     print
-"Other paramaters:\n\t-b blast only\n\t-a alignment only\n\t-m mask only\n\t-o tree building only\n\t-q run sequentially\n\t-f force yes\n";
+"Other paramaters:\n\t-b blast only\n\t-a alignment only\n\t-m mask only\n\t-o tree building only\n\t-q run sequentially\n";
     exit(1);
 }
 
