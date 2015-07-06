@@ -373,17 +373,19 @@ sub filtering_step {
         print "Filtering $file$ext with $FILTER_FILE\n";
 
         my @taxa_accessions = get_accession_list("$sequence_directory\/$file$ext");
-        my $missing_count = 0;
+        my $missing_count   = 0;
 
         foreach my $accession (@taxa_accessions) {
 
             my $taxon_name = get_taxon_names($accession);
-            print "$taxon_name\t";
+
+            #print "$taxon_name\t";
 
             # if the accession is the same as the taxon name
             # it's either a seed or not in the DB, ignore it
             if ( $accession eq $taxon_name ) {
-                print "Probaly the 'seed' sequence, ignoring\n";
+
+                #print "Probaly the 'seed' sequence, ignoring\n";
                 next;
             }
 
@@ -394,7 +396,7 @@ sub filtering_step {
             # won't get a match, but it will cause this script
             # to false positive a match...
             # this goes for spelling mistakes too....!
-            my ($genus, $species) = split ' ', $taxon_name;
+            my ( $genus, $species ) = split ' ', $taxon_name;
             $taxon_name = "$genus $species";
 
             # get the taxonomic lineage and put it in to an array
@@ -403,31 +405,39 @@ sub filtering_step {
             # separated string...hey ho!
             my @taxonomy = split ',', get_taxonomy($taxon_name);
             my $taxonomy_search = join( '|', @taxonomy );
-            print "$taxonomy_search\n";
+
+            #print "$taxonomy_search\n";
 
             # check for species name in the filter list
             if ( my ($matched_taxa) = grep { $_ eq $taxon_name } @filter_list ) {
-                print "\tMATCH1: $matched_taxa\tTaxa: $taxon_name\n";
+
+                #print "\tMATCH1: $matched_taxa\tTaxa: $taxon_name\n";
+
+                output_report("[INFO]\tFILTERING: Matched $accession - $taxon_name to $matched_taxa, retained.\n");
                 last;
             }
 
             # then check for taxonomic lineages
-            # I am hoping that the comma separated list will match
-            # to a single item...
             elsif ( my ($matched_taxonomy) = grep { /$taxonomy_search/ } @filter_list ) {
-                print "\t\tMATCH2:\tTaxonomy: @taxonomy\n";
-                #output_report("[INFO]\tFILTERING: $#seq_file_names sequence files using $FILTER_FILE\n");
+
+                #print "\t\tMATCH2:\tTaxonomy: @taxonomy\n";
+
+                output_report("[INFO]\tFILTERING: Matched $accession - $taxon_name within $matched_taxonomy, retained.\n");
                 last;
             }
             else {
                 $missing_count++;
-                print "No matched filtered taxa/taxonomy\n";
+
+                #print "No matched filtered taxa/taxonomy\n";
             }
 
             # at the end of all the searching if our count
-            # equals 
-            if ($missing_count >= $#taxa_accessions ) {
-                print "Move file to excluded...\n";
+            # equals
+            if ( $missing_count >= $#taxa_accessions ) {
+                my $command = "mv $current_sequences $excluded_directory";
+                system($command);
+                output_report("[INFO]\tFILTERING: No matches for $current_sequences, excluding\n");
+                #print "Moving file to excluded...\n";
             }
         }
     }
