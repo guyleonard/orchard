@@ -12,12 +12,15 @@ use Bio::SeqIO;                                                  # Use Bio::Perl
 use Cwd;                                                         # Gets pathname of current working directory
 use DateTime::Format::Duration;                                  # Duration of processes
 use DateTime;                                                    # Start and End times
+use DBI;                                                         # mysql database access
 use Digest::MD5;                                                 # Generate random string for run ID
 use Digest::MD5 'md5_hex';
 use feature qw{ switch };
 use File::Basename;                                              # Remove path information and extract 8.3 filename
 use Getopt::Std;                                                 # Command line options, finally!
 use IO::Prompt;                                                  # User prompts
+use Bio::Taxon;
+use Bio::Tree::Tree;
 use YAML::XS qw/LoadFile/;                                       # for the parameters file, user friendly layout
 
 ##
@@ -87,7 +90,7 @@ our $TREE_BS      = $EMPTY;
 our $USER_REINDEX = $EMPTY;
 our $USER_RUNID   = $EMPTY;
 
-our $WEED_FILE = $EMPTY;
+our $FILTER_FILE = $EMPTY;
 
 ###########################################################
 ##           Main Program Flow                           ##
@@ -179,9 +182,9 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     # members of a group of taxa or higher level classification
     # e.g. if the potential tree does not have "plants" exclude it
     if ( $options{f} ) {
-        print "Running: Filtering pre-aligned seqs that don't contain taxa/groups from $WEED_FILE\n";
+        print "Running: Filtering pre-aligned seqs that don't contain taxa/groups from $FILTER_FILE\n";
         my $start_time = timing('start');
-        filter_step();
+        filtering_step();
         my $end_time = timing( 'end', $start_time );
     }
 
@@ -210,7 +213,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     }
 
     # run default
-    if ( !$options{b} && !$options{a} && !$options{m} && !$options{o} && !$options{q} ) {
+    if ( !$options{b} && !$options{a} && !$options{m} && !$options{o} && !$options{q} && !$options{f} ) {
 
         # run all steps, but all blasts first then amt steps
         print "Running: ALL Steps; all searches ($SEARCH_PROGRAM) first!\n";
@@ -268,7 +271,7 @@ sub run_hmm_stage {
     my $reduced_seqs_directory = "$WORKING_DIR\/$USER_RUNID\/seqs\/reduced";
 
     # make the directory as it won't exist yet
-    if ( !-d $reduced_alignments_directory ) { mkdir $reduced_alignments_directory }
+    #if ( !-d $reduced_alignments_directory ) { mkdir $reduced_alignments_directory }
 
     # location of required alignment files/directory
     my $alignments_directory         = "$WORKING_DIR\/$USER_RUNID\/alignments";
@@ -348,25 +351,86 @@ sub filtering_step {
     # get list of sequences that were not excluded in previous stage
     my @seq_file_names = glob "$sequence_directory\/*.fas";
 
+    # read in the list of taxa that must be in set of seqs
+    open my $filter_file, '<', $FILTER_FILE;
+    my @filter_list = <$filter_file>;
+    close $filter_file;
+
+    # Let's not continue if there are no files!
+    if ( $#seq_file_names == -1 ) {
+        print "There are no files in the seqs directory, did you run blast?\n";
+        exit;
+    }
+
     # iterate through the stream of sequences and perform each search
     output_report("[INFO]\tFILTERING: $#seq_file_names sequence files using $FILTER_FILE\n");
 
     for my $i ( 0 .. $#seq_file_names ) {
 
         my $current_sequences = $seq_file_names[$i];
-        my ( $file, $dir, $ext ) = fileparse $current_sequences, '\.fas';
+        my ( $file, $dir, $ext ) = fileparse $current_sequences, '.fas';
 
-        print "Filtering $file with $FILTER_FILE\n";
+        print "Filtering $file$ext with $FILTER_FILE\n";
 
-        my @taxa_array = get_taxa_list("$sequence_directory\/$current_sequences");
+        my @taxa_accessions = get_accession_list("$sequence_directory\/$file$ext");
+        my $missing_count = 0;
 
-        foreach my $taxa (@taxa_array) {
+        foreach my $accession (@taxa_accessions) {
 
-            my $taxonomy = get_taxonomy("$taxa");
+            my $taxon_name = get_taxon_names($accession);
+            print "$taxon_name\t";
 
+            # if the accession is the same as the taxon name
+            # it's either a seed or not in the DB, ignore it
+            if ( $accession eq $taxon_name ) {
+                print "Probaly the 'seed' sequence, ignoring\n";
+                next;
+            }
+
+            # modify the taxon name to be Genus species only
+            # this is because the ncbi taxonomy is EXACT match
+            # only, so if your taxa has a strain like:
+            # 'MAD 698-R' but in NCBI it is 'Mad-698-R' you
+            # won't get a match, but it will cause this script
+            # to false positive a match...
+            # this goes for spelling mistakes too....!
+            my ($genus, $species) = split ' ', $taxon_name;
+            $taxon_name = "$genus $species";
+
+            # get the taxonomic lineage and put it in to an array
+            # then split it up with pipes, and it works in a search
+            # not sure why compared to just the returned comma
+            # separated string...hey ho!
+            my @taxonomy = split ',', get_taxonomy($taxon_name);
+            my $taxonomy_search = join( '|', @taxonomy );
+            print "$taxonomy_search\n";
+
+            # check for species name in the filter list
+            if ( my ($matched_taxa) = grep { $_ eq $taxon_name } @filter_list ) {
+                print "\tMATCH1: $matched_taxa\tTaxa: $taxon_name\n";
+                last;
+            }
+
+            # then check for taxonomic lineages
+            # I am hoping that the comma separated list will match
+            # to a single item...
+            elsif ( my ($matched_taxonomy) = grep { /$taxonomy_search/ } @filter_list ) {
+                print "\t\tMATCH2:\tTaxonomy: @taxonomy\n";
+                #output_report("[INFO]\tFILTERING: $#seq_file_names sequence files using $FILTER_FILE\n");
+                last;
+            }
+            else {
+                $missing_count++;
+                print "No matched filtered taxa/taxonomy\n";
+            }
+
+            # at the end of all the searching if our count
+            # equals 
+            if ($missing_count >= $#taxa_accessions ) {
+                print "Move file to excluded...\n";
+            }
         }
     }
-
 }
 
 sub get_taxonomy {
@@ -378,14 +442,16 @@ sub get_taxonomy {
     ## but not today!
     ### Bio::Taxon
     ## Local Files from ftp://ftp.ncbi.nih.gov/pub/taxonomy/ - taxcat
-    #my $dbh = Bio::DB::Taxonomy->new(
-    #    -source    => 'flatfile',
-    #    -nodesfile => "$working_directory/taxonomy/nodes.dmp",
-    #    -namesfile => "$working_directory/taxonomy/names.dmp"
-    #);
+    my $dbh = Bio::DB::Taxonomy->new(
+        -source => 'flatfile',
+
+        #    -directory => '/home/cs02gl/Desktop/genomes/taxonomy',
+        -nodesfile => '/home/cs02gl/Desktop/genomes/taxonomynodes.dmp',
+        -namesfile => '/home/cs02gl/Desktop/genomes/taxonomynames.dmp'
+    );
 
     ## Entrez providing stable connection.
-    my $dbh = Bio::DB::Taxonomy->new( -source => 'entrez' );
+    ## my $dbh = Bio::DB::Taxonomy->new( -source => 'entrez' );
 
     # Retreive taxon_name
     my $unknown = $dbh->get_taxon( -name => "$taxon_name" );
@@ -400,7 +466,8 @@ sub get_taxonomy {
     my $taxonomy = $EMPTY;
     foreach my $item (@lineage) {
         my $name = $item->node_name;
-        my $rank = $item->rank;
+
+        #my $rank = $item->rank;
         $taxonomy = "$taxonomy$name,";
     }
 
@@ -411,7 +478,7 @@ sub get_taxonomy {
 # returned in an array
 sub get_accession_list {
 
-    $filename = shift;
+    my $filename   = shift;
     my @taxa_array = ();
 
     my $input_stream = Bio::SeqIO->new( '-file' => $filename );
@@ -428,16 +495,29 @@ sub get_accession_list {
 # but I can't give it up just yet
 sub get_taxon_names {
 
-    my $seqID      = shift;
-    my $taxon_name = "";
+    my $seqID = shift;
 
-    $statement = $dbh->prepare("SELECT species FROM protein where protein_ID='$seqID'")
+    #my $taxon_name = "";
+
+    # Database Settings
+    my $USER      = "orchard";
+    my $PASSWORD  = "jcsy4s8b";
+    my $SERVER    = "144.173.27.211";
+    my $TABLENAME = "cider";
+    my $DATABASE  = "dbi:mysql:new_proteins:$SERVER";    # do not edit
+
+    # Database handle
+    my $dbh = DBI->connect( $DATABASE, $USER, $PASSWORD ) or die "\nError ($DBI::err):$DBI::errstr\n";
+
+    my $statement = $dbh->prepare("SELECT species FROM $TABLENAME where protein_ID='$seqID'")
       or die "\nError ($DBI::err):$DBI::errstr\n";
     $statement->execute or die "\nError ($DBI::err):$DBI::errstr\n";
-    ($taxon_name) = $statement->fetchrow_array;
-    if ( $taxon_name eq "" ) {
+    my ($taxon_name) = $statement->fetchrow_array;
+
+    if ( !defined $taxon_name ) {
         $taxon_name = "$seqID";
     }
+
     return "$taxon_name";
 }
 
