@@ -92,6 +92,8 @@ our $USER_RUNID   = $EMPTY;
 
 our $FILTER_FILE = $EMPTY;
 
+our $HMM_TAXA_LIST = $EMPTY;
+
 ###########################################################
 ##           Main Program Flow                           ##
 ###########################################################
@@ -131,15 +133,15 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     $SEARCH_EVALUE     = $paramaters->{search}->{evalue}     || '1e-10';
     $SEARCH_TOPHITS    = $paramaters->{search}->{top_hits}   || '1';
     $SEARCH_MAXLENGTH  = $paramaters->{search}->{max_length} || '3000';
-    @SEARCH_SPECIAL_TAXA = split( /,/ms, $paramaters->{search}->{special_taxa} );    # no default
-    $SEARCH_SPECIAL_TOPHITS = $paramaters->{search}->{special_top_hits} || $SEARCH_TOPHITS;
-    $SEARCH_THREADS         = $paramaters->{search}->{threads}          || '1';
+    @SEARCH_SPECIAL_TAXA    = defined split( /,/ms, $paramaters->{search}->{special_taxa} ) || '';
+    $SEARCH_SPECIAL_TOPHITS = $paramaters->{search}->{special_top_hits}                     || $SEARCH_TOPHITS;
+    $SEARCH_THREADS         = $paramaters->{search}->{threads}                              || '1';
 
     #$SEARCH_OTHER = $paramaters->{search}->{other};                                # no default
 
     # alignment options
     $ALIGNMENT_PROGRAM = $paramaters->{alignment}->{program} || 'mafft';
-    $ALIGNMENT_OPTIONS = $paramaters->{alignment}->{options};                        # no default
+    $ALIGNMENT_OPTIONS = $paramaters->{alignment}->{options};              # no default
     $ALIGNMENT_THREADS = $paramaters->{alignment}->{threads} || '1';
 
     # masking options
@@ -148,16 +150,19 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
 
     # tree building options
     $TREE_PROGRAM = $paramaters->{trees}->{program} || 'FastTreeMP';
-    $TREE_OPTIONS = $paramaters->{trees}->{options};                                 # no default
+    $TREE_OPTIONS = $paramaters->{trees}->{options};                       # no default
     $TREE_MINTAXA = $paramaters->{trees}->{min_taxa} || '4';
     $TREE_MODEL   = $paramaters->{trees}->{model} || 'PROTGAMMAAUTO';
     $TREE_BS      = $paramaters->{trees}->{bootstraps} || '100';
 
     # directory options
-    $SEQ_DATA = $paramaters->{directories}->{database};                              # no default
+    $SEQ_DATA = $paramaters->{directories}->{database};                    # no default
 
     # filtering options
-    $FILTER_FILE = $paramaters->{filter}->{filename};                                # no default
+    $FILTER_FILE = $paramaters->{filter}->{filename};                      # no default
+
+    # hmm option
+    $HMM_TAXA_LIST = $paramaters->{hmm}->{taxa_list};
 
     # only run search (blast) step
     if ( $options{b} ) {
@@ -264,79 +269,144 @@ else {
 ##              HMM Subroutines                ##
 #################################################
 
-sub run_hmm_stage {
+# might abandom this first sub for now - do we really need to go through
+# the process of reducing the orthogroups and realigning and retrimming
+# them all - seems a lengthy process for potentially little gain...
 
-    # location of required seq files/directory
-    my $seqs_directory         = "$WORKING_DIR\/$USER_RUNID\/seqs";
-    my $reduced_seqs_directory = "$WORKING_DIR\/$USER_RUNID\/seqs\/reduced";
+# sub run_hmm_stage {
 
-    # make the directory as it won't exist yet
-    #if ( !-d $reduced_alignments_directory ) { mkdir $reduced_alignments_directory }
+#     # location of required seq files/directory
+#     my $seqs_directory         = "$WORKING_DIR\/$USER_RUNID\/seqs";
+#     my $reduced_seqs_directory = "$WORKING_DIR\/$USER_RUNID\/seqs\/reduced";
+#     if ( !-d $reduced_seqs_directory ) { mkdir $reduced_seqs_directory } # make the directory as it won't exist yet
 
-    # location of required alignment files/directory
-    my $alignments_directory         = "$WORKING_DIR\/$USER_RUNID\/alignments";
-    my $reduced_alignments_directory = "$WORKING_DIR\/$USER_RUNID\/alignments\/reduced";
-    if ( !-d $reduced_alignments_directory ) { mkdir $reduced_alignments_directory }
+#     # location of required alignment files/directory
+#     my $alignments_directory         = "$WORKING_DIR\/$USER_RUNID\/alignments";
+#     my $reduced_alignments_directory = "$WORKING_DIR\/$USER_RUNID\/alignments\/reduced";
+#     if ( !-d $reduced_alignments_directory ) { mkdir $reduced_alignments_directory }
 
-    # location of required masks files/directory
-    my $masks_directory         = "$WORKING_DIR\/$USER_RUNID\/masks";
-    my $reduced_masks_directory = "$WORKING_DIR\/$USER_RUNID\/masks\/reduced";
+#     # location of required masks files/directory
+#     my $masks_directory         = "$WORKING_DIR\/$USER_RUNID\/masks";
+#     my $reduced_masks_directory = "$WORKING_DIR\/$USER_RUNID\/masks\/reduced";
+#     if ( !-d $reduced_masks_directory ) { mkdir $reduced_masks_directory }
 
-    # get list of aligned sequences
-    my @aligned_file_names = glob "$alignments_directory\/*.afa";
+#     # get list of aligned sequences
+#     my @aligned_file_names = glob "$alignments_directory\/*.afa";
 
-    # get list of masked sequences
-    my @masked_file_names = glob "$masks_directory\/*.afa-tr";
+#     # get list of masked sequences
+#     my @masked_file_names = glob "$masks_directory\/*.afa-tr";
 
-    # reduce the aligned seqs by removing seqs that are < the
-    # corresponding file's mask length
-    foreach my $masked_filename (@masked_file_names) {
+#     # reduce the aligned seqs by removing seqs that are < the
+#     # corresponding file's mask length
+#     foreach my $masked_filename (@masked_file_names) {
 
-        # get the length of the masked alignment
-        my $mask_length = mask_check($masked_filename);
+#         # get the length of the masked alignment
+#         my $mask_length = mask_check($masked_filename);
 
-        # get the correspoding aligned sequence by replacement
-        my ( $file, $dir, $ext ) = fileparse $masked_filename, '\.afa-tr';
-        my $reduced_aligned_seqs = "$reduced_alignments_directory\/$file$ext";
-        my $aligned_sequences    = $masked_filename;
-        $aligned_sequences =~ s/masks/alignments/;
-        $aligned_sequences =~ s/-tr//;
+#         # get the correspoding aligned sequence by replacement
+#         my ( $file, $dir, $ext ) = fileparse $masked_filename, '\.afa-tr';
+#         my $reduced_aligned_seqs = "$reduced_alignments_directory\/$file$ext";
+#         my $aligned_sequences    = $masked_filename;
+#         $aligned_sequences =~ s/masks/alignments/;
+#         $aligned_sequences =~ s/-tr//;
 
-        # read in the alignment (not mask)
-        my $inseq = Bio::SeqIO->new(
-            -file    => $aligned_sequences,
-            -verbose => -1
-        );
+#         # read in the alignment (not mask)
+#         my $inseq = Bio::SeqIO->new(
+#             -file    => $aligned_sequences,
+#             -verbose => -1
+#         );
 
-        # while each sequence
-        while ( my $seq = $inseq->next_seq ) {
+#         # while each sequence
+#         while ( my $seq = $inseq->next_seq ) {
 
-            # output kept sequences to "reduced" folder
-            my $seq_out = Bio::SeqIO->new(
-                -file   => ">reduced_aligned_seqs",
-                -format => 'fasta',
-            );
+#             # output kept sequences to "reduced" folder
+#             my $seq_out = Bio::SeqIO->new(
+#                 -file   => ">reduced_aligned_seqs",
+#                 -format => 'fasta',
+#             );
 
-            my $current_seq_length = $seq->length;
+#             my $current_seq_length = $seq->length;
 
-            # check if the current sequence is greater than
-            # the masked size of the alignment
-            if ( $current_seq_length >= $mask_length ) {
+#             # check if the current sequence is greater than
+#             # the masked size of the alignment
+#             if ( $current_seq_length >= $mask_length ) {
 
-                # output the sequence
-                $seq_out->write_seq($seq);
-            }
-        }
-    }
+#                 # output the sequence
+#                 $seq_out->write_seq($seq);
+#             }
+#         }
+#     }
 
-    #  hmmbuild <hmmfile_out> <msafile>
-}
+#     #  hmmbuild <hmmfile_out> <msafile>
+# }
 
-sub build_hmm_models {
+# build hmms from the reduced seqs
+# hmmbuild <hmmfile_out> <msafile>
+# sub build_hmm_models {
 
-    # build hmms from the reduced seqs
-    # that have been realigned and remasked/trimmed
-}
+#     # location of required alignment files/directory
+#     my $alignments_directory         = "$WORKING_DIR\/$USER_RUNID\/alignments";
+
+#     # location of hmm output directory
+#     my $hmm_directory         = "$WORKING_DIR\/$USER_RUNID\/hmms";
+#     if ( !-d $hmm_directory ) { mkdir $hmm_directory }
+
+#     # get list of aligned sequences
+#     my @aligned_file_names = glob "$alignments_directory\/*.afa";
+
+#     print "Building: HMMs\n";
+#     foreach my $aligned_filename (@aligned_file_names) {
+
+#         my ( $file, $dir, $ext ) = fileparse $masked_filename, '\.afa-tr';
+#         print "\t$file\t";
+#         my $command = "hmmbuild --amino --cpu $SEARCH_THREADS -n $file";
+#         $command = $command . " $hmm_directory\/$file\.hmm $aligned_filename";
+
+#         system $command;
+#         print "Built\n";
+#     }
+# }
+
+# sub search_hmms {
+
+#     # location of hmm models directory
+#     my $hmm_directory         = "$WORKING_DIR\/$USER_RUNID\/hmms";
+
+#     # location of hmm output directory
+#     my $hmm_directory         = "$WORKING_DIR\/$USER_RUNID\/hmms\/out";
+#     if ( !-d $hmm_directory ) { mkdir $hmm_directory }
+
+#     # get list of aligned sequences
+#     my @hmm_file_names = glob "$hmm_directory\/*.hmm";
+
+#     # hmmsearch [options] <hmmfile> <seqdb>
+
+#     foreach my $hmm_file (@hmm_file_names) {
+
+#     }
+
+#     #     my $taxa_name_for_blast = $taxa_name;
+#     #     $taxa_name_for_blast =~ s/\s+/\_/gms;    # Replace spaces with '_'
+
+#     #     if ( $taxa_name =~ m/^#/sm ) {
+#     #         print "\t\tSkipping commented out $taxa_name\n";
+#     #         output_report("[INFO]\t$sequence_name: Skipping commented out $taxa_name\n");
+#     #         $taxa_count++;
+#     #     }
+#     #     else {
+
+#     #         # Blast Output Filename
+#     #         my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$SEARCH_SUBPROGRAM";
+
+#     #         # BLAST Output Progress
+#     #         printf
+#     #           "\t\t>: $SEARCH_SUBPROGRAM: $taxa_count of $taxa_total\n\e[A";    # - $taxa_name\n\e[A";    # Progress...
+
+#     #         my $database = $taxa_name_for_blast . '.fas';
+#     #     }
+#     # }
+
+# }
 
 #################################################
 ##           Filtering Subroutine              ##
@@ -422,7 +492,8 @@ sub filtering_step {
 
                 #print "\t\tMATCH2:\tTaxonomy: @taxonomy\n";
 
-                output_report("[INFO]\tFILTERING: Matched $accession - $taxon_name within $matched_taxonomy, retained.\n");
+                output_report(
+                    "[INFO]\tFILTERING: Matched $accession - $taxon_name within $matched_taxonomy, retained.\n");
                 last;
             }
             else {
@@ -437,6 +508,7 @@ sub filtering_step {
                 my $command = "mv $current_sequences $excluded_directory";
                 system($command);
                 output_report("[INFO]\tFILTERING: No matches for $current_sequences, excluding\n");
+
                 #print "Moving file to excluded...\n";
             }
         }
@@ -456,8 +528,8 @@ sub get_taxonomy {
         -source => 'flatfile',
 
         #    -directory => '/home/cs02gl/Desktop/genomes/taxonomy',
-        -nodesfile => '/home/cs02gl/Desktop/genomes/taxonomynodes.dmp',
-        -namesfile => '/home/cs02gl/Desktop/genomes/taxonomynames.dmp'
+        -nodesfile => '/home/cs02gl/Desktop/genomes/taxonomy/nodes.dmp',
+        -namesfile => '/home/cs02gl/Desktop/genomes/taxonomy/names.dmp'
     );
 
     ## Entrez providing stable connection.
