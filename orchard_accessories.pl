@@ -52,6 +52,9 @@ our $VERSION     = '2014-10-17';
 #
 ###########################################################
 
+# This may be useful for colouring taxonomy at a later point
+# http://tools.medialab.sciences-po.fr/iwanthue/?utm_content=buffer3847f&utm_medium=social&utm_source=twitter.com&utm_campaign=buffer
+
 ###########################################################
 ##           Global Variables                            ##
 ###########################################################
