@@ -2,6 +2,7 @@
 use strict;
 use warnings;
 
+#TEST
 # Given/when instead of switch - warns in 5.18 eventually I will switch this to "for()" http://www.effectiveperlprogramming.com/2011/05/use-for-instead-of-given/
 #use experimental 'smartmatch';
 no if $] >= 5.017011, warnings => 'experimental::smartmatch';    # ignore experimental warning for 'when'
@@ -522,7 +523,7 @@ sub get_taxonomy {
     ## Eventually I will deprecate the web interface
     ## as it is slow and go to using local caches files
     ## but not today!
-    
+
     ### Bio::Taxon
     ## Local Files from ftp://ftp.ncbi.nih.gov/pub/taxonomy/ - taxcat
     ##my $dbh = Bio::DB::Taxonomy->new(
