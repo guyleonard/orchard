@@ -449,13 +449,13 @@ sub filtering_step {
 
             my $taxon_name = get_taxon_names($accession);
 
-            #print "$taxon_name\t";
+            print "\t$accession = $taxon_name\n";
 
             # if the accession is the same as the taxon name
             # it's either a seed or not in the DB, ignore it
             if ( $accession eq $taxon_name ) {
 
-                #print "Probaly the 'seed' sequence, ignoring\n";
+                print "\t\tProbaly the 'seed' sequence, ignoring\n";
                 next;
             }
 
@@ -466,8 +466,16 @@ sub filtering_step {
             # won't get a match, but it will cause this script
             # to false positive a match...
             # this goes for spelling mistakes too....!
+	    # Also if there is a taxa with "sp." e.g. Dacryopinax sp.
+	    # then often the wrong taxonomy is returned
+ 	    # to remedy, lets only give it the genus
             my ( $genus, $species ) = split ' ', $taxon_name;
-            $taxon_name = "$genus $species";
+	    if ($species eq "sp." || $species eq "sp") {
+		$taxon_name = "$genus";
+	    }
+	    else {
+            	$taxon_name = "$genus $species";
+	    }
 
             # get the taxonomic lineage and put it in to an array
             # then split it up with pipes, and it works in a search
@@ -476,12 +484,12 @@ sub filtering_step {
             my @taxonomy = split ',', get_taxonomy($taxon_name);
             my $taxonomy_search = join( '|', @taxonomy );
 
-            #print "$taxonomy_search\n";
+            print "\t\tTaxonomy= $taxonomy_search\n";
 
             # check for species name in the filter list
             if ( my ($matched_taxa) = grep { $_ eq $taxon_name } @filter_list ) {
 
-                #print "\tMATCH1: $matched_taxa\tTaxa: $taxon_name\n";
+                print "\t\t\tMATCH1: $matched_taxa\tTaxa: $taxon_name\n";
 
                 output_report("[INFO]\tFILTERING: Matched $accession - $taxon_name to $matched_taxa, retained.\n");
                 last;
@@ -490,7 +498,7 @@ sub filtering_step {
             # then check for taxonomic lineages
             elsif ( my ($matched_taxonomy) = grep { /$taxonomy_search/ } @filter_list ) {
 
-                #print "\t\tMATCH2:\tTaxonomy: @taxonomy\n";
+                print "\t\t\tMATCH2:\tTaxonomy: @taxonomy\n";
 
                 output_report(
                     "[INFO]\tFILTERING: Matched $accession - $taxon_name within $matched_taxonomy, retained.\n");
@@ -499,7 +507,7 @@ sub filtering_step {
             else {
                 $missing_count++;
 
-                #print "No matched filtered taxa/taxonomy\n";
+                print "\t\tNo matched filtered taxa/taxonomy\n\n";
             }
 
             # at the end of all the searching if our count
@@ -509,7 +517,7 @@ sub filtering_step {
                 system($command);
                 output_report("[INFO]\tFILTERING: No matches for $current_sequences, excluding\n");
 
-                #print "Moving file to excluded...\n";
+                print "\t\tMoving file to excluded...\n\n";
             }
         }
     }
@@ -524,16 +532,14 @@ sub get_taxonomy {
     ## but not today!
     ### Bio::Taxon
     ## Local Files from ftp://ftp.ncbi.nih.gov/pub/taxonomy/ - taxcat
-    my $dbh = Bio::DB::Taxonomy->new(
-        -source => 'flatfile',
-
-        #    -directory => '/home/cs02gl/Desktop/genomes/taxonomy',
-        -nodesfile => '/home/cs02gl/Desktop/genomes/taxonomy/nodes.dmp',
-        -namesfile => '/home/cs02gl/Desktop/genomes/taxonomy/names.dmp'
-    );
+    #my $dbh = Bio::DB::Taxonomy->new(
+    #    -source => 'flatfile',
+    #    -nodesfile => '/storage/ncbi/taxdump/nodes.dmp',
+    #    -namesfile => '/storage/ncbi/taxdump/names.dmp'
+    #);
 
     ## Entrez providing stable connection.
-    ## my $dbh = Bio::DB::Taxonomy->new( -source => 'entrez' );
+    my $dbh = Bio::DB::Taxonomy->new( -source => 'entrez' );
 
     # Retreive taxon_name
     my $unknown = $dbh->get_taxon( -name => "$taxon_name" );
