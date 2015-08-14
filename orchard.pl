@@ -100,7 +100,7 @@ our $HMM_TAXA_LIST = $EMPTY;
 
 # declare the perl command line flags/options we want to allow
 my %options = ();
-getopts( 's:t:p:hvbfamoq', \%options ) or display_help();    # or display_help();
+getopts( 's:t:p:hvbfamo', \%options ) or display_help();    # or display_help();
 
 # Display the help message if the user invokes -h
 if ( $options{h} ) { display_help(); }
@@ -118,7 +118,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     my $paramaters = LoadFile("$options{p}");
     $USER_RUNID = $paramaters->{user}->{run_id} || substr( Digest::MD5::md5_hex(rand), 0, 10 );
     $USER_REINDEX = $paramaters->{user}->{reindex} || 'n';    # default no
-    if ( $USER_REINDEX eq 'y' ) { output_report("[INFO]\tUser requested reindexing of database directory files\n"); }
+    if ( $USER_REINDEX eq 'y' ) { output_report("[INFO]\tUser requested reindexing of database directory files - slow!\n"); }
     my $run_directory = "$WORKING_DIR\/$USER_RUNID";
 
     # Now we can make the directories
@@ -162,7 +162,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     $FILTER_FILE = $paramaters->{filter}->{filename};                      # no default
 
     # hmm option
-    $HMM_TAXA_LIST = $paramaters->{hmm}->{taxa_list};
+    # $HMM_TAXA_LIST = $paramaters->{hmm}->{taxa_list};
 
     # only run search (blast) step
     if ( $options{b} ) {
@@ -187,7 +187,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     # members of a group of taxa or higher level classification
     # e.g. if the potential tree does not have "plants" exclude it
     if ( $options{f} ) {
-        print "Running: Filtering pre-aligned seqs that don't contain taxa/groups from $FILTER_FILE\n";
+        print "Running: Filtering un-aligned seqs that don't contain taxa/groups from $FILTER_FILE\n";
         my $start_time = timing('start');
         filtering_step();
         my $end_time = timing( 'end', $start_time );
@@ -218,7 +218,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     }
 
     # run default
-    if ( !$options{b} && !$options{a} && !$options{m} && !$options{o} && !$options{q} && !$options{f} ) {
+    if ( !$options{b} && !$options{a} && !$options{m} && !$options{o} && !$options{f} ) {
 
         # run all steps, but all blasts first then amt steps
         print "Running: ALL Steps; all searches ($SEARCH_PROGRAM) first!\n";
@@ -524,16 +524,16 @@ sub get_taxonomy {
     ## but not today!
     ### Bio::Taxon
     ## Local Files from ftp://ftp.ncbi.nih.gov/pub/taxonomy/ - taxcat
-    my $dbh = Bio::DB::Taxonomy->new(
-        -source => 'flatfile',
+    ##my $dbh = Bio::DB::Taxonomy->new(
+    ##    -source => 'flatfile',
 
-        #    -directory => '/home/cs02gl/Desktop/genomes/taxonomy',
-        -nodesfile => '/home/cs02gl/Desktop/genomes/taxonomy/nodes.dmp',
-        -namesfile => '/home/cs02gl/Desktop/genomes/taxonomy/names.dmp'
-    );
+    ##    #    -directory => '/home/cs02gl/Desktop/genomes/taxonomy',
+    ##    -nodesfile => '/home/cs02gl/Desktop/genomes/taxonomy/nodes.dmp',
+    ##    -namesfile => '/home/cs02gl/Desktop/genomes/taxonomy/names.dmp'
+    ##);
 
     ## Entrez providing stable connection.
-    ## my $dbh = Bio::DB::Taxonomy->new( -source => 'entrez' );
+    my $dbh = Bio::DB::Taxonomy->new( -source => 'entrez' );
 
     # Retreive taxon_name
     my $unknown = $dbh->get_taxon( -name => "$taxon_name" );
@@ -1584,7 +1584,7 @@ sub display_help {
     print "Required files for input:\n\t-s sequence(s) file\n\t-t taxa file\n\t-p paramaters file\n";
     print "Example: perl orchard.pl -s sequences.fasta -t taxa_list.txt -p paramaters.yaml\n";
     print
-"Other paramaters:\n\t-b blast only\n\t-a alignment only\n\t-m mask only\n\t-o tree building only\n\t-q run sequentially\n";
+"Other paramaters:\n\t-b blast only\n\t-a alignment only\n\t-m mask only\n\t-o tree building only\n\t-q run sequentially\n\t-f filter file\n";
     exit(1);
 }
 
