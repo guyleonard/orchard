@@ -343,6 +343,7 @@ sub dendroscope_trees {
 # done in the creation of the mysql db, and as I have alluded
 # to elsewhere, that was getting tiresome to build, update and
 # add new genomes to, compared to just adding a file to a folder
+# and then quickly reassigning accessions.
 
 sub rename_newick_trees {
 
