@@ -526,7 +526,6 @@ sub get_taxonomy {
     ## Local Files from ftp://ftp.ncbi.nih.gov/pub/taxonomy/ - taxcat
     ##my $dbh = Bio::DB::Taxonomy->new(
     ##    -source => 'flatfile',
-
     ##    #    -directory => '/home/cs02gl/Desktop/genomes/taxonomy',
     ##    -nodesfile => '/home/cs02gl/Desktop/genomes/taxonomy/nodes.dmp',
     ##    -namesfile => '/home/cs02gl/Desktop/genomes/taxonomy/names.dmp'
