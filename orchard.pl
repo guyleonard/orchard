@@ -441,11 +441,12 @@ sub filtering_step {
         my $current_sequences = $seq_file_names[$i];
         my ( $file, $dir, $ext ) = fileparse $current_sequences, '.fas';
 
-        print "Filtering $file$ext with $FILTER_FILE\n";
+        print "Filtering $current_sequences with $FILTER_FILE\n";
 
         my @taxa_accessions = get_accession_list("$sequence_directory\/$file$ext");
         my $missing_count   = 0;
-
+	my $matched         = 0;
+        print "MC= $missing_count\t TA= $#taxa_accessions\n";
         foreach my $accession (@taxa_accessions) {
 
             my $taxon_name = get_taxon_names($accession);
@@ -457,6 +458,7 @@ sub filtering_step {
             if ( $accession eq $taxon_name ) {
 
                 #print "Probaly the 'seed' sequence, ignoring\n";
+		$missing_count++;
                 next;
             }
 
@@ -482,37 +484,48 @@ sub filtering_step {
             # check for species name in the filter list
             if ( my ($matched_taxa) = grep { $_ eq $taxon_name } @filter_list ) {
 
-                #print "\tMATCH1: $matched_taxa\tTaxa: $taxon_name\n";
-
-                output_report("[INFO]\tFILTERING: Matched $accession - $taxon_name to $matched_taxa, retained.\n");
+                print "\tMATCH1: $matched_taxa\tTaxa: $taxon_name\n";
+		$matched = 1;
+                print "MC1 $missing_count\tM: $matched\n";
+                output_report("[INFO]\tFILTERING1: Matched $accession - $taxon_name to $matched_taxa, retained.\n");
                 last;
             }
 
             # then check for taxonomic lineages
             elsif ( my ($matched_taxonomy) = grep { /$taxonomy_search/ } @filter_list ) {
 
-                #print "\t\tMATCH2:\tTaxonomy: @taxonomy\n";
-
+                print "\t\tMATCH2:\tTaxonomy: @taxonomy\n";
+		print "MC2 $missing_count\tM: $matched\n";
+		$matched = 1;		
                 output_report(
-                    "[INFO]\tFILTERING: Matched $accession - $taxon_name within $matched_taxonomy, retained.\n");
+                    "[INFO]\tFILTERING2: Matched $accession - $taxon_name within $matched_taxonomy, retained.\n");
                 last;
             }
             else {
                 $missing_count++;
-
-                #print "No matched filtered taxa/taxonomy\n";
+		print "MC: $missing_count\tM: $matched\n";
+                print "No matched filtered taxa/taxonomy\n";
             }
-
+	}	
             # at the end of all the searching if our count
-            # equals
-            if ( $missing_count >= $#taxa_accessions ) {
+            # equals the number of accession or is larger
+	    # then we likely haven't hit a taxon from the filter list and doubly
+	    # so if out match status is still 0
+            if ( $missing_count >= $#taxa_accessions || $matched eq 0 ) {
                 my $command = "mv $current_sequences $excluded_directory";
                 system($command);
-                output_report("[INFO]\tFILTERING: No matches for $current_sequences, excluding\n");
-
-                #print "Moving file to excluded...\n";
+                output_report("[INFO]\tFILTERING3: No matches for $current_sequences, excluding\n");
+		print "MC3 $missing_count\tM: $matched\n";
+                print "Moving file to excluded...\n";
             }
-        }
+            #elsif ( $matched eq 0 ) {
+            #    my $command = "mv $current_sequences $excluded_directory";
+            #    system($command);
+            #    output_report("[INFO]\tFILTERING4: No matches for $current_sequences, excluding\n");
+            #    print "MC4 $missing_count\tM: $matched\n";
+            #    print "Moving file to excluded...\n";
+            #}
+	#}
     }
 }
 
