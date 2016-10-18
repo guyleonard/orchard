@@ -1102,7 +1102,7 @@ sub search_step {
             # remove selenocystein and non-alpha numeric characters as they cause BLAST/MAFFT
             # to complain/crash (and the --anysymbol option produces terrible alignments)
             # I have to check for this as some genome projects are just full of junk!
-            system "sed -i \'/^>/! s/U|\\w/X/g\' $WORKING_DIR\/$USER_RUNID\/seqs\/$sequence_name\_hits.fas";
+	    system "sed -i \'/^>/!s/U|\\w/X/g\' $WORKING_DIR\/$USER_RUNID\/seqs\/$sequence_name\_hits.fas";
         }
     }
     return;
