@@ -134,7 +134,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     $SEARCH_EVALUE     = $paramaters->{search}->{evalue}     || '1e-10';
     $SEARCH_TOPHITS    = $paramaters->{search}->{top_hits}   || '1';
     $SEARCH_MAXLENGTH  = $paramaters->{search}->{max_length} || '3000';
-    @SEARCH_SPECIAL_TAXA    = split( /,/ms, $paramaters->{search}->{special_taxa} ) || '';
+    @SEARCH_SPECIAL_TAXA    = split /,/, $paramaters->{search}->{special_taxa} || '';
     $SEARCH_SPECIAL_TOPHITS = $paramaters->{search}->{special_top_hits}                     || $SEARCH_TOPHITS;
     $SEARCH_THREADS         = $paramaters->{search}->{threads}                              || '1';
 
