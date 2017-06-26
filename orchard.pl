@@ -54,8 +54,6 @@ use Data::Dumper;                          # temporary during rewrite to dump da
 ##           Global Variables                            ##
 ###########################################################
 # These options are global and will be set from the user YAML
-# file read in below, globals to avoid passing multiple values
-# to sub routines, they should not be edited once set.
 my $Working_Dir = getcwd();
 
 my $Alignment_Options;
@@ -65,16 +63,14 @@ my $Alignment_Threads;
 my $Masking_Cutoff1;
 my $Masking_Cutoff2;
 
-my $Search_Evalue;
-my $Search_Maxlength;
-
-#my $Search_Other;
-my $Search_Program;
+my $Search_Evalue = '1e-10';
+my $Search_Maxlength = '3000';
+my $Search_Program = 'blast+';
+my $Search_Subprogram = 'blastp';
+my $Search_Threads = '1';
+my $Search_Tophits = '1';
 my @Search_Special_Taxa;
-my $Search_Special_Tophits;
-my $Search_Subprogram;
-my $Search_Threads;
-my $Search_Tophits;
+my $Search_Special_Tophits = '1';
 
 my $Seq_Data;
 
@@ -89,25 +85,26 @@ my $User_Runid;
 
 my $Filter_File;
 
+
 ###########################################################
 ##           Main Program Flow                           ##
 ###########################################################
-
 # declare the perl command line flags/options we want to allow
 my %options = ();
-getopts( 's:t:p:hvbfamo', \%options ) or display_help();    # or display_help();
+getopts( 's:t:p:hvbfamo', \%options ) or display_help();
 
 # Display the help message if the user invokes -h
 if ( $options{h} ) { display_help(); }
+
 if ( $options{v} ) { print "Orchard $VERSION\n"; }
 
-if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
+if ( defined $options{s} && defined $options{t} && defined $options{p} ) {
     my $taxa_list_fname = "$options{t}";
     my @taxa_array      = taxa_list_to_array($taxa_list_fname);
 
     my $input_seqs_fname = "$options{s}";
 
-    # read in parameters from YAML file and/or set defaults
+    # read in parameters from YAML file overiding set defaults
     # user options
     # modify the md5_hex to ten chars from pos 0 if none given in YAML
     my $paramaters = LoadFile("$options{p}");
@@ -125,14 +122,14 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     output_report("[INFO]\tRun ID: $User_Runid\n[INFO]\tDirectory: $run_directory\n");
 
     # search options
-    $Search_Program    = $paramaters->{search}->{program}    || 'blast+';
-    $Search_Subprogram = $paramaters->{search}->{subprogram} || 'blastp';
-    $Search_Evalue     = $paramaters->{search}->{evalue}     || '1e-10';
-    $Search_Tophits    = $paramaters->{search}->{top_hits}   || '1';
-    $Search_Maxlength  = $paramaters->{search}->{max_length} || '3000';
-    @Search_Special_Taxa    = split /,/, $paramaters->{search}->{special_taxa} || '';
-    $Search_Special_Tophits = $paramaters->{search}->{special_top_hits}        || $Search_Tophits;
-    $Search_Threads         = $paramaters->{search}->{threads}                 || '1';
+    $Search_Program    = $paramaters->{search}->{program};
+    $Search_Subprogram = $paramaters->{search}->{subprogram};
+    $Search_Evalue     = $paramaters->{search}->{evalue};
+    $Search_Tophits    = $paramaters->{search}->{top_hits};
+    $Search_Maxlength  = $paramaters->{search}->{max_length};
+    @Search_Special_Taxa    = split /,/, $paramaters->{search}->{special_taxa};
+    $Search_Special_Tophits = $paramaters->{search}->{special_top_hits};
+    $Search_Threads         = $paramaters->{search}->{threads};
 
     #$Search_Other = $paramaters->{search}->{other};                                # no default
 
