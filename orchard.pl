@@ -56,32 +56,33 @@ use Data::Dumper;                          # temporary during rewrite to dump da
 # These options are global and will be set from the user YAML
 my $Working_Dir = getcwd();
 
-my $Alignment_Options;
-my $Alignment_Program;
-my $Alignment_Threads;
+my $Alignment_Program = 'mafft';
+my $Alignment_Options = '--auto --quiet --reorder';
+my $Alignment_Threads = '1';
 
-my $Masking_Cutoff1;
-my $Masking_Cutoff2;
+my $Masking_Cutoff1 = '50';
+my $Masking_Cutoff2 = '20';
 
-my $Search_Evalue = '1e-10';
-my $Search_Maxlength = '3000';
 my $Search_Program = 'blast+';
 my $Search_Subprogram = 'blastp';
 my $Search_Threads = '1';
+my $Search_Evalue = '1e-10';
+my $Search_Maxlength = '3000';
 my $Search_Tophits = '1';
 my @Search_Special_Taxa;
 my $Search_Special_Tophits = '1';
 
 my $Seq_Data;
 
-my $Tree_Mintaxa;
-my $Tree_Options;
-my $Tree_Program;
-my $Tree_Model;
-my $Tree_Bs;
+my $Tree_Program = 'FastTreeMP';
+my $Tree_Options = '-bionj -slow -quiet';
+my $Tree_Mintaxa = '4';
+my $Tree_Model = 'PROTGAMMAAUTO';
+my $Tree_Bs = '100';
 
-my $User_Reindex;
-my $User_Runid;
+my $User_Reindex = 'n';
+# modify the md5_hex to ten chars from pos 0 if none given in YAML
+my $User_Runid = substr( Digest::MD5::md5_hex(rand), 0, 10 )
 
 my $Filter_File;
 
@@ -104,12 +105,10 @@ if ( defined $options{s} && defined $options{t} && defined $options{p} ) {
 
     my $input_seqs_fname = "$options{s}";
 
-    # read in parameters from YAML file overiding set defaults
-    # user options
-    # modify the md5_hex to ten chars from pos 0 if none given in YAML
+    # read in parameters from YAML file overiding set defaults 
     my $paramaters = LoadFile("$options{p}");
-    $User_Runid = $paramaters->{user}->{run_id} || substr( Digest::MD5::md5_hex(rand), 0, 10 );
-    $User_Reindex = $paramaters->{user}->{reindex} || 'n';    # default no
+    $User_Runid = $paramaters->{user}->{run_id};
+    $User_Reindex = $paramaters->{user}->{reindex};
     if ( $User_Reindex eq 'y' ) {
         output_report("[INFO]\tUser requested reindexing of database directory files - slow!\n");
     }
@@ -131,29 +130,27 @@ if ( defined $options{s} && defined $options{t} && defined $options{p} ) {
     $Search_Special_Tophits = $paramaters->{search}->{special_top_hits};
     $Search_Threads         = $paramaters->{search}->{threads};
 
-    #$Search_Other = $paramaters->{search}->{other};                                # no default
-
     # alignment options
-    $Alignment_Program = $paramaters->{alignment}->{program} || 'mafft';
-    $Alignment_Options = $paramaters->{alignment}->{options};              # no default
-    $Alignment_Threads = $paramaters->{alignment}->{threads} || '1';
+    $Alignment_Program = $paramaters->{alignment}->{program};
+    $Alignment_Options = $paramaters->{alignment}->{options};
+    $Alignment_Threads = $paramaters->{alignment}->{threads};
 
     # masking options
-    $Masking_Cutoff1 = $paramaters->{masking}->{cutoff_1} || '50';
-    $Masking_Cutoff2 = $paramaters->{masking}->{cutoff_2} || '20';
+    $Masking_Cutoff1 = $paramaters->{masking}->{cutoff_1};
+    $Masking_Cutoff2 = $paramaters->{masking}->{cutoff_2};
 
     # tree building options
-    $Tree_Program = $paramaters->{trees}->{program} || 'FastTreeMP';
-    $Tree_Options = $paramaters->{trees}->{options};                       # no default
-    $Tree_Mintaxa = $paramaters->{trees}->{min_taxa} || '4';
-    $Tree_Model   = $paramaters->{trees}->{model} || 'PROTGAMMAAUTO';
-    $Tree_Bs      = $paramaters->{trees}->{bootstraps} || '100';
+    $Tree_Program = $paramaters->{trees}->{program};
+    $Tree_Options = $paramaters->{trees}->{options};
+    $Tree_Mintaxa = $paramaters->{trees}->{min_taxa};
+    $Tree_Model   = $paramaters->{trees}->{model};
+    $Tree_Bs      = $paramaters->{trees}->{bootstraps};
 
     # directory options
-    $Seq_Data = $paramaters->{directories}->{database};                    # no default
+    $Seq_Data = $paramaters->{directories}->{database};
 
     # filtering options
-    $Filter_File = $paramaters->{filter}->{filename};                      # no default
+    $Filter_File = $paramaters->{filter}->{filename};
 
     # only run search (blast) step
     if ( $options{b} ) {
