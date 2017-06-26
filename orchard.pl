@@ -2,26 +2,24 @@
 use strict;
 use warnings;
 
-#TEST
-# Given/when instead of switch - warns in 5.18 eventually I will switch this to "for()" http://www.effectiveperlprogramming.com/2011/05/use-for-instead-of-given/
-#use experimental 'smartmatch';
-no if $] >= 5.017011, warnings => 'experimental::smartmatch';    # ignore experimental warning for 'when'
+use 5.012;
+no warnings 'experimental::smartmatch';                          # ignore experimental warning for given/when
 use autodie;                                                     # bIlujDI' yIchegh()Qo'; yIHegh()!
 use Bio::DB::Fasta;                                              # for indexing fasta files for sequence retrieval
 use Bio::SearchIO;                                               # parse blast tabular format
 use Bio::SeqIO;                                                  # Use Bio::Perl
+use Bio::Taxon;
+use Bio::Tree::Tree;
 use Cwd;                                                         # Gets pathname of current working directory
 use DateTime::Format::Duration;                                  # Duration of processes
 use DateTime;                                                    # Start and End times
 use DBI;                                                         # mysql database access
-use Digest::MD5;                                                 # Generate random string for run ID
 use Digest::MD5 'md5_hex';
-use feature qw{ switch };
+use Digest::MD5;                                                 # Generate random string for run ID
+#use feature qw{ switch };
 use File::Basename;                                              # Remove path information and extract 8.3 filename
 use Getopt::Std;                                                 # Command line options, finally!
 use IO::Prompt;                                                  # User prompts
-use Bio::Taxon;
-use Bio::Tree::Tree;
 use YAML::XS qw/LoadFile/;                                       # for the parameters file, user friendly layout
 
 ##
@@ -638,6 +636,13 @@ sub tree_step {
             run_fasttree("$masks_directory\/$file\.afa-tr");
         }
     }
+    elsif ( $TREE_PROGRAM =~ /iqtree/ism ) {
+        for my $i ( 0 .. $#mask_file_names ) {
+            my ( $file, $dir, $ext ) = fileparse $mask_file_names[$i], '\.afa-tr';
+
+            run_iqtree("$masks_directory\/$file\.afa-tr");
+        }
+    }
     else {
         for my $i ( 0 .. $#mask_file_names ) {
             my ( $file, $dir, $ext ) = fileparse $mask_file_names[$i], '\.afa-tr';
@@ -645,6 +650,17 @@ sub tree_step {
             run_raxml_ml_rapid_bd("$masks_directory\/$file\.afa-tr");
         }
     }
+}
+
+sub run_iqtree {
+    my $masked_sequences = shift;
+    my $iqtree_command = $EMPTY;
+
+    my ( $file, $dir, $ext ) = fileparse $masked_sequences, '\.afa\-tr';
+
+    $iqtree_command = "iqtree -s $masked_sequences $TREE_OPTIONS";
+
+
 }
 
 sub run_raxml_ml_rapid_bd {
@@ -811,7 +827,7 @@ sub alignment_step {
 
         my ( $file, $dir, $ext ) = fileparse $current_sequences, '\.fas';
 
-        for ($ALIGNMENT_PROGRAM) {
+        given ($ALIGNMENT_PROGRAM) {
             when (/mafft/ism) {
                 my $mafft_command = "mafft $ALIGNMENT_OPTIONS";
                 $mafft_command .= " --thread $ALIGNMENT_THREADS";
