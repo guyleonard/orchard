@@ -3,27 +3,27 @@ use strict;
 use warnings;
 
 use 5.012;
-no warnings 'experimental::smartmatch';                          # ignore experimental warning for given/when
-use autodie;                                                     # bIlujDI' yIchegh()Qo'; yIHegh()!
-use Bio::DB::Fasta;                                              # for indexing fasta files for sequence retrieval
-use Bio::SearchIO;                                               # parse blast tabular format
-use Bio::SeqIO;                                                  # Use Bio::Perl
+no warnings 'experimental::smartmatch';    # ignore experimental warning for given/when
+use autodie;                               # bIlujDI' yIchegh()Qo'; yIHegh()!
+use Bio::DB::Fasta;                        # for indexing fasta files for sequence retrieval
+use Bio::SearchIO;                         # parse blast tabular format
+use Bio::SeqIO;                            # Use Bio::Perl
 use Bio::Taxon;
 use Bio::Tree::Tree;
-use Cwd;                                                         # Gets pathname of current working directory
-use DateTime::Format::Duration;                                  # Duration of processes
-use DateTime;                                                    # Start and End times
-use DBI;                                                         # mysql database access
-use Digest::MD5;                                                 # Generate random string for run ID
+use Cwd;                                   # Gets pathname of current working directory
+use DateTime::Format::Duration;            # Duration of processes
+use DateTime;                              # Start and End times
+use DBI;                                   # mysql database access
+use Digest::MD5;                           # Generate random string for run ID
 use Digest::MD5 'md5_hex';
-use File::Basename;                                              # Remove path information and extract 8.3 filename
-use Getopt::Std;                                                 # Command line options, finally!
-use IO::Prompt;                                                  # User prompts
-use YAML::XS qw/LoadFile/;                                       # for the parameters file, user friendly layout
-our $VERSION     = '2017-06-26';
+use File::Basename;                        # Remove path information and extract 8.3 filename
+use Getopt::Std;                           # Command line options, finally!
+use IO::Prompt;                            # User prompts
+use YAML::XS qw/LoadFile/;                 # for the parameters file, user friendly layout
+our $VERSION = '2017-06-26';
 
 ##
-use Data::Dumper;    # temporary during rewrite to dump data nicely to screen
+use Data::Dumper;                          # temporary during rewrite to dump data nicely to screen
 ## remove ## comments before publication
 
 ###########################################################
@@ -57,6 +57,7 @@ use Data::Dumper;    # temporary during rewrite to dump data nicely to screen
 # file read in below, globals to avoid passing multiple values
 # to sub routines, they should not be edited once set.
 my $Working_Dir = getcwd();
+
 #my $Empty             = q{};
 my $ALIGNMENT_OPTIONS;
 my $ALIGNMENT_PROGRAM;
@@ -65,27 +66,27 @@ my $ALIGNMENT_THREADS;
 my $MASKING_CUTOFF1;
 my $MASKING_CUTOFF2;
 
-my $SEARCH_EVALUE   ;
+my $SEARCH_EVALUE;
 my $SEARCH_MAXLENGTH;
 
-#my $SEARCH_OTHER          ;
-my $SEARCH_PROGRAM        ;
-my @SEARCH_SPECIAL_TAXA   ;
+#my $SEARCH_OTHER;
+my $SEARCH_PROGRAM;
+my @SEARCH_SPECIAL_TAXA;
 my $SEARCH_SPECIAL_TOPHITS;
-my $SEARCH_SUBPROGRAM     ;
-my $SEARCH_THREADS        ;
-my $SEARCH_TOPHITS        ;
+my $SEARCH_SUBPROGRAM;
+my $SEARCH_THREADS;
+my $SEARCH_TOPHITS;
 
 my $SEQ_DATA;
 
 my $TREE_MINTAXA;
 my $TREE_OPTIONS;
 my $TREE_PROGRAM;
-my $TREE_MODEL  ;
-my $TREE_BS     ;
+my $TREE_MODEL;
+my $TREE_BS;
 
 my $USER_REINDEX;
-my $USER_RUNID  ;
+my $USER_RUNID;
 
 my $FILTER_FILE;
 
@@ -115,7 +116,9 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     my $paramaters = LoadFile("$options{p}");
     $USER_RUNID = $paramaters->{user}->{run_id} || substr( Digest::MD5::md5_hex(rand), 0, 10 );
     $USER_REINDEX = $paramaters->{user}->{reindex} || 'n';    # default no
-    if ( $USER_REINDEX eq 'y' ) { output_report("[INFO]\tUser requested reindexing of database directory files - slow!\n"); }
+    if ( $USER_REINDEX eq 'y' ) {
+        output_report("[INFO]\tUser requested reindexing of database directory files - slow!\n");
+    }
     my $run_directory = "$Working_Dir\/$USER_RUNID";
 
     # Now we can make the directories
@@ -131,8 +134,8 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     $SEARCH_TOPHITS    = $paramaters->{search}->{top_hits}   || '1';
     $SEARCH_MAXLENGTH  = $paramaters->{search}->{max_length} || '3000';
     @SEARCH_SPECIAL_TAXA    = split /,/, $paramaters->{search}->{special_taxa} || '';
-    $SEARCH_SPECIAL_TOPHITS = $paramaters->{search}->{special_top_hits}                     || $SEARCH_TOPHITS;
-    $SEARCH_THREADS         = $paramaters->{search}->{threads}                              || '1';
+    $SEARCH_SPECIAL_TOPHITS = $paramaters->{search}->{special_top_hits}        || $SEARCH_TOPHITS;
+    $SEARCH_THREADS         = $paramaters->{search}->{threads}                 || '1';
 
     #$SEARCH_OTHER = $paramaters->{search}->{other};                                # no default
 
@@ -298,7 +301,7 @@ sub filtering_step {
 
         my @taxa_accessions = get_accession_list("$sequence_directory\/$file$ext");
         my $missing_count   = 0;
-	my $matched         = 0;
+        my $matched         = 0;
         print "MC= $missing_count\t TA= $#taxa_accessions\n";
         foreach my $accession (@taxa_accessions) {
 
@@ -311,7 +314,7 @@ sub filtering_step {
             if ( $accession eq $taxon_name ) {
 
                 #print "Probaly the 'seed' sequence, ignoring\n";
-		$missing_count++;
+                $missing_count++;
                 next;
             }
 
@@ -338,7 +341,7 @@ sub filtering_step {
             if ( my ($matched_taxa) = grep { $_ eq $taxon_name } @filter_list ) {
 
                 print "\tMATCH1: $matched_taxa\tTaxa: $taxon_name\n";
-		$matched = 1;
+                $matched = 1;
                 print "MC1 $missing_count\tM: $matched\n";
                 output_report("[INFO]\tFILTERING1: Matched $accession - $taxon_name to $matched_taxa, retained.\n");
                 last;
@@ -348,37 +351,39 @@ sub filtering_step {
             elsif ( my ($matched_taxonomy) = grep { /$taxonomy_search/ } @filter_list ) {
 
                 print "\t\tMATCH2:\tTaxonomy: @taxonomy\n";
-		print "MC2 $missing_count\tM: $matched\n";
-		$matched = 1;		
+                print "MC2 $missing_count\tM: $matched\n";
+                $matched = 1;
                 output_report(
                     "[INFO]\tFILTERING2: Matched $accession - $taxon_name within $matched_taxonomy, retained.\n");
                 last;
             }
             else {
                 $missing_count++;
-		print "MC: $missing_count\tM: $matched\n";
+                print "MC: $missing_count\tM: $matched\n";
                 print "No matched filtered taxa/taxonomy\n";
             }
-	}	
-            # at the end of all the searching if our count
-            # equals the number of accession or is larger
-	    # then we likely haven't hit a taxon from the filter list and doubly
-	    # so if out match status is still 0
-            if ( $missing_count >= $#taxa_accessions || $matched eq 0 ) {
-                my $command = "mv $current_sequences $excluded_directory";
-                system($command);
-                output_report("[INFO]\tFILTERING3: No matches for $current_sequences, excluding\n");
-		print "MC3 $missing_count\tM: $matched\n";
-                print "Moving file to excluded...\n";
-            }
-            #elsif ( $matched eq 0 ) {
-            #    my $command = "mv $current_sequences $excluded_directory";
-            #    system($command);
-            #    output_report("[INFO]\tFILTERING4: No matches for $current_sequences, excluding\n");
-            #    print "MC4 $missing_count\tM: $matched\n";
-            #    print "Moving file to excluded...\n";
-            #}
-	#}
+        }
+
+        # at the end of all the searching if our count
+        # equals the number of accession or is larger
+        # then we likely haven't hit a taxon from the filter list and doubly
+        # so if out match status is still 0
+        if ( $missing_count >= $#taxa_accessions || $matched eq 0 ) {
+            my $command = "mv $current_sequences $excluded_directory";
+            system($command);
+            output_report("[INFO]\tFILTERING3: No matches for $current_sequences, excluding\n");
+            print "MC3 $missing_count\tM: $matched\n";
+            print "Moving file to excluded...\n";
+        }
+
+        #elsif ( $matched eq 0 ) {
+        #    my $command = "mv $current_sequences $excluded_directory";
+        #    system($command);
+        #    output_report("[INFO]\tFILTERING4: No matches for $current_sequences, excluding\n");
+        #    print "MC4 $missing_count\tM: $matched\n";
+        #    print "Moving file to excluded...\n";
+        #}
+        #}
     }
 }
 
@@ -515,11 +520,10 @@ sub run_iqtree {
 
     $iqtree_command = "iqtree -s $masked_sequences $TREE_OPTIONS";
 
-
 }
 
 sub run_raxml_ml_rapid_bd {
-    my $masked_sequences  = shift;
+    my $masked_sequences = shift;
     my $raxmltree_command;
 
     my ( $file, $dir, $ext ) = fileparse $masked_sequences, '\.afa\-tr';
@@ -730,7 +734,7 @@ sub search_step_ortho_groups {
         my ( $ortho_file, $ortho_dir, $ortho_ext ) = fileparse( $orthofile, qr'\..*' );
 
         #
-        my $num_hit_seqs  = 0;
+        my $num_hit_seqs = 0;
         my $sequence_name;
 
         # open bioperl seqio object with user input sequences
@@ -891,7 +895,7 @@ sub search_step {
     my $input_seqs_count = 1;
 
     #
-    my $num_hit_seqs  = 0;
+    my $num_hit_seqs = 0;
     my $sequence_name;
 
     # open bioperl seqio object with user input sequences
@@ -973,7 +977,7 @@ sub search_step {
             # remove selenocystein and non-alpha numeric characters as they cause BLAST/MAFFT
             # to complain/crash (and the --anysymbol option produces terrible alignments)
             # I have to check for this as some genome projects are just full of junk!
-	    system "sed -i \'/^>/!s/U|\\w/X/g\' $Working_Dir\/$USER_RUNID\/seqs\/$sequence_name\_hits.fas";
+            system "sed -i \'/^>/!s/U|\\w/X/g\' $Working_Dir\/$USER_RUNID\/seqs\/$sequence_name\_hits.fas";
         }
     }
     return;
@@ -1269,10 +1273,10 @@ sub run_vsearch {
             # we will use tabulated output as it's smaller than XML
             # and we don't really need much information other than the hit ID
             my $usearch_command = 'vsearch --usearch_global';
-            $usearch_command .= " $sequence_name_for_blast\_query.fas";              # query file
+            $usearch_command .= " $sequence_name_for_blast\_query.fas";    # query file
             $usearch_command .= " --db $SEQ_DATA\/$database";
             $usearch_command .= " --id 0.9";
-            $usearch_command .= " --blast6out $search_output";                       # output filename
+            $usearch_command .= " --blast6out $search_output";             # output filename
             $usearch_command .= " --threads $SEARCH_THREADS";
             $usearch_command .= " --maxaccepts $SEARCH_TOPHITS";
 
