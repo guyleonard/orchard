@@ -20,14 +20,12 @@ use File::Basename;                                              # Remove path i
 use Getopt::Std;                                                 # Command line options, finally!
 use IO::Prompt;                                                  # User prompts
 use YAML::XS qw/LoadFile/;                                       # for the parameters file, user friendly layout
+our $VERSION     = '2017-06-26';
 
 ##
 use Data::Dumper;    # temporary during rewrite to dump data nicely to screen
+## remove ## comments before publication
 
-# remove ## comments before publication
-#
-my $WORKING_DIR = getcwd();
-my $VERSION     = '2014-10-17';
 ###########################################################
 #           Darren's Orchard Pipeline                     #
 ###########################################################
@@ -58,39 +56,40 @@ my $VERSION     = '2014-10-17';
 # These options are global and will be set from the user YAML
 # file read in below, globals to avoid passing multiple values
 # to sub routines, they should not be edited once set.
-my $EMPTY             = q{};
-my $ALIGNMENT_OPTIONS = $EMPTY;
-my $ALIGNMENT_PROGRAM = $EMPTY;
-my $ALIGNMENT_THREADS = $EMPTY;
+my $Working_Dir = getcwd();
+#my $Empty             = q{};
+my $ALIGNMENT_OPTIONS;
+my $ALIGNMENT_PROGRAM;
+my $ALIGNMENT_THREADS;
 
-my $MASKING_CUTOFF1 = $EMPTY;
-my $MASKING_CUTOFF2 = $EMPTY;
+my $MASKING_CUTOFF1;
+my $MASKING_CUTOFF2;
 
-my $SEARCH_EVALUE    = $EMPTY;
-my $SEARCH_MAXLENGTH = $EMPTY;
+my $SEARCH_EVALUE   ;
+my $SEARCH_MAXLENGTH;
 
-#my $SEARCH_OTHER           = $EMPTY;
-my $SEARCH_PROGRAM         = $EMPTY;
-my @SEARCH_SPECIAL_TAXA    = $EMPTY;
-my $SEARCH_SPECIAL_TOPHITS = $EMPTY;
-my $SEARCH_SUBPROGRAM      = $EMPTY;
-my $SEARCH_THREADS         = $EMPTY;
-my $SEARCH_TOPHITS         = $EMPTY;
+#my $SEARCH_OTHER          ;
+my $SEARCH_PROGRAM        ;
+my @SEARCH_SPECIAL_TAXA   ;
+my $SEARCH_SPECIAL_TOPHITS;
+my $SEARCH_SUBPROGRAM     ;
+my $SEARCH_THREADS        ;
+my $SEARCH_TOPHITS        ;
 
-my $SEQ_DATA = $EMPTY;
+my $SEQ_DATA;
 
-my $TREE_MINTAXA = $EMPTY;
-my $TREE_OPTIONS = $EMPTY;
-my $TREE_PROGRAM = $EMPTY;
-my $TREE_MODEL   = $EMPTY;
-my $TREE_BS      = $EMPTY;
+my $TREE_MINTAXA;
+my $TREE_OPTIONS;
+my $TREE_PROGRAM;
+my $TREE_MODEL  ;
+my $TREE_BS     ;
 
-my $USER_REINDEX = $EMPTY;
-my $USER_RUNID   = $EMPTY;
+my $USER_REINDEX;
+my $USER_RUNID  ;
 
-my $FILTER_FILE = $EMPTY;
+my $FILTER_FILE;
 
-my $HMM_TAXA_LIST = $EMPTY;
+my $HMM_TAXA_LIST;
 
 ###########################################################
 ##           Main Program Flow                           ##
@@ -117,7 +116,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     $USER_RUNID = $paramaters->{user}->{run_id} || substr( Digest::MD5::md5_hex(rand), 0, 10 );
     $USER_REINDEX = $paramaters->{user}->{reindex} || 'n';    # default no
     if ( $USER_REINDEX eq 'y' ) { output_report("[INFO]\tUser requested reindexing of database directory files - slow!\n"); }
-    my $run_directory = "$WORKING_DIR\/$USER_RUNID";
+    my $run_directory = "$Working_Dir\/$USER_RUNID";
 
     # Now we can make the directories
     setup_main_directories( $run_directory, $options{f} );
@@ -270,8 +269,8 @@ else {
 sub filtering_step {
 
     # directories
-    my $sequence_directory = "$WORKING_DIR\/$USER_RUNID\/seqs";
-    my $excluded_directory = "$WORKING_DIR\/$USER_RUNID\/excluded";
+    my $sequence_directory = "$Working_Dir\/$USER_RUNID\/seqs";
+    my $excluded_directory = "$Working_Dir\/$USER_RUNID\/excluded";
 
     # get list of sequences that were not excluded in previous stage
     my @seq_file_names = glob "$sequence_directory\/*.fas";
@@ -413,7 +412,7 @@ sub get_taxonomy {
     my @lineage = $tree_functions->get_lineage_nodes($unknown);
 
     # Then we can extract the name of each node, which will give us the Taxonomy lineages...
-    my $taxonomy = $EMPTY;
+    my $taxonomy;
     foreach my $item (@lineage) {
         my $name = $item->node_name;
 
@@ -477,8 +476,8 @@ sub get_taxon_names {
 
 sub tree_step {
 
-    my $masks_directory = "$WORKING_DIR\/$USER_RUNID\/masks";
-    my $tree_directory  = "$WORKING_DIR\/$USER_RUNID\/trees";
+    my $masks_directory = "$Working_Dir\/$USER_RUNID\/masks";
+    my $tree_directory  = "$Working_Dir\/$USER_RUNID\/trees";
 
     # get list of sequences that were not excluded in previous stage
     my @mask_file_names = glob "$masks_directory\/*.afa-tr";
@@ -510,7 +509,7 @@ sub tree_step {
 
 sub run_iqtree {
     my $masked_sequences = shift;
-    my $iqtree_command = $EMPTY;
+    my $iqtree_command;
 
     my ( $file, $dir, $ext ) = fileparse $masked_sequences, '\.afa\-tr';
 
@@ -521,7 +520,7 @@ sub run_iqtree {
 
 sub run_raxml_ml_rapid_bd {
     my $masked_sequences  = shift;
-    my $raxmltree_command = $EMPTY;
+    my $raxmltree_command;
 
     my ( $file, $dir, $ext ) = fileparse $masked_sequences, '\.afa\-tr';
 
@@ -547,7 +546,7 @@ sub run_raxml_ml_rapid_bd {
 
 sub run_fasttree {
     my $masked_sequences = shift;
-    my $fasttree_command = $EMPTY;
+    my $fasttree_command;
 
     my ( $file, $dir, $ext ) = fileparse $masked_sequences, '\.afa\-tr';
 
@@ -556,12 +555,12 @@ sub run_fasttree {
     if ( $TREE_PROGRAM =~ /fasttreemp/ism ) {
         $fasttree_command = "FastTreeMP $TREE_OPTIONS";
         $fasttree_command .= " $masked_sequences";
-        $fasttree_command .= " > $WORKING_DIR\/$USER_RUNID\/trees\/$file\_FT.tree";
+        $fasttree_command .= " > $Working_Dir\/$USER_RUNID\/trees\/$file\_FT.tree";
     }
     else {
         $fasttree_command = "FastTree $TREE_OPTIONS";
         $fasttree_command .= " $masked_sequences";
-        $fasttree_command .= " > $WORKING_DIR\/$USER_RUNID\/trees\/$file\_FT.tree";
+        $fasttree_command .= " > $Working_Dir\/$USER_RUNID\/trees\/$file\_FT.tree";
     }
 
     system($fasttree_command);
@@ -574,8 +573,8 @@ sub run_fasttree {
 sub masking_step {
 
     # directory variables
-    my $alignments_directory = "$WORKING_DIR\/$USER_RUNID\/alignments";
-    my $masks_directory      = "$WORKING_DIR\/$USER_RUNID\/masks";
+    my $alignments_directory = "$Working_Dir\/$USER_RUNID\/alignments";
+    my $masks_directory      = "$Working_Dir\/$USER_RUNID\/masks";
 
     # get list of sequences that were not excluded in previous stage
     my @algn_file_names = glob "$alignments_directory\/*.afa";
@@ -608,7 +607,7 @@ sub masking_step {
 "[WARN]\t$file does not satisfy trimal cutoffs ($MASKING_CUTOFF1 or $MASKING_CUTOFF2). Moved to excluded directory.\n"
                 );
                 system
-"mv $WORKING_DIR\/$USER_RUNID\/masks\/$file\.afa-tr $WORKING_DIR\/$USER_RUNID\/excluded\/$file\.afa-tr";
+"mv $Working_Dir\/$USER_RUNID\/masks\/$file\.afa-tr $Working_Dir\/$USER_RUNID\/excluded\/$file\.afa-tr";
             }
             else {
                 print " OK.\n";
@@ -624,7 +623,7 @@ sub run_trimal {
 
     my $aligned_sequences = shift;
     my $option            = shift;
-    my $masks_directory   = "$WORKING_DIR\/$USER_RUNID\/masks";
+    my $masks_directory   = "$Working_Dir\/$USER_RUNID\/masks";
 
     my ( $file, $dir, $ext ) = fileparse $aligned_sequences, '\.afa';
 
@@ -666,8 +665,8 @@ sub alignment_step {
     ## if we are going to be bypassing the search step...
 
     # directory variables
-    my $sequence_directory   = "$WORKING_DIR\/$USER_RUNID\/seqs";
-    my $alignments_directory = "$WORKING_DIR\/$USER_RUNID\/alignments";
+    my $sequence_directory   = "$Working_Dir\/$USER_RUNID\/seqs";
+    my $alignments_directory = "$Working_Dir\/$USER_RUNID\/alignments";
 
     # get list of sequences that were not excluded in previous stage
     my @seq_file_names = glob "$sequence_directory\/*.fas";
@@ -732,7 +731,7 @@ sub search_step_ortho_groups {
 
         #
         my $num_hit_seqs  = 0;
-        my $sequence_name = $EMPTY;
+        my $sequence_name;
 
         # open bioperl seqio object with user input sequences
         my $seq_in = Bio::SeqIO->new( -file => "<$orthofile" );
@@ -819,37 +818,37 @@ sub search_step_ortho_groups {
 
             # remove the query hits after each run as they are now stored
             # in the *ortho_seqs.fas file
-            unlink "$WORKING_DIR\/$sequence_name\_query.fas";
+            unlink "$Working_Dir\/$sequence_name\_query.fas";
 
             # append the current seed sequence's hits to the ortho_seqs.fas file
-            system "cat $WORKING_DIR\/$sequence_name\_hits.fas >> $WORKING_DIR\/$ortho_file\_ortho\_hits.fas";
+            system "cat $Working_Dir\/$sequence_name\_hits.fas >> $Working_Dir\/$ortho_file\_ortho\_hits.fas";
 
             # then get rid of the query file as we don't need it anymore
-            unlink "$WORKING_DIR\/$sequence_name\_hits.fas";
+            unlink "$Working_Dir\/$sequence_name\_hits.fas";
         }
         $ortho_files_count++;
 
         # now we can remove duplicate sequences based on accession only
-        remove_duplicate_sequences("$WORKING_DIR\/$ortho_file\_ortho\_hits.fas");
+        remove_duplicate_sequences("$Working_Dir\/$ortho_file\_ortho\_hits.fas");
 
         # get the number of sequences in the file
-        chomp( $num_hit_seqs = `grep -c ">" $WORKING_DIR\/$ortho_file\_ortho\_hits.fas` );
+        chomp( $num_hit_seqs = `grep -c ">" $Working_Dir\/$ortho_file\_ortho\_hits.fas` );
 
         if ( $num_hit_seqs <= $TREE_MINTAXA ) {
             output_report("[WARN]\t$ortho_file: Too few hits\n");
-            unlink "$WORKING_DIR\/$ortho_file\_ortho\_hits.fas";
+            unlink "$Working_Dir\/$ortho_file\_ortho\_hits.fas";
             system
-              "mv $WORKING_DIR\/$ortho_file\_ortho\_non\_redundant\_hits.fas $WORKING_DIR\/$USER_RUNID\/excluded\/";
+              "mv $Working_Dir\/$ortho_file\_ortho\_non\_redundant\_hits.fas $Working_Dir\/$USER_RUNID\/excluded\/";
         }
         else {
-            unlink "$WORKING_DIR\/$ortho_file\_ortho\_hits.fas";
+            unlink "$Working_Dir\/$ortho_file\_ortho\_hits.fas";
             system
-"mv $WORKING_DIR\/$ortho_file\_ortho\_non\_redundant\_hits.fas $WORKING_DIR\/$USER_RUNID\/seqs\/$ortho_file\_hits.fas";
+"mv $Working_Dir\/$ortho_file\_ortho\_non\_redundant\_hits.fas $Working_Dir\/$USER_RUNID\/seqs\/$ortho_file\_hits.fas";
 
             # remove selenocystein and non-alpha numeric characters as they cause BLAST/MAFFT
             # to complain/crash (and the --anysymbol option produces terrible alignments)
             # I have to check for this as some genome projects are just full of junk!
-            system "sed -i \'/^>/!s/U/X/g\' $WORKING_DIR\/$USER_RUNID\/seqs\/$ortho_file\_hits.fas";
+            system "sed -i \'/^>/!s/U/X/g\' $Working_Dir\/$USER_RUNID\/seqs\/$ortho_file\_hits.fas";
         }
     }
 }
@@ -868,7 +867,7 @@ sub remove_duplicate_sequences {
     );
 
     my $out = Bio::SeqIO->new(
-        - file   => ">$WORKING_DIR\/$FILE\_non_redundant$EXT",
+        - file   => ">$Working_Dir\/$FILE\_non_redundant$EXT",
         - format => 'fasta'
     );
 
@@ -893,7 +892,7 @@ sub search_step {
 
     #
     my $num_hit_seqs  = 0;
-    my $sequence_name = $EMPTY;
+    my $sequence_name;
 
     # open bioperl seqio object with user input sequences
     my $seq_in = Bio::SeqIO->new( -file => "<$input_seqs_fname" );
@@ -964,17 +963,17 @@ sub search_step {
 
         if ( $num_hit_seqs <= $TREE_MINTAXA ) {
             output_report("[WARN]\t$sequence_name: Too few hits\n");
-            unlink "$WORKING_DIR\/$sequence_name\_query.fas";
-            system "mv $sequence_name\_hits.fas $WORKING_DIR\/$USER_RUNID\/excluded\/";
+            unlink "$Working_Dir\/$sequence_name\_query.fas";
+            system "mv $sequence_name\_hits.fas $Working_Dir\/$USER_RUNID\/excluded\/";
         }
         else {
-            unlink "$WORKING_DIR\/$sequence_name\_query.fas";
-            system "mv $sequence_name\_hits.fas $WORKING_DIR\/$USER_RUNID\/seqs\/";
+            unlink "$Working_Dir\/$sequence_name\_query.fas";
+            system "mv $sequence_name\_hits.fas $Working_Dir\/$USER_RUNID\/seqs\/";
 
             # remove selenocystein and non-alpha numeric characters as they cause BLAST/MAFFT
             # to complain/crash (and the --anysymbol option produces terrible alignments)
             # I have to check for this as some genome projects are just full of junk!
-	    system "sed -i \'/^>/!s/U|\\w/X/g\' $WORKING_DIR\/$USER_RUNID\/seqs\/$sequence_name\_hits.fas";
+	    system "sed -i \'/^>/!s/U|\\w/X/g\' $Working_Dir\/$USER_RUNID\/seqs\/$sequence_name\_hits.fas";
         }
     }
     return;
@@ -1431,7 +1430,7 @@ sub parse_search_output {
 
     # move the files once we are finished to the report directory
     # we may need to make it first
-    my $report_dir = "$WORKING_DIR\/$USER_RUNID\/report\/$sequence_name";
+    my $report_dir = "$Working_Dir\/$USER_RUNID\/report\/$sequence_name";
     if ( !-d $report_dir ) { mkdir $report_dir }
     if ( !-d "$report_dir\/$SEARCH_SUBPROGRAM" ) { mkdir "$report_dir\/$SEARCH_SUBPROGRAM" }
 
@@ -1458,7 +1457,7 @@ sub output_report {
 
     # Append messages to report file
     my $message   = shift;
-    my $file_name = "$WORKING_DIR\/$USER_RUNID\_report.txt";
+    my $file_name = "$Working_Dir\/$USER_RUNID\_report.txt";
     open my $report, '>>', $file_name;
     print {$report} $message;
     close($report);
@@ -1538,7 +1537,7 @@ sub timing {
     my $time_operation = shift;
     my $start_time     = shift;
 
-    my $time_now = $EMPTY;
+    my $time_now;
 
     if ( $time_operation eq 'start' ) {
 
