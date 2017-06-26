@@ -58,39 +58,36 @@ use Data::Dumper;                          # temporary during rewrite to dump da
 # to sub routines, they should not be edited once set.
 my $Working_Dir = getcwd();
 
-#my $Empty             = q{};
-my $ALIGNMENT_OPTIONS;
-my $ALIGNMENT_PROGRAM;
-my $ALIGNMENT_THREADS;
+my $Alignment_Options;
+my $Alignment_Program;
+my $Alignment_Threads;
 
-my $MASKING_CUTOFF1;
-my $MASKING_CUTOFF2;
+my $Masking_Cutoff1;
+my $Masking_Cutoff2;
 
-my $SEARCH_EVALUE;
-my $SEARCH_MAXLENGTH;
+my $Search_Evalue;
+my $Search_Maxlength;
 
-#my $SEARCH_OTHER;
-my $SEARCH_PROGRAM;
-my @SEARCH_SPECIAL_TAXA;
-my $SEARCH_SPECIAL_TOPHITS;
-my $SEARCH_SUBPROGRAM;
-my $SEARCH_THREADS;
-my $SEARCH_TOPHITS;
+#my $Search_Other;
+my $Search_Program;
+my @Search_Special_Taxa;
+my $Search_Special_Tophits;
+my $Search_Subprogram;
+my $Search_Threads;
+my $Search_Tophits;
 
-my $SEQ_DATA;
+my $Seq_Data;
 
-my $TREE_MINTAXA;
-my $TREE_OPTIONS;
-my $TREE_PROGRAM;
-my $TREE_MODEL;
-my $TREE_BS;
+my $Tree_Mintaxa;
+my $Tree_Options;
+my $Tree_Program;
+my $Tree_Model;
+my $Tree_Bs;
 
-my $USER_REINDEX;
-my $USER_RUNID;
+my $User_Reindex;
+my $User_Runid;
 
-my $FILTER_FILE;
-
-my $HMM_TAXA_LIST;
+my $Filter_File;
 
 ###########################################################
 ##           Main Program Flow                           ##
@@ -114,55 +111,52 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     # user options
     # modify the md5_hex to ten chars from pos 0 if none given in YAML
     my $paramaters = LoadFile("$options{p}");
-    $USER_RUNID = $paramaters->{user}->{run_id} || substr( Digest::MD5::md5_hex(rand), 0, 10 );
-    $USER_REINDEX = $paramaters->{user}->{reindex} || 'n';    # default no
-    if ( $USER_REINDEX eq 'y' ) {
+    $User_Runid = $paramaters->{user}->{run_id} || substr( Digest::MD5::md5_hex(rand), 0, 10 );
+    $User_Reindex = $paramaters->{user}->{reindex} || 'n';    # default no
+    if ( $User_Reindex eq 'y' ) {
         output_report("[INFO]\tUser requested reindexing of database directory files - slow!\n");
     }
-    my $run_directory = "$Working_Dir\/$USER_RUNID";
+    my $run_directory = "$Working_Dir\/$User_Runid";
 
     # Now we can make the directories
     setup_main_directories( $run_directory, $options{f} );
 
     # Report
-    output_report("[INFO]\tRun ID: $USER_RUNID\n[INFO]\tDirectory: $run_directory\n");
+    output_report("[INFO]\tRun ID: $User_Runid\n[INFO]\tDirectory: $run_directory\n");
 
     # search options
-    $SEARCH_PROGRAM    = $paramaters->{search}->{program}    || 'blast+';
-    $SEARCH_SUBPROGRAM = $paramaters->{search}->{subprogram} || 'blastp';
-    $SEARCH_EVALUE     = $paramaters->{search}->{evalue}     || '1e-10';
-    $SEARCH_TOPHITS    = $paramaters->{search}->{top_hits}   || '1';
-    $SEARCH_MAXLENGTH  = $paramaters->{search}->{max_length} || '3000';
-    @SEARCH_SPECIAL_TAXA    = split /,/, $paramaters->{search}->{special_taxa} || '';
-    $SEARCH_SPECIAL_TOPHITS = $paramaters->{search}->{special_top_hits}        || $SEARCH_TOPHITS;
-    $SEARCH_THREADS         = $paramaters->{search}->{threads}                 || '1';
+    $Search_Program    = $paramaters->{search}->{program}    || 'blast+';
+    $Search_Subprogram = $paramaters->{search}->{subprogram} || 'blastp';
+    $Search_Evalue     = $paramaters->{search}->{evalue}     || '1e-10';
+    $Search_Tophits    = $paramaters->{search}->{top_hits}   || '1';
+    $Search_Maxlength  = $paramaters->{search}->{max_length} || '3000';
+    @Search_Special_Taxa    = split /,/, $paramaters->{search}->{special_taxa} || '';
+    $Search_Special_Tophits = $paramaters->{search}->{special_top_hits}        || $Search_Tophits;
+    $Search_Threads         = $paramaters->{search}->{threads}                 || '1';
 
-    #$SEARCH_OTHER = $paramaters->{search}->{other};                                # no default
+    #$Search_Other = $paramaters->{search}->{other};                                # no default
 
     # alignment options
-    $ALIGNMENT_PROGRAM = $paramaters->{alignment}->{program} || 'mafft';
-    $ALIGNMENT_OPTIONS = $paramaters->{alignment}->{options};              # no default
-    $ALIGNMENT_THREADS = $paramaters->{alignment}->{threads} || '1';
+    $Alignment_Program = $paramaters->{alignment}->{program} || 'mafft';
+    $Alignment_Options = $paramaters->{alignment}->{options};              # no default
+    $Alignment_Threads = $paramaters->{alignment}->{threads} || '1';
 
     # masking options
-    $MASKING_CUTOFF1 = $paramaters->{masking}->{cutoff_1} || '50';
-    $MASKING_CUTOFF2 = $paramaters->{masking}->{cutoff_2} || '20';
+    $Masking_Cutoff1 = $paramaters->{masking}->{cutoff_1} || '50';
+    $Masking_Cutoff2 = $paramaters->{masking}->{cutoff_2} || '20';
 
     # tree building options
-    $TREE_PROGRAM = $paramaters->{trees}->{program} || 'FastTreeMP';
-    $TREE_OPTIONS = $paramaters->{trees}->{options};                       # no default
-    $TREE_MINTAXA = $paramaters->{trees}->{min_taxa} || '4';
-    $TREE_MODEL   = $paramaters->{trees}->{model} || 'PROTGAMMAAUTO';
-    $TREE_BS      = $paramaters->{trees}->{bootstraps} || '100';
+    $Tree_Program = $paramaters->{trees}->{program} || 'FastTreeMP';
+    $Tree_Options = $paramaters->{trees}->{options};                       # no default
+    $Tree_Mintaxa = $paramaters->{trees}->{min_taxa} || '4';
+    $Tree_Model   = $paramaters->{trees}->{model} || 'PROTGAMMAAUTO';
+    $Tree_Bs      = $paramaters->{trees}->{bootstraps} || '100';
 
     # directory options
-    $SEQ_DATA = $paramaters->{directories}->{database};                    # no default
+    $Seq_Data = $paramaters->{directories}->{database};                    # no default
 
     # filtering options
-    $FILTER_FILE = $paramaters->{filter}->{filename};                      # no default
-
-    # hmm option
-    # $HMM_TAXA_LIST = $paramaters->{hmm}->{taxa_list};
+    $Filter_File = $paramaters->{filter}->{filename};                      # no default
 
     # only run search (blast) step
     if ( $options{b} ) {
@@ -171,12 +165,12 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
         my $start_time = timing('start');
 
         if ( -d $input_seqs_fname ) {
-            print "Running: Search ($SEARCH_PROGRAM) from Ortho Groups Directory ONLY\n";
+            print "Running: Search ($Search_Program) from Ortho Groups Directory ONLY\n";
 
             search_step_ortho_groups( \@taxa_array, $input_seqs_fname );
         }
         else {
-            print "Running: Search ($SEARCH_PROGRAM) ONLY\n";
+            print "Running: Search ($Search_Program) ONLY\n";
             search_step( \@taxa_array, $input_seqs_fname );
         }
 
@@ -187,7 +181,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     # members of a group of taxa or higher level classification
     # e.g. if the potential tree does not have "plants" exclude it
     if ( $options{f} ) {
-        print "Running: Filtering un-aligned seqs that don't contain taxa/groups from $FILTER_FILE\n";
+        print "Running: Filtering un-aligned seqs that don't contain taxa/groups from $Filter_File\n";
         my $start_time = timing('start');
         filtering_step();
         my $end_time = timing( 'end', $start_time );
@@ -195,7 +189,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
 
     # only run alignment step
     if ( $options{a} ) {
-        print "Running: Alignment ($ALIGNMENT_PROGRAM) ONLY\n";
+        print "Running: Alignment ($Alignment_Program) ONLY\n";
         my $start_time = timing('start');
         alignment_step();
         my $end_time = timing( 'end', $start_time );
@@ -211,7 +205,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
 
     # only run tree building step (o is for orchard)
     if ( $options{o} ) {
-        print "Running: Tree Reconstruction with $TREE_PROGRAM ONLY\n";
+        print "Running: Tree Reconstruction with $Tree_Program ONLY\n";
         my $start_time = timing('start');
         tree_step();
         my $end_time = timing( 'end', $start_time );
@@ -221,25 +215,25 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
     if ( !$options{b} && !$options{a} && !$options{m} && !$options{o} && !$options{f} ) {
 
         # run all steps, but all blasts first then amt steps
-        print "Running: ALL Steps; all searches ($SEARCH_PROGRAM) first!\n";
+        print "Running: ALL Steps; all searches ($Search_Program) first!\n";
 
         # Run the user selected sequence search option
         my $start_time = timing('start');
 
         if ( -d $input_seqs_fname ) {
-            print "Running: Search ($SEARCH_PROGRAM) from Ortho Groups Directory ONLY\n";
+            print "Running: Search ($Search_Program) from Ortho Groups Directory ONLY\n";
 
             search_step_ortho_groups( \@taxa_array, $input_seqs_fname );
         }
         else {
-            print "Running: Search ($SEARCH_PROGRAM) ONLY\n";
+            print "Running: Search ($Search_Program) ONLY\n";
             search_step( \@taxa_array, $input_seqs_fname );
         }
 
         my $end_time = timing( 'end', $start_time );
 
         # Run the user selected alignment option
-        print "Running: Alignment with $ALIGNMENT_PROGRAM\n";
+        print "Running: Alignment with $Alignment_Program\n";
         $start_time = timing('start');
         alignment_step();
         $end_time = timing( 'end', $start_time );
@@ -251,7 +245,7 @@ if ( defined $options{p} && defined $options{t} && defined $options{s} ) {
         $end_time = timing( 'end', $start_time );
 
         # Run the user selected tree building options
-        print "Running: Tree Reconstruction with $TREE_PROGRAM\n";
+        print "Running: Tree Reconstruction with $Tree_Program\n";
         $start_time = timing('start');
         tree_step();
         $end_time = timing( 'end', $start_time );
@@ -272,16 +266,16 @@ else {
 sub filtering_step {
 
     # directories
-    my $sequence_directory = "$Working_Dir\/$USER_RUNID\/seqs";
-    my $excluded_directory = "$Working_Dir\/$USER_RUNID\/excluded";
+    my $sequence_directory = "$Working_Dir\/$User_Runid\/seqs";
+    my $excluded_directory = "$Working_Dir\/$User_Runid\/excluded";
 
     # get list of sequences that were not excluded in previous stage
     my @seq_file_names = glob "$sequence_directory\/*.fas";
 
     # read in the list of taxa that must be in set of seqs
-    open my $filter_file, '<', $FILTER_FILE;
-    my @filter_list = <$filter_file>;
-    close $filter_file;
+    open my $Filter_File, '<', $Filter_File;
+    my @filter_list = <$Filter_File>;
+    close $Filter_File;
 
     # Let's not continue if there are no files!
     if ( $#seq_file_names == -1 ) {
@@ -290,14 +284,14 @@ sub filtering_step {
     }
 
     # iterate through the stream of sequences and perform each search
-    output_report("[INFO]\tFILTERING: $#seq_file_names sequence files using $FILTER_FILE\n");
+    output_report("[INFO]\tFILTERING: $#seq_file_names sequence files using $Filter_File\n");
 
     for my $i ( 0 .. $#seq_file_names ) {
 
         my $current_sequences = $seq_file_names[$i];
         my ( $file, $dir, $ext ) = fileparse $current_sequences, '.fas';
 
-        print "Filtering $current_sequences with $FILTER_FILE\n";
+        print "Filtering $current_sequences with $Filter_File\n";
 
         my @taxa_accessions = get_accession_list("$sequence_directory\/$file$ext");
         my $missing_count   = 0;
@@ -481,22 +475,22 @@ sub get_taxon_names {
 
 sub tree_step {
 
-    my $masks_directory = "$Working_Dir\/$USER_RUNID\/masks";
-    my $tree_directory  = "$Working_Dir\/$USER_RUNID\/trees";
+    my $masks_directory = "$Working_Dir\/$User_Runid\/masks";
+    my $tree_directory  = "$Working_Dir\/$User_Runid\/trees";
 
     # get list of sequences that were not excluded in previous stage
     my @mask_file_names = glob "$masks_directory\/*.afa-tr";
 
-    output_report("[INFO]\tTREE BUILDING: $#mask_file_names alignments using $TREE_PROGRAM\n");
+    output_report("[INFO]\tTREE BUILDING: $#mask_file_names alignments using $Tree_Program\n");
 
-    if ( $TREE_PROGRAM =~ /fasttree/ism ) {
+    if ( $Tree_Program =~ /fasttree/ism ) {
         for my $i ( 0 .. $#mask_file_names ) {
             my ( $file, $dir, $ext ) = fileparse $mask_file_names[$i], '\.afa-tr';
 
             run_fasttree("$masks_directory\/$file\.afa-tr");
         }
     }
-    elsif ( $TREE_PROGRAM =~ /iqtree/ism ) {
+    elsif ( $Tree_Program =~ /iqtree/ism ) {
         for my $i ( 0 .. $#mask_file_names ) {
             my ( $file, $dir, $ext ) = fileparse $mask_file_names[$i], '\.afa-tr';
 
@@ -518,7 +512,7 @@ sub run_iqtree {
 
     my ( $file, $dir, $ext ) = fileparse $masked_sequences, '\.afa\-tr';
 
-    $iqtree_command = "iqtree -s $masked_sequences $TREE_OPTIONS";
+    $iqtree_command = "iqtree -s $masked_sequences $Tree_Options";
 
 }
 
@@ -528,20 +522,20 @@ sub run_raxml_ml_rapid_bd {
 
     my ( $file, $dir, $ext ) = fileparse $masked_sequences, '\.afa\-tr';
 
-    if ( $TREE_PROGRAM =~ /raxmlHPC-PTHREADS/ism ) {
-        $raxmltree_command = "raxmlHPC-PTHREADS -T $SEARCH_THREADS";
+    if ( $Tree_Program =~ /raxmlHPC-PTHREADS/ism ) {
+        $raxmltree_command = "raxmlHPC-PTHREADS -T $Search_Threads";
         $raxmltree_command = " -f a";                                                           # fast ML
-        $raxmltree_command = " -m $TREE_MODEL";                                                 # model
+        $raxmltree_command = " -m $Tree_Model";                                                 # model
         $raxmltree_command = " -p " . int( rand(10000) ) . " -x " . int( rand(10000) ) . "";    # rapid BS mode
-        $raxmltree_command = " -# $TREE_BS";                                                    # e.g. 100 BS
+        $raxmltree_command = " -# $Tree_Bs";                                                    # e.g. 100 BS
         $raxmltree_command = " -s $masked_sequences";                                           # masked alignment
     }
     else {
         $raxmltree_command = "raxmlHPC";
         $raxmltree_command = " -f a";                                                           # fast ML
-        $raxmltree_command = " -m $TREE_MODEL";                                                 # model
+        $raxmltree_command = " -m $Tree_Model";                                                 # model
         $raxmltree_command = " -p " . int( rand(10000) ) . " -x " . int( rand(10000) ) . "";    # rapid BS mode
-        $raxmltree_command = " -# $TREE_BS";                                                    # e.g. 100 BS
+        $raxmltree_command = " -# $Tree_Bs";                                                    # e.g. 100 BS
         $raxmltree_command = " -s $masked_sequences";                                           # masked alignment
     }
 
@@ -556,15 +550,15 @@ sub run_fasttree {
 
     print "\tCalculating FastTree on $file\n";
 
-    if ( $TREE_PROGRAM =~ /fasttreemp/ism ) {
-        $fasttree_command = "FastTreeMP $TREE_OPTIONS";
+    if ( $Tree_Program =~ /fasttreemp/ism ) {
+        $fasttree_command = "FastTreeMP $Tree_Options";
         $fasttree_command .= " $masked_sequences";
-        $fasttree_command .= " > $Working_Dir\/$USER_RUNID\/trees\/$file\_FT.tree";
+        $fasttree_command .= " > $Working_Dir\/$User_Runid\/trees\/$file\_FT.tree";
     }
     else {
-        $fasttree_command = "FastTree $TREE_OPTIONS";
+        $fasttree_command = "FastTree $Tree_Options";
         $fasttree_command .= " $masked_sequences";
-        $fasttree_command .= " > $Working_Dir\/$USER_RUNID\/trees\/$file\_FT.tree";
+        $fasttree_command .= " > $Working_Dir\/$User_Runid\/trees\/$file\_FT.tree";
     }
 
     system($fasttree_command);
@@ -577,8 +571,8 @@ sub run_fasttree {
 sub masking_step {
 
     # directory variables
-    my $alignments_directory = "$Working_Dir\/$USER_RUNID\/alignments";
-    my $masks_directory      = "$Working_Dir\/$USER_RUNID\/masks";
+    my $alignments_directory = "$Working_Dir\/$User_Runid\/alignments";
+    my $masks_directory      = "$Working_Dir\/$User_Runid\/masks";
 
     # get list of sequences that were not excluded in previous stage
     my @algn_file_names = glob "$alignments_directory\/*.afa";
@@ -595,7 +589,7 @@ sub masking_step {
         my $mask_length = run_trimal( $current_sequences, '-nogaps' );
 
         # if the length is less than the first limit
-        if ( $mask_length <= $MASKING_CUTOFF1 ) {
+        if ( $mask_length <= $Masking_Cutoff1 ) {
 
             # then re-run trimal and report mask length with -automated1 option
             $mask_length = run_trimal( $current_sequences, '-automated1' );
@@ -603,15 +597,15 @@ sub masking_step {
             print "Mask Length is ($mask_length) and is";
 
             # if the length is less than the second limit (always the smaller)
-            if ( $mask_length <= $MASKING_CUTOFF2 ) {
+            if ( $mask_length <= $Masking_Cutoff2 ) {
                 print " not OK. Excluding sequence.\n";
 
                 # then abandon this sequence, report it, move to excluded
                 output_report(
-"[WARN]\t$file does not satisfy trimal cutoffs ($MASKING_CUTOFF1 or $MASKING_CUTOFF2). Moved to excluded directory.\n"
+"[WARN]\t$file does not satisfy trimal cutoffs ($Masking_Cutoff1 or $Masking_Cutoff2). Moved to excluded directory.\n"
                 );
                 system
-"mv $Working_Dir\/$USER_RUNID\/masks\/$file\.afa-tr $Working_Dir\/$USER_RUNID\/excluded\/$file\.afa-tr";
+"mv $Working_Dir\/$User_Runid\/masks\/$file\.afa-tr $Working_Dir\/$User_Runid\/excluded\/$file\.afa-tr";
             }
             else {
                 print " OK.\n";
@@ -627,7 +621,7 @@ sub run_trimal {
 
     my $aligned_sequences = shift;
     my $option            = shift;
-    my $masks_directory   = "$Working_Dir\/$USER_RUNID\/masks";
+    my $masks_directory   = "$Working_Dir\/$User_Runid\/masks";
 
     my ( $file, $dir, $ext ) = fileparse $aligned_sequences, '\.afa';
 
@@ -669,34 +663,34 @@ sub alignment_step {
     ## if we are going to be bypassing the search step...
 
     # directory variables
-    my $sequence_directory   = "$Working_Dir\/$USER_RUNID\/seqs";
-    my $alignments_directory = "$Working_Dir\/$USER_RUNID\/alignments";
+    my $sequence_directory   = "$Working_Dir\/$User_Runid\/seqs";
+    my $alignments_directory = "$Working_Dir\/$User_Runid\/alignments";
 
     # get list of sequences that were not excluded in previous stage
     my @seq_file_names = glob "$sequence_directory\/*.fas";
 
     # iterate through the stream of sequences and perform each search
-    output_report("[INFO]\tALIGNING: $#seq_file_names alignments using $ALIGNMENT_PROGRAM\n");
+    output_report("[INFO]\tALIGNING: $#seq_file_names alignments using $Alignment_Program\n");
 
     for my $i ( 0 .. $#seq_file_names ) {
 
         my $current_sequences = $seq_file_names[$i];
 
-        print "Aligning $current_sequences with $ALIGNMENT_PROGRAM\n";
+        print "Aligning $current_sequences with $Alignment_Program\n";
 
         my ( $file, $dir, $ext ) = fileparse $current_sequences, '\.fas';
 
-        given ($ALIGNMENT_PROGRAM) {
+        given ($Alignment_Program) {
             when (/mafft/ism) {
-                my $mafft_command = "mafft $ALIGNMENT_OPTIONS";
-                $mafft_command .= " --thread $ALIGNMENT_THREADS";
+                my $mafft_command = "mafft $Alignment_Options";
+                $mafft_command .= " --thread $Alignment_Threads";
                 $mafft_command .= " $current_sequences > $alignments_directory\/$file\.afa";
 
                 system($mafft_command);
             }
             when (/muscle/ism) {
 
-                my $muscle_command = "muscle $ALIGNMENT_OPTIONS";
+                my $muscle_command = "muscle $Alignment_Options";
                 $muscle_command .= " -in $current_sequences -out $alignments_directory\/$file\.afa";
 
                 system($muscle_command);
@@ -746,7 +740,7 @@ sub search_step_ortho_groups {
         chomp( my $input_seqs_total = `grep -c ">" $orthofile` );
 
         # iterate through the stream of sequences and perform each search
-        output_report("[INFO]\tStarting $input_seqs_total searches using $SEARCH_PROGRAM($SEARCH_SUBPROGRAM)\n");
+        output_report("[INFO]\tStarting $input_seqs_total searches using $Search_Program($Search_Subprogram)\n");
 
         while ( my $seq = $seq_in->next_seq() ) {
 
@@ -782,7 +776,7 @@ sub search_step_ortho_groups {
             );
             $ortho_seqs_out->write_seq($seq);
 
-            for ($SEARCH_PROGRAM) {
+            for ($Search_Program) {
                 when (/BLAST[+]/ism) {
 
                     print "\tRunning: blast+ on $sequence_name\n";
@@ -813,8 +807,8 @@ sub search_step_ortho_groups {
                     print "\tRunning: (default) blast+ on $sequence_name\n";
 
                     # lets just make sure we are using the defaults and not user passed variables
-                    $SEARCH_PROGRAM    = 'blast+';
-                    $SEARCH_SUBPROGRAM = 'blastp';
+                    $Search_Program    = 'blast+';
+                    $Search_Subprogram = 'blastp';
                     run_blast_plus( \@taxa_array, "$sequence_name\_query.fas", $sequence_name );
                 }
             }
@@ -838,21 +832,21 @@ sub search_step_ortho_groups {
         # get the number of sequences in the file
         chomp( $num_hit_seqs = `grep -c ">" $Working_Dir\/$ortho_file\_ortho\_hits.fas` );
 
-        if ( $num_hit_seqs <= $TREE_MINTAXA ) {
+        if ( $num_hit_seqs <= $Tree_Mintaxa ) {
             output_report("[WARN]\t$ortho_file: Too few hits\n");
             unlink "$Working_Dir\/$ortho_file\_ortho\_hits.fas";
             system
-              "mv $Working_Dir\/$ortho_file\_ortho\_non\_redundant\_hits.fas $Working_Dir\/$USER_RUNID\/excluded\/";
+              "mv $Working_Dir\/$ortho_file\_ortho\_non\_redundant\_hits.fas $Working_Dir\/$User_Runid\/excluded\/";
         }
         else {
             unlink "$Working_Dir\/$ortho_file\_ortho\_hits.fas";
             system
-"mv $Working_Dir\/$ortho_file\_ortho\_non\_redundant\_hits.fas $Working_Dir\/$USER_RUNID\/seqs\/$ortho_file\_hits.fas";
+"mv $Working_Dir\/$ortho_file\_ortho\_non\_redundant\_hits.fas $Working_Dir\/$User_Runid\/seqs\/$ortho_file\_hits.fas";
 
             # remove selenocystein and non-alpha numeric characters as they cause BLAST/MAFFT
             # to complain/crash (and the --anysymbol option produces terrible alignments)
             # I have to check for this as some genome projects are just full of junk!
-            system "sed -i \'/^>/!s/U/X/g\' $Working_Dir\/$USER_RUNID\/seqs\/$ortho_file\_hits.fas";
+            system "sed -i \'/^>/!s/U/X/g\' $Working_Dir\/$User_Runid\/seqs\/$ortho_file\_hits.fas";
         }
     }
 }
@@ -907,7 +901,7 @@ sub search_step {
     chomp( my $input_seqs_total = `grep -c ">" $input_seqs_fname` );
 
     # iterate through the stream of sequences and perform each search
-    output_report("[INFO]\tStarting $input_seqs_total searches using $SEARCH_PROGRAM($SEARCH_SUBPROGRAM)\n");
+    output_report("[INFO]\tStarting $input_seqs_total searches using $Search_Program($Search_Subprogram)\n");
     while ( my $seq = $seq_in->next_seq() ) {
 
         print "Processing: $input_seqs_count of $input_seqs_total\n";
@@ -929,7 +923,7 @@ sub search_step {
         );
         $hits_out->write_seq($seq);
 
-        for ($SEARCH_PROGRAM) {
+        for ($Search_Program) {
             when (/BLAST[+]/ism) {
 
                 print "\tRunning: blast+ on $sequence_name\n";
@@ -957,27 +951,27 @@ sub search_step {
             }
             default {
                 # lets just make sure we are using the defaults and not user passed variables
-                $SEARCH_PROGRAM    = 'blast+';
-                $SEARCH_SUBPROGRAM = 'blastp';
+                $Search_Program    = 'blast+';
+                $Search_Subprogram = 'blastp';
                 print "\tRunning: (default) blast+ on $sequence_name\n";
                 $num_hit_seqs = run_blast_plus( \@taxa_array, $input_seqs_fname, $sequence_name );
             }
         }
         $input_seqs_count++;
 
-        if ( $num_hit_seqs <= $TREE_MINTAXA ) {
+        if ( $num_hit_seqs <= $Tree_Mintaxa ) {
             output_report("[WARN]\t$sequence_name: Too few hits\n");
             unlink "$Working_Dir\/$sequence_name\_query.fas";
-            system "mv $sequence_name\_hits.fas $Working_Dir\/$USER_RUNID\/excluded\/";
+            system "mv $sequence_name\_hits.fas $Working_Dir\/$User_Runid\/excluded\/";
         }
         else {
             unlink "$Working_Dir\/$sequence_name\_query.fas";
-            system "mv $sequence_name\_hits.fas $Working_Dir\/$USER_RUNID\/seqs\/";
+            system "mv $sequence_name\_hits.fas $Working_Dir\/$User_Runid\/seqs\/";
 
             # remove selenocystein and non-alpha numeric characters as they cause BLAST/MAFFT
             # to complain/crash (and the --anysymbol option produces terrible alignments)
             # I have to check for this as some genome projects are just full of junk!
-            system "sed -i \'/^>/!s/U|\\w/X/g\' $Working_Dir\/$USER_RUNID\/seqs\/$sequence_name\_hits.fas";
+            system "sed -i \'/^>/!s/U|\\w/X/g\' $Working_Dir\/$User_Runid\/seqs\/$sequence_name\_hits.fas";
         }
     }
     return;
@@ -1010,52 +1004,52 @@ sub run_blast_plus {
         else {
 
             # Blast Output Filename
-            my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$SEARCH_SUBPROGRAM";
+            my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$Search_Subprogram";
 
             # BLAST Output Progress
             printf
-              "\t\t>: $SEARCH_SUBPROGRAM: $taxa_count of $taxa_total\n\e[A";    # - $taxa_name\n\e[A";    # Progress...
+              "\t\t>: $Search_Subprogram: $taxa_count of $taxa_total\n\e[A";    # - $taxa_name\n\e[A";    # Progress...
 
             my $database = $taxa_name_for_blast . '.fas';
 
             # In the future I might consider replacing grep with List:MoreUtils 'any' to save
             # large searches
-            if ( grep { $_ eq $taxa_name } @SEARCH_SPECIAL_TAXA ) {
+            if ( grep { $_ eq $taxa_name } @Search_Special_Taxa ) {
 
                 # blast(x) from blast+ package command
                 # we will use tabulated output as it's smaller than XML
                 # and we don't really need much information other than the hit ID
-                my $blast_command = "$SEARCH_SUBPROGRAM -task $SEARCH_SUBPROGRAM";
-                $blast_command .= " -db $SEQ_DATA\/$database";
+                my $blast_command = "$Search_Subprogram -task $Search_Subprogram";
+                $blast_command .= " -db $Seq_Data\/$database";
                 $blast_command .= " -query $sequence_name_for_blast\_query.fas";
                 $blast_command .= " -out $search_output";
-                $blast_command .= " -evalue $SEARCH_EVALUE";
+                $blast_command .= " -evalue $Search_Evalue";
                 $blast_command .= ' -outfmt 6';
-                $blast_command .= " -max_target_seqs $SEARCH_SPECIAL_TOPHITS";
-                $blast_command .= " -num_threads $SEARCH_THREADS";
+                $blast_command .= " -max_target_seqs $Search_Special_Tophits";
+                $blast_command .= " -num_threads $Search_Threads";
 
-                #$blast_command .= " $SEARCH_OTHER";
+                #$blast_command .= " $Search_Other";
 
                 system($blast_command);
                 parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
 
                 output_report(
-                    "[INFO]\t$sequence_name: Using special -max_target_seqs $SEARCH_SPECIAL_TOPHITS for $taxa_name\n");
+                    "[INFO]\t$sequence_name: Using special -max_target_seqs $Search_Special_Tophits for $taxa_name\n");
             }
             else {
                 # blast(x) from blast+ package command
                 # we will use tabulated output as it's smaller than XML
                 # and we don't really need much information other than the hit ID
-                my $blast_command = "$SEARCH_SUBPROGRAM -task $SEARCH_SUBPROGRAM";
-                $blast_command .= " -db $SEQ_DATA\/$database";
+                my $blast_command = "$Search_Subprogram -task $Search_Subprogram";
+                $blast_command .= " -db $Seq_Data\/$database";
                 $blast_command .= " -query $sequence_name_for_blast\_query.fas";
                 $blast_command .= " -out $search_output";
-                $blast_command .= " -evalue $SEARCH_EVALUE";
+                $blast_command .= " -evalue $Search_Evalue";
                 $blast_command .= ' -outfmt 6';
-                $blast_command .= " -max_target_seqs $SEARCH_TOPHITS";
-                $blast_command .= " -num_threads $SEARCH_THREADS";
+                $blast_command .= " -max_target_seqs $Search_Tophits";
+                $blast_command .= " -num_threads $Search_Threads";
 
-                #$blast_command .= " $SEARCH_OTHER";
+                #$blast_command .= " $Search_Other";
 
                 system($blast_command);
                 parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
@@ -1103,56 +1097,56 @@ sub run_blast_legacy {
         else {
 
             # Blast Output Filename
-            my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$SEARCH_SUBPROGRAM";
+            my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$Search_Subprogram";
 
             # BLAST Output Progress
-            printf "\t\t>: $SEARCH_SUBPROGRAM: $taxa_count of $taxa_total\n\e[A";    # Progress...
+            printf "\t\t>: $Search_Subprogram: $taxa_count of $taxa_total\n\e[A";    # Progress...
 
             my $database = $taxa_name_for_blast . '.fas';
 
             # In the future I might consider replacing grep with List:MoreUtils 'any' to save
             # large searches
-            if ( grep { $_ eq $taxa_name } @SEARCH_SPECIAL_TAXA ) {
+            if ( grep { $_ eq $taxa_name } @Search_Special_Taxa ) {
 
                 # blast(x) from legacy blast package command
                 # we will use tabulated output as it's smaller than XML
                 # and we don't really need much information other than the hit ID
-                my $blast_command = "blastall -p $SEARCH_SUBPROGRAM";
-                $blast_command .= " -d $SEQ_DATA\/$database";
+                my $blast_command = "blastall -p $Search_Subprogram";
+                $blast_command .= " -d $Seq_Data\/$database";
                 $blast_command .= " -i $sequence_name_for_blast\_query.fas";
                 $blast_command .= " -o $search_output";
-                $blast_command .= " -e $SEARCH_EVALUE";
+                $blast_command .= " -e $Search_Evalue";
                 $blast_command .= ' -m 8';
-                $blast_command .= " -b $SEARCH_SPECIAL_TOPHITS";
+                $blast_command .= " -b $Search_Special_Tophits";
 
-                #$blast_command .= " -v $SEARCH_TOPHITS";
-                $blast_command .= " -a $SEARCH_THREADS";
+                #$blast_command .= " -v $Search_Tophits";
+                $blast_command .= " -a $Search_Threads";
 
-                #$blast_command .= " $SEARCH_OTHER";
+                #$blast_command .= " $Search_Other";
 
                 system($blast_command);
                 parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
 
                 output_report(
-                    "[INFO]\t$sequence_name: Using special -max_target_seqs $SEARCH_SPECIAL_TOPHITS for $taxa_name\n");
+                    "[INFO]\t$sequence_name: Using special -max_target_seqs $Search_Special_Tophits for $taxa_name\n");
 
             }
             else {
                 # blast(x) from legacy blast package command
                 # we will use tabulated output as it's smaller than XML
                 # and we don't really need much information other than the hit ID
-                my $blast_command = "blastall -p $SEARCH_SUBPROGRAM";
-                $blast_command .= " -d $SEQ_DATA\/$database";
+                my $blast_command = "blastall -p $Search_Subprogram";
+                $blast_command .= " -d $Seq_Data\/$database";
                 $blast_command .= " -i $sequence_name_for_blast\_query.fas";
                 $blast_command .= " -o $search_output";
-                $blast_command .= " -e $SEARCH_EVALUE";
+                $blast_command .= " -e $Search_Evalue";
                 $blast_command .= ' -m 8';
-                $blast_command .= " -b $SEARCH_TOPHITS";
+                $blast_command .= " -b $Search_Tophits";
 
-                #$blast_command .= " -v $SEARCH_TOPHITS";
-                $blast_command .= " -a $SEARCH_THREADS";
+                #$blast_command .= " -v $Search_Tophits";
+                $blast_command .= " -a $Search_Threads";
 
-                #$blast_command .= " $SEARCH_OTHER";
+                #$blast_command .= " $Search_Other";
 
                 system($blast_command);
                 parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
@@ -1200,10 +1194,10 @@ sub run_blat {
         else {
 
             # Blast Output Filename
-            my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$SEARCH_SUBPROGRAM";
+            my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$Search_Subprogram";
 
             # BLAST Output Progress
-            printf "\t\t>: $SEARCH_SUBPROGRAM: $taxa_count of $taxa_total\n\e[A";    # Progress...
+            printf "\t\t>: $Search_Subprogram: $taxa_count of $taxa_total\n\e[A";    # Progress...
 
             my $database = $taxa_name_for_blast . '.fas';
 
@@ -1212,7 +1206,7 @@ sub run_blat {
             # and we don't really need much information other than the hit ID
             my $blat_command = 'blat';
             $blat_command .= ' -prot';                                  # this should be a user option eventually
-            $blat_command .= " $SEQ_DATA\/$database";
+            $blat_command .= " $Seq_Data\/$database";
             $blat_command .= " $sequence_name_for_blast\_query.fas";    # query file
             $blat_command .= ' -out=blast8';
             $blat_command .= " $search_output";                         # output filename
@@ -1262,10 +1256,10 @@ sub run_vsearch {
         else {
 
             # Blast Output Filename
-            my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$SEARCH_SUBPROGRAM";
+            my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$Search_Subprogram";
 
             # BLAST Output Progress
-            printf "\t\t>: $SEARCH_SUBPROGRAM: $taxa_count of $taxa_total\n\e[A";    # Progress...
+            printf "\t\t>: $Search_Subprogram: $taxa_count of $taxa_total\n\e[A";    # Progress...
 
             my $database = $taxa_name_for_blast . '.fas';
 
@@ -1274,11 +1268,11 @@ sub run_vsearch {
             # and we don't really need much information other than the hit ID
             my $usearch_command = 'vsearch --usearch_global';
             $usearch_command .= " $sequence_name_for_blast\_query.fas";    # query file
-            $usearch_command .= " --db $SEQ_DATA\/$database";
+            $usearch_command .= " --db $Seq_Data\/$database";
             $usearch_command .= " --id 0.9";
             $usearch_command .= " --blast6out $search_output";             # output filename
-            $usearch_command .= " --threads $SEARCH_THREADS";
-            $usearch_command .= " --maxaccepts $SEARCH_TOPHITS";
+            $usearch_command .= " --threads $Search_Threads";
+            $usearch_command .= " --maxaccepts $Search_Tophits";
 
             system($usearch_command);
             parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
@@ -1325,10 +1319,10 @@ sub run_usearch {
         else {
 
             # Blast Output Filename
-            my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$SEARCH_SUBPROGRAM";
+            my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$Search_Subprogram";
 
             # BLAST Output Progress
-            printf "\t\t>: $SEARCH_SUBPROGRAM: $taxa_count of $taxa_total\n\e[A";    # Progress...
+            printf "\t\t>: $Search_Subprogram: $taxa_count of $taxa_total\n\e[A";    # Progress...
 
             my $database = $taxa_name_for_blast . '.fas';
 
@@ -1337,11 +1331,11 @@ sub run_usearch {
             # and we don't really need much information other than the hit ID
             my $usearch_command = 'usearch -ublast';
             $usearch_command .= " $sequence_name_for_blast\_query.fas";    # query file
-            $usearch_command .= " -db $SEQ_DATA\/$database";
-            $usearch_command .= " -evalue $SEARCH_EVALUE";                 # this should be a user option eventually
+            $usearch_command .= " -db $Seq_Data\/$database";
+            $usearch_command .= " -evalue $Search_Evalue";                 # this should be a user option eventually
             $usearch_command .= " -blast6out $search_output";              # output filename
-            $usearch_command .= " -threads $SEARCH_THREADS";
-            $usearch_command .= " -maxaccepts $SEARCH_TOPHITS";
+            $usearch_command .= " -threads $Search_Threads";
+            $usearch_command .= " -maxaccepts $Search_Tophits";
 
             system($usearch_command);
             parse_search_output( \@taxa_array, $input_seqs_fname, $sequence_name, $taxa_name, $database );
@@ -1375,17 +1369,17 @@ sub parse_search_output {
     $taxa_name_for_blast =~ s/\s+/\_/gms;    # Replace spaces with '_'
 
     # search output filename
-    my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$SEARCH_SUBPROGRAM";
+    my $search_output = "$sequence_name\_v\_$taxa_name_for_blast\.$Search_Subprogram";
 
     # open file for seq retrieval
     # this will create an index file on the first run, this may slow things down once
     # it may also cause issues if the index is not rebuilt for updated *.fas files
     my $sequence_file;
-    if ( $USER_REINDEX eq 'y' ) {
-        $sequence_file = Bio::DB::Fasta->new( "$SEQ_DATA\/$taxa_name_for_blast\.fas", -reindex );
+    if ( $User_Reindex eq 'y' ) {
+        $sequence_file = Bio::DB::Fasta->new( "$Seq_Data\/$taxa_name_for_blast\.fas", -reindex );
     }
     else {
-        $sequence_file = Bio::DB::Fasta->new("$SEQ_DATA\/$taxa_name_for_blast\.fas");
+        $sequence_file = Bio::DB::Fasta->new("$Seq_Data\/$taxa_name_for_blast\.fas");
     }
 
     # open file in to searchio stream
@@ -1412,7 +1406,7 @@ sub parse_search_output {
                 # many alignment issues
                 my $sequence_length = length $sequence;
 
-                if ( $sequence_length <= $SEARCH_MAXLENGTH ) {
+                if ( $sequence_length <= $Search_Maxlength ) {
 
                     # output hits to hits files
                     open my $hits_seq_out, '>>', "$sequence_name\_hits.fas";
@@ -1434,11 +1428,11 @@ sub parse_search_output {
 
     # move the files once we are finished to the report directory
     # we may need to make it first
-    my $report_dir = "$Working_Dir\/$USER_RUNID\/report\/$sequence_name";
+    my $report_dir = "$Working_Dir\/$User_Runid\/report\/$sequence_name";
     if ( !-d $report_dir ) { mkdir $report_dir }
-    if ( !-d "$report_dir\/$SEARCH_SUBPROGRAM" ) { mkdir "$report_dir\/$SEARCH_SUBPROGRAM" }
+    if ( !-d "$report_dir\/$Search_Subprogram" ) { mkdir "$report_dir\/$Search_Subprogram" }
 
-    system "mv $search_output $report_dir\/$SEARCH_SUBPROGRAM";
+    system "mv $search_output $report_dir\/$Search_Subprogram";
 
     return;
 }
@@ -1461,7 +1455,7 @@ sub output_report {
 
     # Append messages to report file
     my $message   = shift;
-    my $file_name = "$Working_Dir\/$USER_RUNID\_report.txt";
+    my $file_name = "$Working_Dir\/$User_Runid\_report.txt";
     open my $report, '>>', $file_name;
     print {$report} $message;
     close($report);
