@@ -26,8 +26,8 @@ use Data::Dumper;    # temporary during rewrite to dump data nicely to screen
 
 # remove ## comments before publication
 #
-our $WORKING_DIR = getcwd();
-our $VERSION     = '2014-10-17';
+my $WORKING_DIR = getcwd();
+my $VERSION     = '2014-10-17';
 ###########################################################
 #           Darren's Orchard Pipeline                     #
 ###########################################################
@@ -58,39 +58,39 @@ our $VERSION     = '2014-10-17';
 # These options are global and will be set from the user YAML
 # file read in below, globals to avoid passing multiple values
 # to sub routines, they should not be edited once set.
-our $EMPTY             = q{};
-our $ALIGNMENT_OPTIONS = $EMPTY;
-our $ALIGNMENT_PROGRAM = $EMPTY;
-our $ALIGNMENT_THREADS = $EMPTY;
+my $EMPTY             = q{};
+my $ALIGNMENT_OPTIONS = $EMPTY;
+my $ALIGNMENT_PROGRAM = $EMPTY;
+my $ALIGNMENT_THREADS = $EMPTY;
 
-our $MASKING_CUTOFF1 = $EMPTY;
-our $MASKING_CUTOFF2 = $EMPTY;
+my $MASKING_CUTOFF1 = $EMPTY;
+my $MASKING_CUTOFF2 = $EMPTY;
 
-our $SEARCH_EVALUE    = $EMPTY;
-our $SEARCH_MAXLENGTH = $EMPTY;
+my $SEARCH_EVALUE    = $EMPTY;
+my $SEARCH_MAXLENGTH = $EMPTY;
 
-#our $SEARCH_OTHER           = $EMPTY;
-our $SEARCH_PROGRAM         = $EMPTY;
-our @SEARCH_SPECIAL_TAXA    = $EMPTY;
-our $SEARCH_SPECIAL_TOPHITS = $EMPTY;
-our $SEARCH_SUBPROGRAM      = $EMPTY;
-our $SEARCH_THREADS         = $EMPTY;
-our $SEARCH_TOPHITS         = $EMPTY;
+#my $SEARCH_OTHER           = $EMPTY;
+my $SEARCH_PROGRAM         = $EMPTY;
+my @SEARCH_SPECIAL_TAXA    = $EMPTY;
+my $SEARCH_SPECIAL_TOPHITS = $EMPTY;
+my $SEARCH_SUBPROGRAM      = $EMPTY;
+my $SEARCH_THREADS         = $EMPTY;
+my $SEARCH_TOPHITS         = $EMPTY;
 
-our $SEQ_DATA = $EMPTY;
+my $SEQ_DATA = $EMPTY;
 
-our $TREE_MINTAXA = $EMPTY;
-our $TREE_OPTIONS = $EMPTY;
-our $TREE_PROGRAM = $EMPTY;
-our $TREE_MODEL   = $EMPTY;
-our $TREE_BS      = $EMPTY;
+my $TREE_MINTAXA = $EMPTY;
+my $TREE_OPTIONS = $EMPTY;
+my $TREE_PROGRAM = $EMPTY;
+my $TREE_MODEL   = $EMPTY;
+my $TREE_BS      = $EMPTY;
 
-our $USER_REINDEX = $EMPTY;
-our $USER_RUNID   = $EMPTY;
+my $USER_REINDEX = $EMPTY;
+my $USER_RUNID   = $EMPTY;
 
-our $FILTER_FILE = $EMPTY;
+my $FILTER_FILE = $EMPTY;
 
-our $HMM_TAXA_LIST = $EMPTY;
+my $HMM_TAXA_LIST = $EMPTY;
 
 ###########################################################
 ##           Main Program Flow                           ##
@@ -728,7 +728,7 @@ sub search_step_ortho_groups {
         print "Starting: $ortho_files_count of $ortho_files_total = $orthofile\n";
         output_report("[INFO]\tStarting $ortho_files_count of $ortho_files_total = $orthofile\n");
 
-        our ( $ortho_file, $ortho_dir, $ortho_ext ) = fileparse( $orthofile, qr'\..*' );
+        my ( $ortho_file, $ortho_dir, $ortho_ext ) = fileparse( $orthofile, qr'\..*' );
 
         #
         my $num_hit_seqs  = 0;
