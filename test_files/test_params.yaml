@@ -1,55 +1,28 @@
 user:
- run_id: test_scrumpy # give your run an ID
- reindex: y # force reindex of search db y/n
- retrieve: bioperl # bioperl or grep
+  results: testing    # folder name for results
+  threads: 8          # number of cores to use
 
 search:
- # blast, blast+, blat, usearch
- program: blast+
- # blastp, blastx, ublast, blat, etc
- subprogram: blastp
- threads: 8
- other: # any special commands - not implemented
- # values below are only supported by blast/blast+/usearch
- evalue: 1e-10
- top_hits: 5
- # values below are only supported by blast/blast+
- max_length: 3000
- # must be a comma separated list of taxa names or blank
- #e.g. Acanthamoeba castellanii str. Neff,Allomyces macrogynus atcc 38327
- special_taxa:
- special_top_hits: 5
+  program: blast+     # blast, blast+, blat
+  subprogram: blastp  # blastp, blastx, blat
+  evalue: 1e-10       # 1e-10, 1e-05, etc
+  tophits: 5          # integer
+  maxlength: 3000     # ignore AA sequences larger than this value
+
+special:
+  taxa:               # comma separated list of genome IDs from orchardDB
+  tophits:            # integer
 
 alignment:
- # mafft, muscle
- program: mafft
- # mafft = --auto --quiet --reorder
- # muscle = -maxiters 2 -quiet -group
- options: --auto --quiet --reorder
- threads: 4
+  program: mafft      # mafft, muscle
+  options: --auto --quiet --reorder  # muscle: -maxiters 2 -quiet -group
 
 masking:
- cutoff_1: 50
- cutoff_2: 30
+  program: trimal     # trimal, divvier
+  cutoff1: 50         # integer
+  cutoff2: 30         # integer
 
 trees:
- # FastTree, FastTreeMP, raxmlHPC, raxmlHPC-PTHREADS
- program: FastTreeMP
- # FastTree options: -bionj -slow -quiet
- # IQTree options: -bb 1000 -alrt 1000 -nt AUTO -quiet
- options: -bionj -slow -quiet
- # raxmlHPC options
- model: PROTGAMMAAUTO
- bootstraps: 100
- # min number of taxa to make a tree from
- min_taxa: 5
- node_colour: 255 0 0 # r g b (only, no hex)
- seed_colour: 76 175 80 # r g b (only, no hex)
-
-directories:
- # the location of the *.fasta predicted protein files
- database: /home/cs02gl/Desktop/genomes/scrumpy
- taxdump: /home/cs02gl/Desktop/genomes/taxonomy
-
-filter:
- filename: /home/cs02gl/Dropbox/git/orchard/test_files/test_filter.txt
+  program: fasttree   # fasttree, iqtree
+  options: -bionj -slow -quiet  #
+  mintaxa: 5          # integer
