@@ -1,13 +1,11 @@
 user:
- run_id: test_ortho # give your run an ID
- reindex: n # force reindex of search db y/n
+ run_id: test_scrumpy # give your run an ID
+ reindex: y # force reindex of search db y/n
  retrieve: bioperl # bioperl or grep
 
 search:
  # blast, blast+, blat, usearch
- # in some cases legacy blast is 'faster' than blast+ but occasionally returns
- # fewer hits than the newer version...
- program: blast
+ program: blast+
  # blastp, blastx, ublast, blat, etc
  subprogram: blastp
  threads: 8
@@ -18,7 +16,8 @@ search:
  # values below are only supported by blast/blast+
  max_length: 3000
  # must be a comma separated list of taxa names or blank
- special_taxa: Acanthamoeba castellanii str. Neff,Allomyces macrogynus atcc 38327
+ #e.g. Acanthamoeba castellanii str. Neff,Allomyces macrogynus atcc 38327
+ special_taxa:
  special_top_hits: 5
 
 alignment:
@@ -36,11 +35,12 @@ masking:
 trees:
  # FastTree, FastTreeMP, raxmlHPC, raxmlHPC-PTHREADS
  program: FastTreeMP
- # FastTree options e.g. -bionj -slow
+ # FastTree options: -bionj -slow -quiet
+ # IQTree options: -bb 1000 -alrt 1000 -nt AUTO -quiet
  options: -bionj -slow -quiet
  # raxmlHPC options
-  model: PROTGAMMAAUTO
-  bootstraps: 100
+ model: PROTGAMMAAUTO
+ bootstraps: 100
  # min number of taxa to make a tree from
  min_taxa: 5
  node_colour: 255 0 0 # r g b (only, no hex)
@@ -48,5 +48,8 @@ trees:
 
 directories:
  # the location of the *.fasta predicted protein files
- database: /home/cs02gl/Desktop/genomes/cider
+ database: /home/cs02gl/Desktop/genomes/scrumpy
  taxdump: /home/cs02gl/Desktop/genomes/taxonomy
+
+filter:
+ filename: /home/cs02gl/Dropbox/git/orchard/test_files/test_filter.txt
