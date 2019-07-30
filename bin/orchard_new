@@ -1,0 +1,113 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+
+use File::Slurp;
+use Getopt::Long;
+use YAML::XS qw/LoadFile/;
+
+use Data::Dumper;
+
+our $VERSION = 0.1;
+my $version = "Orchard Pipeline v1.0 -- orchard v$VERSION\n";
+
+#
+# Input Variables
+#
+my ( $input_seqs, $taxa_list, $params_file );
+
+#
+# YAML Variables
+#
+my ( $outdir, $threads );
+my ($search_prog,    $search_subprog, $search_evalue,
+    $search_tophits, $search_maxlength
+);
+my ( @special_taxa,   $special_tophits );
+my ( $alignment_prog, $alignment_opts );
+my ( $masking_prog,   $masking_cutoff1, $masking_cutoff2 );
+my ( $tree_prog,      $tree_opts, $tree_mintaxa );
+my ($blast);
+#
+# getopt Logic
+#
+if ( !@ARGV ) {
+    help_message();
+}
+
+GetOptions(
+    'input|i=s'             => \$input_seqs,
+    'taxa|t=s'              => \$taxa_list,
+    'paramaters|params|p=s' => \$params_file,
+    'blast|b'               => \$blast,
+    'version|v'             => sub { print "$version"; exit(0) },
+    'help|h' => sub { help_message() }
+) or help_message();
+
+#
+# Main
+#
+if ( defined $input_seqs && defined $taxa_list && defined $params_file ) {
+    if ( !-f $input_seqs ) {
+        print
+            "[Orchard:ERRR] - The input sequences file $input_seqs does not exist!\n";
+        exit(1);
+    }
+
+    if ( -f $taxa_list ) {
+        my @taxa = read_file("$taxa_list");
+    }
+    else {
+        print
+            "[Orchard:ERRR] - The taxon list file $taxa_list does not exist!\n";
+        exit(1);
+    }
+
+    if ( -f $params_file ) {
+        my $paramaters = LoadFile("$params_file");
+
+        $outdir  = $paramaters->{user}->{results};
+        $threads = $paramaters->{user}->{threads};
+
+        $search_prog      = $paramaters->{search}->{program};
+        $search_subprog   = $paramaters->{search}->{subprogram};
+        $search_evalue    = $paramaters->{search}->{evalue};
+        $search_tophits   = $paramaters->{search}->{tophits};
+        $search_maxlength = $paramaters->{search}->{maxlength};
+
+        @special_taxa    = $paramaters->{special}->{taxa};
+        $special_tophits = $paramaters->{special}->{tophits};
+
+        $alignment_prog = $paramaters->{alignment}->{program};
+        $alignment_opts = $paramaters->{alignment}->{options};
+
+        $masking_prog    = $paramaters->{masking}->{program};
+        $masking_cutoff1 = $paramaters->{masking}->{cutoff1};
+        $masking_cutoff2 = $paramaters->{masking}->{cutoff2};
+
+        $tree_prog    = $paramaters->{trees}->{program};
+        $tree_opts    = $paramaters->{trees}->{options};
+        $tree_mintaxa = $paramaters->{trees}->{mintaxa};
+    }
+    else {
+        print
+            "[Orchard:ERRR] - The parameters file $params_file does not exist!\n";
+        exit(1);
+    }
+
+    if ( defined $blast eq 1 ) {
+        print "1\n";
+    }
+
+}
+else {
+    print "[Orchard:ERRR] - Missing Required Option!\n";
+}
+
+#
+# Help Function
+#
+sub help_message {
+    print "Help!\n";
+    exit(0);
+}
