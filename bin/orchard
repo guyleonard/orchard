@@ -79,7 +79,7 @@ my $Tree_Model   = 'PROTGAMMAAUTO';
 my $Tree_Bs      = '100';
 
 my $ncbi_taxdump_dir = '/home/cs02gl/Desktop/genomes/taxonomy/';
-my $User_Reindex = 'n';
+my $User_Reindex     = 'n';
 
 # modify the md5_hex to ten chars from pos 0 if none given in YAML
 my $User_Runid = substr( Digest::MD5::md5_hex(rand), 0, 10 );
@@ -866,7 +866,7 @@ sub search_step_ortho_groups {
             # in the *ortho_seqs.fasta file
             unlink "$work_dir\/$sequence_name\_query.fasta";
 
-          # append the current seed sequence's hits to the ortho_seqs.fasta file
+        # append the current seed sequence's hits to the ortho_seqs.fasta file
             system
                 "cat $work_dir\/$sequence_name\_hits.fasta >> $work_dir\/$ortho_file\_ortho\_hits.fasta";
 
@@ -876,7 +876,8 @@ sub search_step_ortho_groups {
         $ortho_files_count++;
 
         # now we can remove duplicate sequences based on accession only
-        remove_duplicate_sequences("$work_dir\/$ortho_file\_ortho\_hits.fasta");
+        remove_duplicate_sequences(
+            "$work_dir\/$ortho_file\_ortho\_hits.fasta");
 
         # get the number of sequences in the file
         chomp( $num_hit_seqs

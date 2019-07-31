@@ -2,8 +2,13 @@
 use strict;
 use warnings;
 
+use Bio::DB::Fasta;
+use Bio::SearchIO;
+use Bio::SeqIO;
+use File::Path qw(make_path);
 use File::Slurp;
 use Getopt::Long;
+use IO::Tee;
 use YAML::XS qw/LoadFile/;
 
 use Data::Dumper;
@@ -27,7 +32,14 @@ my ( @special_taxa,   $special_tophits );
 my ( $alignment_prog, $alignment_opts );
 my ( $masking_prog,   $masking_cutoff1, $masking_cutoff2 );
 my ( $tree_prog,      $tree_opts, $tree_mintaxa );
+my ($orchardDB);
 my ($blast);
+
+#
+# Other Variables
+#
+my $log;
+
 #
 # getopt Logic
 #
@@ -54,8 +66,9 @@ if ( defined $input_seqs && defined $taxa_list && defined $params_file ) {
         exit(1);
     }
 
+    my @taxa;
     if ( -f $taxa_list ) {
-        my @taxa = read_file("$taxa_list");
+        @taxa = read_file("$taxa_list");
     }
     else {
         print
@@ -75,7 +88,7 @@ if ( defined $input_seqs && defined $taxa_list && defined $params_file ) {
         $search_tophits   = $paramaters->{search}->{tophits};
         $search_maxlength = $paramaters->{search}->{maxlength};
 
-        @special_taxa    = $paramaters->{special}->{taxa};
+        @special_taxa = split /,/, $paramaters->{special}->{taxa};
         $special_tophits = $paramaters->{special}->{tophits};
 
         $alignment_prog = $paramaters->{alignment}->{program};
@@ -88,6 +101,8 @@ if ( defined $input_seqs && defined $taxa_list && defined $params_file ) {
         $tree_prog    = $paramaters->{trees}->{program};
         $tree_opts    = $paramaters->{trees}->{options};
         $tree_mintaxa = $paramaters->{trees}->{mintaxa};
+
+        $orchardDB = $paramaters->{directories}->{orchardDB};
     }
     else {
         print
@@ -95,13 +110,238 @@ if ( defined $input_seqs && defined $taxa_list && defined $params_file ) {
         exit(1);
     }
 
+    make_path($outdir);
+
+    # output to screen and log file
+    my $logfile = ">>$outdir\.log";
+    $log = IO::Tee->new( \*STDOUT, $logfile );
+    select $log;
+
     if ( defined $blast eq 1 ) {
-        print "1\n";
+        searching( $input_seqs, \@taxa );
     }
 
 }
 else {
     print "[Orchard:ERRR] - Missing Required Option!\n";
+}
+
+#
+# Searching
+#
+sub searching {
+    my ( $input_seqs, $taxa_list ) = @_;
+    my @taxa = @{$taxa_list};
+
+    my $seqs_in = Bio::SeqIO->new( -file => "<$input_seqs" );
+
+    my $input_seqs_count = 1;
+    chomp( my $input_seqs_total = `grep -c ">" $input_seqs` );
+
+    my $hit_seqs_count;
+
+    while ( my $seq = $seqs_in->next_seq() ) {
+
+        print
+            "\n[Orchard:INFO] - Processing: $input_seqs_count of $input_seqs_total\n";
+
+        my $sequence_name = $seq->id;
+
+        # Output Query Sequence
+        my $query_out = Bio::SeqIO->new(
+            -file   => ">$sequence_name\_query.fasta",
+            -format => 'fasta'
+        );
+        $query_out->write_seq($seq);
+
+        # Running total of hits, note '>>' append
+        my $hits_out = Bio::SeqIO->new(
+            -file   => ">>$sequence_name\_hits.fasta",
+            -format => 'fasta'
+        );
+        $hits_out->write_seq($seq);
+
+        if ( $search_prog =~ /BLAST/i ) {
+            print "[Orchard:INFO] - Running: blast+ on $sequence_name\n";
+            $hit_seqs_count
+                = run_blast( \@taxa, $input_seqs, $sequence_name );
+        }
+        elsif ( $search_prog =~ /BLAT/i ) {
+            print "[Orchard:INFO] - Running: blat on $sequence_name\n";
+            $hit_seqs_count = run_blat( \@taxa, $input_seqs, $sequence_name );
+        }
+        else {
+            $search_prog    = 'blast+';
+            $search_subprog = 'blastp';
+            print "[Orchard:INFO] - Running: blast+ on $sequence_name\n";
+            $hit_seqs_count
+                = run_blast( \@taxa, $input_seqs, $sequence_name );
+        }
+
+        $input_seqs_count++;
+
+        if ( $hit_seqs_count <= $tree_mintaxa ) {
+            print "[Orchard:WARN] - Too Few Hits for $sequence_name.\n";
+
+            unlink "$sequence_name\_query.fasta";
+            make_path("$outdir\/excluded");
+            system "mv $sequence_name\_hits.fasta $outdir\/excluded";
+        }
+        else {
+            unlink "$sequence_name\_query.fasta";
+            make_path("$outdir\/seqs");
+            system "mv $sequence_name\_hits.fasta $outdir\/seqs";
+
+            # replace selinocysteine and other junk from
+            # sequences with X, just in case!
+            system
+                "sed -i \'/^>/!s/U|\\w/X/g\' $outdir\/seqs\/$sequence_name\_hits.fasta";
+        }
+    }
+}
+
+sub run_blast {
+    my ( $taxa, $input_seqs, $sequence_name ) = @_;
+
+    my @taxa_list  = @{$taxa};
+    my $taxa_total = @taxa_list;
+    my $taxa_count = 1;
+
+    while (@taxa_list) {
+
+        chomp( my $current_taxa = shift(@taxa_list) );
+
+        if ( $current_taxa =~ m/^#/ ) {
+            print "[Orchard:WARN] - Skipping commented out $current_taxa\n";
+            $taxa_count++;
+        }
+        else {
+
+            my $search_output
+                = "$sequence_name\_vs\_$current_taxa\.$search_subprog";
+            my $database = "$current_taxa\.fasta";
+
+            if ( grep { $_ eq $current_taxa } @special_taxa ) {
+                print
+                    "[Orchard:INFO] - BLAST: Using special search for $search_output\n";
+                my $blast_command = "$search_subprog -task $search_subprog";
+                $blast_command .= " -db $orchardDB\/$database";
+                $blast_command .= " -query $sequence_name\_query.fasta";
+                $blast_command .= " -evalue $search_evalue";
+                $blast_command .= " -outfmt 6 -out $search_output";
+                $blast_command .= " -max_target_seqs $special_tophits";
+                $blast_command .= " -num_threads $threads";
+                system($blast_command);
+            }
+            else {
+                print
+                    "[Orchard:INFO] - BLAST: $search_subprog is running as $search_output\n";
+                my $blast_command = "$search_subprog -task $search_subprog";
+                $blast_command .= " -db $orchardDB\/$database";
+                $blast_command .= " -query $sequence_name\_query.fasta";
+                $blast_command .= " -evalue $search_evalue";
+                $blast_command .= " -outfmt 6 -out $search_output";
+                $blast_command .= " -max_target_seqs $search_tophits";
+                $blast_command .= " -num_threads $threads";
+                system($blast_command);
+                parse_search_output( $sequence_name, $current_taxa );
+            }
+        }
+    }
+
+    chomp( my $hit_seqs_total = `grep -c ">" $sequence_name\_hits.fasta` );
+    print "[Orchard:INFO] - Number of Sequences found = $hit_seqs_total\n";
+    return $hit_seqs_total;
+}
+
+sub run_blat {
+    my ( $taxa, $input_seqs, $sequence_name ) = @_;
+
+    my @taxa_list  = @{$taxa};
+    my $taxa_total = @taxa_list;
+    my $taxa_count = 1;
+
+    while (@taxa_list) {
+
+        chomp( my $current_taxa = shift(@taxa_list) );
+
+        if ( $current_taxa =~ m/^#/ ) {
+            print "[Orchard:WARN] - Skipping commented out $current_taxa\n";
+            $taxa_count++;
+        }
+        else {
+
+            my $search_output
+                = "$sequence_name\_vs\_$current_taxa\.$search_subprog";
+            my $database = "$current_taxa\.fasta";
+
+            print
+                "[Orchard:INFO] - BLAT: $search_subprog is running as $search_output\n";
+            my $blat_command = 'blat';
+            $blat_command .= " \-$search_subprog";
+            $blat_command .= " $orchardDB\/$database";
+            $blat_command .= " $sequence_name\_query.fasta";
+            $blat_command .= ' -out=blast8';
+            $blat_command .= " $search_output";
+
+            system($blat_command);
+            parse_search_output( $sequence_name, $current_taxa );
+
+        }
+    }
+
+    chomp( my $hit_seqs_total = `grep -c ">" $sequence_name\_hits.fasta` );
+    print "[Orchard:INFO] - Number of Sequences found = $hit_seqs_total\n";
+    return $hit_seqs_total;
+}
+
+sub parse_search_output {
+
+    my ( $sequence_name, $current_taxa ) = @_;
+    my $search_output = "$sequence_name\_vs\_$current_taxa\.$search_subprog";
+    my $database      = "$current_taxa\.fasta";
+    my $sequence_file;
+
+    if ( !-f "$orchardDB\/$database\.index" ) {
+        $sequence_file
+            = Bio::DB::Fasta->new( "$orchardDB\/$database", -reindex );
+    }
+    else {
+        $sequence_file = Bio::DB::Fasta->new("$orchardDB\/$database");
+    }
+
+    my $read_search_output = Bio::SearchIO->new(
+        -format => 'blasttable',
+        -file   => $search_output
+    );
+
+    while ( my $result = $read_search_output->next_result ) {
+        while ( my $hit = $result->next_hit ) {
+            my $hit_name = $hit->name;
+            my $sequence = $sequence_file->seq($hit_name);
+
+            if ( defined $sequence ) {
+                my $sequence_length = length $sequence;
+                if ( $sequence_length <= $search_maxlength ) {
+                    open my $hits_seq_out, '>>', "$sequence_name\_hits.fasta";
+                    print {$hits_seq_out} ">$hit_name\n$sequence\n";
+                    close $hits_seq_out;
+                }
+                else {
+                    print
+                        "[Orchard:WARN] - $sequence_name: sequence hit too long for: $hit_name -> $current_taxa\n";
+                }
+            }
+            else {
+                print
+                    "[Orchard:WARN] - $sequence_name: sequence retreival problem for: $hit_name -> $current_taxa\n";
+            }
+        }
+    }
+
+    my $report_dir = "$outdir\/reports\/$sequence_name\/$search_subprog";
+    make_path($report_dir);
+    system "mv $search_output $report_dir";
 }
 
 #
