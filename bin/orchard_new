@@ -5,6 +5,7 @@ use warnings;
 use Bio::DB::Fasta;
 use Bio::SearchIO;
 use Bio::SeqIO;
+use File::Basename;
 use File::Path qw(make_path);
 use File::Slurp;
 use Getopt::Long;
@@ -38,7 +39,7 @@ my ($orchardDB);
 #
 # Other Variables
 #
-my ( $search, alignment );
+my ( $search, $alignment );
 my $log;
 
 #
@@ -367,7 +368,59 @@ sub parse_search_output {
 #
 
 sub alignment {
+    my $sequence_directory   = "$outdir\/seqs";
+    my $alignments_directory = "$outdir\/alignments";
 
+    my @files_to_align = glob "$sequence_directory\/*.fasta";
+
+    if ( !-d $sequence_directory ) {
+        print
+            "[Orchard:INFO] - ALIGN: The directory $sequence_directory does not exist!\n";
+        exit(1);
+    }
+
+    if ( !@files_to_align ) {
+        print
+            "[Orchard:INFO] - ALIGN: There are no sequence files in $sequence_directory!\n";
+        exit(1);
+    }
+
+    make_path($alignments_directory);
+
+    for my $i ( 0 .. $#files_to_align ) {
+        my $current_file = $files_to_align[$i];
+        my $basename = fileparse( $current_file, qr/\Q.fasta\E/ );
+
+        if ( $alignment_prog =~ /mafft/i ) {
+            print
+                "[Orchard:INFO] - ALIGN: Aligning $current_file with $alignment_prog\n";
+            my $mafft_command = "mafft $alignment_opts";
+            $mafft_command .= " --thread $threads";
+            $mafft_command
+                .= " $current_file > $alignments_directory\/$basename\_aligned\.fasta";
+
+            system($mafft_command);
+        }
+        elsif ( $alignment_prog =~ /muscle/i ) {
+            print
+                "[Orchard:INFO] - ALIGN: Aligning $current_file with $alignment_prog\n";
+            my $muscle_command = "muscle $alignment_opts";
+            $muscle_command
+                .= " -in $current_file -out $alignments_directory\/$basename\_aligned\.fasta";
+
+            system($muscle_command);
+        }
+        else {
+            print
+                "[Orchard:INFO] - ALIGN: Aligning $current_file with $alignment_prog\n";
+            my $mafft_command = "mafft $alignment_opts";
+            $mafft_command .= " --thread $threads";
+            $mafft_command
+                .= " $current_file > $alignments_directory\/$basename\_aligned\.fasta";
+
+            system($mafft_command);
+        }
+    }
 }
 
 #
