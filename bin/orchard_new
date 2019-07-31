@@ -34,11 +34,11 @@ my ( $alignment_prog, $alignment_opts );
 my ( $masking_prog,   $masking_cutoff1, $masking_cutoff2 );
 my ( $tree_prog,      $tree_opts, $tree_mintaxa );
 my ($orchardDB);
-my ($blast);
 
 #
 # Other Variables
 #
+my ( $search, alignment );
 my $log;
 
 #
@@ -52,7 +52,8 @@ GetOptions(
     'input|i=s'             => \$input_seqs,
     'taxa|t=s'              => \$taxa_list,
     'paramaters|params|p=s' => \$params_file,
-    'blast|b'               => \$blast,
+    'search|s'              => \$search,
+    'alignment|align|a'     => \$alignment,
     'version|v'             => sub { print "$version"; exit(0) },
     'help|h' => sub { help_message() }
 ) or help_message();
@@ -120,17 +121,22 @@ if ( defined $input_seqs && defined $taxa_list && defined $params_file ) {
     $log = IO::Tee->new( \*STDOUT, $logfile );
     select $log;
 
-    if ( -f "$outdir\.log") {
-    	print "[Orchard:WARN] - Logfile exists, previous run detected! Continue? Y/N\n";
-    	my $user_choice = prompt( ' > : ', -yes_no1 );
-    	if ( $user_choice =~ m/n/i ) {
-    		print "[Orchard:WARN] - Exiting.\n";
-    		exit(1);
-    	}
-    } 
+    if ( -f "$outdir\.log" ) {
+        print
+            "[Orchard:WARN] - Logfile exists, previous run detected! Continue? Y/N\n";
+        my $user_choice = prompt( ' > : ', -yes_no1 );
+        if ( $user_choice =~ m/n/i ) {
+            print "[Orchard:WARN] - Exiting.\n";
+            exit(1);
+        }
+    }
 
-    if ( defined $blast eq 1 ) {
+    if ( defined $search eq 1 ) {
         searching( $input_seqs, \@taxa );
+    }
+
+    if ( defined $alignment eq 1 ) {
+        alignment();
     }
 
 }
@@ -236,26 +242,26 @@ sub run_blast {
             if ( grep { $_ eq $current_taxa } @special_taxa ) {
                 print
                     "[Orchard:INFO] - BLAST: Using special search for $search_output\n";
-                my $blast_command = "$search_subprog -task $search_subprog";
-                $blast_command .= " -db $orchardDB\/$database";
-                $blast_command .= " -query $sequence_name\_query.fasta";
-                $blast_command .= " -evalue $search_evalue";
-                $blast_command .= " -outfmt 6 -out $search_output";
-                $blast_command .= " -max_target_seqs $special_tophits";
-                $blast_command .= " -num_threads $threads";
-                system($blast_command);
+                my $search_command = "$search_subprog -task $search_subprog";
+                $search_command .= " -db $orchardDB\/$database";
+                $search_command .= " -query $sequence_name\_query.fasta";
+                $search_command .= " -evalue $search_evalue";
+                $search_command .= " -outfmt 6 -out $search_output";
+                $search_command .= " -max_target_seqs $special_tophits";
+                $search_command .= " -num_threads $threads";
+                system($search_command);
             }
             else {
                 print
                     "[Orchard:INFO] - BLAST: $search_subprog is running as $search_output\n";
-                my $blast_command = "$search_subprog -task $search_subprog";
-                $blast_command .= " -db $orchardDB\/$database";
-                $blast_command .= " -query $sequence_name\_query.fasta";
-                $blast_command .= " -evalue $search_evalue";
-                $blast_command .= " -outfmt 6 -out $search_output";
-                $blast_command .= " -max_target_seqs $search_tophits";
-                $blast_command .= " -num_threads $threads";
-                system($blast_command);
+                my $search_command = "$search_subprog -task $search_subprog";
+                $search_command .= " -db $orchardDB\/$database";
+                $search_command .= " -query $sequence_name\_query.fasta";
+                $search_command .= " -evalue $search_evalue";
+                $search_command .= " -outfmt 6 -out $search_output";
+                $search_command .= " -max_target_seqs $search_tophits";
+                $search_command .= " -num_threads $threads";
+                system($search_command);
                 parse_search_output( $sequence_name, $current_taxa );
             }
         }
@@ -354,6 +360,14 @@ sub parse_search_output {
     my $report_dir = "$outdir\/reports\/$sequence_name\/$search_subprog";
     make_path($report_dir);
     system "mv $search_output $report_dir";
+}
+
+#
+# Alignment
+#
+
+sub alignment {
+
 }
 
 #
