@@ -3,8 +3,8 @@ user:
   threads: 8          # number of cores to use
 
 search:
-  program: blast+     # blast, blast+, blat
-  subprogram: blastp  # blastp, blastx, blat
+  program: blast+     # blast+, blat
+  subprogram: blastp  # blast: blastp, blastx. blat: dna, prot, dnax
   evalue: 1e-10       # 1e-10, 1e-05, etc
   tophits: 5          # integer
   maxlength: 3000     # ignore AA sequences larger than this value
@@ -26,3 +26,6 @@ trees:
   program: fasttree   # fasttree, iqtree
   options: -bionj -slow -quiet  #
   mintaxa: 5          # integer
+
+directories:
+  orchardDB: /home/cs02gl/Dropbox/git/orchard/test_files/test_db
