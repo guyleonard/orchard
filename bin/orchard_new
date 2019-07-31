@@ -39,7 +39,7 @@ my ($orchardDB);
 #
 # Other Variables
 #
-my ( $search, $alignment );
+my ( $search, $alignment, $masking );
 my $log;
 
 #
@@ -55,6 +55,7 @@ GetOptions(
     'paramaters|params|p=s' => \$params_file,
     'search|s'              => \$search,
     'alignment|align|a'     => \$alignment,
+    'masking|mask|m'        => \$masking,
     'version|v'             => sub { print "$version"; exit(0) },
     'help|h' => sub { help_message() }
 ) or help_message();
@@ -138,6 +139,10 @@ if ( defined $input_seqs && defined $taxa_list && defined $params_file ) {
 
     if ( defined $alignment eq 1 ) {
         alignment();
+    }
+
+    if ( defined $masking eq 1 ) {
+        masking();
     }
 
 }
@@ -421,6 +426,90 @@ sub alignment {
             system($mafft_command);
         }
     }
+}
+
+#
+# Masking
+#
+
+sub masking {
+    my $alignments_directory = "$outdir\/alignments";
+    my $masking_directory    = "$outdir\/masking";
+
+    my @files_to_mask = glob "$alignments_directory\/*.fasta";
+
+    if ( !-d $alignments_directory ) {
+        print
+            "[Orchard:INFO] - ALIGN: The directory $alignments_directory does not exist!\n";
+        exit(1);
+    }
+
+    if ( !@files_to_mask ) {
+        print
+            "[Orchard:INFO] - ALIGN: There are no sequence files in $alignments_directory!\n";
+        exit(1);
+    }
+
+    make_path($masking_directory);
+
+    for my $i ( 0 .. $#files_to_mask ) {
+        my $current_file = $files_to_mask[$i];
+        my $basename = fileparse( $current_file, qr/\Q.fasta\E/ );
+
+        if ( $masking_prog =~ /trimal/i ) {
+            print
+                "[Orchard:INFO] - MASK: Masking Alignment with $masking_prog\n";
+            my $mask_length
+                = run_trimal( $masking_directory, $current_file, '-nogaps' );
+
+            if ( $mask_length <= $masking_cutoff1 ) {
+                print
+                    "[Orchard:WARN] - MASK: Length is $mask_length and smaller than 1st cutoff: $masking_cutoff1. Trying again!\n";
+                my $mask_length
+                    = run_trimal( $masking_directory, $current_file,
+                    '-automated1' );
+                if ( $mask_length <= $masking_cutoff2 ) {
+                    print
+                        "[Orchard:WARN] - MASK: Length is $mask_length and smaller than 2nd cutoff: $masking_cutoff2. Excluding!\n";
+                    system
+                        "mv $masking_directory\/$basename\_masked\.fasta $outdir\/excluded";
+                }
+                else {
+                    print
+                        "[Orchard:INFO] - MASK: Length is $mask_length and bigger than 2nd cutoff: $masking_cutoff2. Next!\n";
+                }
+            }
+            else {
+                print
+                    "[Orchard:INFO] - MASK: Length is $mask_length and bigger than 1st cutoff: $masking_cutoff1. Next!\n";
+            }
+        }
+        else {
+            print "[Orchard:INFO] - MASK: Please use Correct Program Name for Trimming in your YAML\n";
+            exit(1);
+        }
+    }
+}
+
+sub run_trimal {
+    my ( $masking_directory, $current_file, $masking_opt ) = @_;
+    my $basename = fileparse( $current_file, qr/\Q.fasta\E/ );
+
+    my $trimal_command = 'trimal';
+    $trimal_command .= " -in $current_file";
+    $trimal_command .= " -out $masking_directory\/$basename\_masked\.fasta";
+    $trimal_command .= " $masking_opt";
+
+    system($trimal_command);
+
+    my $bioseq = Bio::SeqIO->new(
+        '-file'  => "$masking_directory\/$basename\_masked\.fasta",
+        -verbose => -1
+    );
+    my $sequence = $bioseq->next_seq;
+    my $length   = $sequence->length;
+
+    return $length;
 }
 
 #
