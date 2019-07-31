@@ -8,6 +8,7 @@ use Bio::SeqIO;
 use File::Path qw(make_path);
 use File::Slurp;
 use Getopt::Long;
+use IO::Prompt;
 use IO::Tee;
 use YAML::XS qw/LoadFile/;
 
@@ -88,7 +89,9 @@ if ( defined $input_seqs && defined $taxa_list && defined $params_file ) {
         $search_tophits   = $paramaters->{search}->{tophits};
         $search_maxlength = $paramaters->{search}->{maxlength};
 
-        @special_taxa = split /,/, $paramaters->{special}->{taxa};
+        if ( defined $paramaters->{special}->{taxa} ) {
+            @special_taxa = split /,/, $paramaters->{special}->{taxa};
+        }
         $special_tophits = $paramaters->{special}->{tophits};
 
         $alignment_prog = $paramaters->{alignment}->{program};
@@ -116,6 +119,15 @@ if ( defined $input_seqs && defined $taxa_list && defined $params_file ) {
     my $logfile = ">>$outdir\.log";
     $log = IO::Tee->new( \*STDOUT, $logfile );
     select $log;
+
+    if ( -f "$outdir\.log") {
+    	print "[Orchard:WARN] - Logfile exists, previous run detected! Continue? Y/N\n";
+    	my $user_choice = prompt( ' > : ', -yes_no1 );
+    	if ( $user_choice =~ m/n/i ) {
+    		print "[Orchard:WARN] - Exiting.\n";
+    		exit(1);
+    	}
+    } 
 
     if ( defined $blast eq 1 ) {
         searching( $input_seqs, \@taxa );
