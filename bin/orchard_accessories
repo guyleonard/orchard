@@ -1,0 +1,140 @@
+#!/usr/bin/env perl
+use strict;
+use warnings;
+
+use Bio::TreeIO;
+use DBI;
+use File::Basename;
+use File::Path qw(make_path);
+use Getopt::Long;
+use YAML::XS qw/LoadFile/;
+
+use Data::Dumper;
+
+our $VERSION = 0.1;
+my $version = "Orchard Pipeline v1.0 -- orchard_accessories v$VERSION\n";
+
+#
+# Other Variables
+#
+my $params_file;
+my ( $outdir, $threads );
+my ( $orchardDB_location, $orchardDB_username, $orchardDB_password );
+my $rename_newick_trees;
+
+#
+# getopt Logic
+#
+if ( !@ARGV ) {
+    help_message();
+}
+
+GetOptions(
+    'paramaters|params|p=s' => \$params_file,
+    'newick|n'              => \$rename_newick_trees,
+    'version|v'             => sub { print "$version"; exit(0) },
+    'help|h' => sub { help_message() }
+) or help_message();
+
+#
+# Main
+#
+if ( -f $params_file ) {
+    my $paramaters = LoadFile("$params_file");
+
+    $outdir  = $paramaters->{user}->{results};
+    $threads = $paramaters->{user}->{threads};
+
+    $orchardDB_location = $paramaters->{directories}->{orchardDB};
+    $orchardDB_username = $paramaters->{database}->{username};
+    $orchardDB_password = $paramaters->{database}->{password};
+
+    if ( defined $params_file eq 1 ) {
+        rename_newick_trees();
+    }
+}
+else {
+    print
+        "[orchard_accessories:ERRR] - The parameters file $params_file does not exist!\n";
+    exit(1);
+}
+
+#
+# Renaming
+#
+sub rename_newick_trees {
+    my $trees_directory = "$outdir\/trees";
+    my $trees_renamed_directory = "$outdir\/trees\/renamed";
+    make_path($trees_renamed_directory);
+
+    my $dbh = sqllite();
+
+    my @trees_to_rename = glob "$trees_directory\/*.treefile";
+
+    for my $i ( 0 .. $#trees_to_rename ) {
+        my $current_file = $trees_to_rename[$i];
+
+        my $input_tree = new Bio::TreeIO(
+            -file   => "$current_file",
+            -format => "newick"
+        );
+
+        my $basename = fileparse( $current_file, qr/\Q.treefile\E/ );
+        my $output_tree = new Bio::TreeIO(
+            -file   => ">$trees_renamed_directory\/$basename\_renamed\.treefile",
+            -format => "newick"
+        );
+
+        while ( my $tree = $input_tree->next_tree ) {
+            my $rootnode = $tree->get_root_node;
+
+            foreach my $node ( $rootnode->get_all_Descendents() ) {
+                if ( $node->is_Leaf ) {
+                    my $current_node = $node->id;
+                    print "$current_node\t";
+
+                    my $statement
+                        = qq(SELECT odb_accessions.extracted_accession, odb_maintable.genus_species, odb_maintable.source FROM odb_maintable INNER JOIN odb_accessions ON odb_maintable.genome_id = odb_accessions.lookup_id WHERE hashed_accession='$current_node');
+                    my $prepare = $dbh->prepare($statement);
+                    $prepare->execute();
+
+                    my ( $extracted_accession, $genus_species, $source )
+                        = $prepare->fetchrow_array();
+
+                    print
+                        "$genus_species \[$source\:$extracted_accession\]\n";
+
+                }
+            }
+        }
+    }
+
+}
+
+#
+# SQLLite
+#
+sub sqllite {
+    my $db_name  = fileparse $orchardDB_location;
+    my $driver   = 'SQLite';
+    my $database = "$orchardDB_location\/$db_name\.sqlite";
+    my $dsn      = "DBI:$driver:dbname=$database";
+    print
+        "Connecting to $database with $orchardDB_username:$orchardDB_password\n";
+    my $dbh
+        = DBI->connect( $dsn, $orchardDB_username, $orchardDB_password,
+        { RaiseError => 1 } )
+        or die $DBI::errstr;
+
+    return $dbh;
+}
+
+#
+# Help Function
+#
+sub help_message {
+    print "Usage: bin/orchard_accessories\n";
+    print
+        "Cite: https://github.com/guyleonard/orchard and doi: 10.1105/tpc.109.065805\n";
+    exit(0);
+}
