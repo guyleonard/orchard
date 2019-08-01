@@ -5,6 +5,7 @@ use warnings;
 use Bio::DB::Fasta;
 use Bio::SearchIO;
 use Bio::SeqIO;
+use Cwd 'abs_path';
 use File::Basename;
 use File::Path qw(make_path);
 use File::Slurp;
@@ -39,7 +40,7 @@ my ($orchardDB);
 #
 # Other Variables
 #
-my ( $search, $alignment, $masking );
+my ( $search, $alignment, $masking, $tree );
 my $log;
 
 #
@@ -56,6 +57,7 @@ GetOptions(
     'search|s'              => \$search,
     'alignment|align|a'     => \$alignment,
     'masking|mask|m'        => \$masking,
+    'tree|x'                => \$tree,
     'version|v'             => sub { print "$version"; exit(0) },
     'help|h' => sub { help_message() }
 ) or help_message();
@@ -143,6 +145,10 @@ if ( defined $input_seqs && defined $taxa_list && defined $params_file ) {
 
     if ( defined $masking eq 1 ) {
         masking();
+    }
+
+    if ( defined $tree eq 1 ) {
+        generate_tree();
     }
 
 }
@@ -431,7 +437,6 @@ sub alignment {
 #
 # Masking
 #
-
 sub masking {
     my $alignments_directory = "$outdir\/alignments";
     my $masking_directory    = "$outdir\/masking";
@@ -484,11 +489,32 @@ sub masking {
                     "[Orchard:INFO] - MASK: Length is $mask_length and bigger than 1st cutoff: $masking_cutoff1. Next!\n";
             }
         }
+        elsif ( $masking_prog =~ /divvier/i ) {
+            print
+                "[Orchard:INFO] - MASK: Masking Alignment with $masking_prog\n";
+            run_divvier($masking_directory, $current_file);
+        }
         else {
-            print "[Orchard:INFO] - MASK: Please use Correct Program Name for Trimming in your YAML\n";
+            print
+                "[Orchard:INFO] - MASK: Please use Correct Program Name for Trimming in your YAML\n";
             exit(1);
         }
     }
+}
+
+sub run_divvier {
+    my ( $masking_directory, $current_file ) = @_;
+    my $basename = fileparse( $current_file, qr/\Q.fasta\E/ );
+
+    my $symlink = abs_path($current_file);
+    system("ln -s $symlink $masking_directory");
+
+    my $divvier_command = "divvier -divvygap $masking_directory\/$basename\.fasta";
+    system($divvier_command);
+
+    system ("rm $masking_directory\/$basename\.fasta");
+    system ("rm $masking_directory\/$basename\.fasta\.PP");
+    system ("mv $masking_directory\/$basename\\ta.divvy.fas $masking_directory\/$basename\_masked\.fasta");
 }
 
 sub run_trimal {
@@ -513,9 +539,98 @@ sub run_trimal {
 }
 
 #
+# Trees
+#
+sub generate_tree {
+    my $masking_directory = "$outdir\/masking";
+    my $trees_directory   = "$outdir\/trees";
+
+    my @files_to_tree = glob "$masking_directory\/*.fasta";
+
+    if ( !-d $masking_directory ) {
+        print
+            "[Orchard:INFO] - TREE: The directory $masking_directory does not exist!\n";
+        exit(1);
+    }
+
+    if ( !@files_to_tree ) {
+        print
+            "[Orchard:INFO] - TREE: There are no sequence files in $masking_directory!\n";
+        exit(1);
+    }
+
+    make_path($trees_directory);
+
+    for my $i ( 0 .. $#files_to_tree ) {
+        my $current_file = $files_to_tree[$i];
+        my $basename = fileparse( $current_file, qr/\Q.fasta\E/ );
+
+        if ( $tree_prog =~ /fasttree/i ) {
+            print
+                "[Orchard:INFO] - TREE: Running FastTree on $current_file\n";
+            run_fasttree( $current_file, $trees_directory );
+        }
+        elsif ( $tree_prog =~ /iqtree/i ) {
+            print "[Orchard:INFO] - TREE: Running IQTree on $current_file\n";
+            my $symlink = abs_path($current_file);
+            system("ln -s $symlink $trees_directory");
+            run_iqtree( $current_file, $trees_directory );
+            system("rm $trees_directory\/$basename\.fasta");
+        }
+    }
+}
+
+sub run_fasttree {
+    my ( $current_file, $trees_directory ) = @_;
+    my $basename = fileparse( $current_file, qr/\Q.fasta\E/ );
+    my $fasttree_command;
+
+    print "[Orchard:INFO] - TREE: Calculating FastTree on $current_file\n";
+
+    if ( $tree_prog =~ /fasttreemp/i ) {
+        $fasttree_command = "FastTreeMP $tree_opts";
+        $fasttree_command .= " $current_file";
+        $fasttree_command .= " > $trees_directory\/$basename\_FT.treefile";
+    }
+    else {
+        $fasttree_command = "FastTree $tree_opts";
+        $fasttree_command .= " $current_file";
+        $fasttree_command .= " > $trees_directory\/$basename\_FT.treefile";
+    }
+
+    system($fasttree_command);
+}
+
+sub run_iqtree {
+    my ( $current_file, $trees_directory ) = @_;
+    my $basename = fileparse( $current_file, qr/\Q.fasta\E/ );
+
+    my $iqtree_command = "iqtree -s $trees_directory\/$basename\.fasta";
+    $iqtree_command .= " -nt $threads";
+    $iqtree_command .= " $tree_opts";
+
+    system($iqtree_command);
+
+    make_path("$trees_directory\/iqtree_info");
+    system(
+        "mv $trees_directory\/*.bionj $trees_directory\/*.gz $trees_directory\/*.iqtree $trees_directory\/*.log $trees_directory\/*.mldist $trees_directory\/iqtree_info"
+    );
+}
+
+#
 # Help Function
 #
 sub help_message {
-    print "Help!\n";
+	print "Usage: bin/orchard -i seqs.fasta -t taxa.txt -p params.yaml -s -a -m -x\n";
+	print "Required Parameters\n";
+	print "\t-i <sequences.fasta>\tInput Sequences in FASTA Format\n";
+	print "\t-t <taxa_list.txt>\tList of orchardDB Taxa IDs\n";
+	print "\t-p <parameters.yaml>\tParameters File in YAML Format\n";
+	print "Optional Parameters\n";
+	print "\t-s\tRun Searches e.g. BLASTp\n";
+	print "\t-a\tRun Alignments e.g. MAFFT\n";
+	print "\t-m\tRun Masking e.g trimAl\n";
+	print "\t-x\tRun Trees e.g FastTree2\n";
+	print "Cite: https://github.com/guyleonard/orchard and doi: 10.1105/tpc.109.065805\n"; 
     exit(0);
 }
