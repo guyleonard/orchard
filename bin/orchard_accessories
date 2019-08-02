@@ -2,11 +2,13 @@
 use strict;
 use warnings;
 
+use Bio::SeqIO;
 use Bio::TreeIO;
 use DBI;
 use File::Basename;
 use File::Path qw(make_path);
 use Getopt::Long;
+use IO::Tee;
 use YAML::XS qw/LoadFile/;
 
 use Data::Dumper;
@@ -20,7 +22,10 @@ my $version = "Orchard Pipeline v1.0 -- orchard_accessories v$VERSION\n";
 my $params_file;
 my ( $outdir, $threads );
 my ( $orchardDB_location, $orchardDB_username, $orchardDB_password );
-my $rename_newick_trees;
+my $log;
+my ($rename_sequences, $rename_alignments, $rename_masks,
+    $rename_excluded,  $rename_newick_trees
+);
 
 #
 # getopt Logic
@@ -32,6 +37,10 @@ if ( !@ARGV ) {
 GetOptions(
     'paramaters|params|p=s' => \$params_file,
     'newick|n'              => \$rename_newick_trees,
+    'seqs|s'                => \$rename_sequences,
+    'align|a'               => \$rename_alignments,
+    'mask|m'                => \$rename_masks,
+    'excluded|e'            => \$rename_excluded,
     'version|v'             => sub { print "$version"; exit(0) },
     'help|h' => sub { help_message() }
 ) or help_message();
@@ -49,7 +58,27 @@ if ( -f $params_file ) {
     $orchardDB_username = $paramaters->{database}->{username};
     $orchardDB_password = $paramaters->{database}->{password};
 
-    if ( defined $params_file eq 1 ) {
+    my $logfile = ">>$outdir\_orchard_accessories.log";
+    $log = IO::Tee->new( \*STDOUT, $logfile );
+    select $log;
+
+    if ( defined $rename_sequences eq 1 ) {
+        rename_sequences('seqs');
+    }
+
+    if ( defined $rename_alignments eq 1 ) {
+        rename_sequences('alignments');
+    }
+
+    if ( defined $rename_masks eq 1 ) {
+        rename_sequences('masking');
+    }
+
+    if ( defined $rename_excluded eq 1 ) {
+        rename_sequences('excluded');
+    }
+
+    if ( defined $rename_newick_trees eq 1 ) {
         rename_newick_trees();
     }
 }
@@ -62,8 +91,55 @@ else {
 #
 # Renaming
 #
+sub rename_sequences {
+    my $stage             = shift;
+    my $directory         = "$outdir\/$stage";
+    my $renamed_directory = "$directory\/renamed";
+    make_path($renamed_directory);
+
+    my $dbh = sqllite();
+
+    my @files_to_rename = glob "$directory\/*.fasta";
+
+    for my $i ( 0 .. $#files_to_rename ) {
+        my $current_file = $files_to_rename[$i];
+        print
+            "[orchard_accessories:INFO] - Renaming Taxa in Sequence File $current_file\n";
+
+        my $input_file = new Bio::SeqIO(
+            -file   => "$current_file",
+            -format => "fasta"
+        );
+
+        my $basename = fileparse( $current_file, qr/\Q.fasta\E/ );
+        my $output_file = new Bio::SeqIO(
+            -file   => ">$renamed_directory\/$basename\_renamed\.fasta",
+            -format => "fasta"
+        );
+
+        while ( my $seq = $input_file->next_seq ) {
+
+            my $current_seq = $seq->id;
+
+            my $statement
+                = qq(SELECT odb_accessions.extracted_accession, odb_maintable.genus_species, odb_maintable.source FROM odb_maintable INNER JOIN odb_accessions ON odb_maintable.genome_id = odb_accessions.lookup_id WHERE hashed_accession='$current_seq');
+            my $prepare = $dbh->prepare($statement);
+            $prepare->execute();
+
+            my ( $extracted_accession, $genus_species, $source )
+                = $prepare->fetchrow_array();
+
+            $genus_species =~ s/ /\_/g;
+
+            $seq->id("$genus_species\_\[$source\-$extracted_accession\]");
+
+            $output_file->write_seq($seq);
+        }
+    }
+}
+
 sub rename_newick_trees {
-    my $trees_directory = "$outdir\/trees";
+    my $trees_directory         = "$outdir\/trees";
     my $trees_renamed_directory = "$outdir\/trees\/renamed";
     make_path($trees_renamed_directory);
 
@@ -73,6 +149,8 @@ sub rename_newick_trees {
 
     for my $i ( 0 .. $#trees_to_rename ) {
         my $current_file = $trees_to_rename[$i];
+        print
+            "[orchard_accessories:INFO] - Renaming Taxa in Tree $current_file\n";
 
         my $input_tree = new Bio::TreeIO(
             -file   => "$current_file",
@@ -81,7 +159,8 @@ sub rename_newick_trees {
 
         my $basename = fileparse( $current_file, qr/\Q.treefile\E/ );
         my $output_tree = new Bio::TreeIO(
-            -file   => ">$trees_renamed_directory\/$basename\_renamed\.treefile",
+            -file =>
+                ">$trees_renamed_directory\/$basename\_renamed\.treefile",
             -format => "newick"
         );
 
@@ -91,7 +170,6 @@ sub rename_newick_trees {
             foreach my $node ( $rootnode->get_all_Descendents() ) {
                 if ( $node->is_Leaf ) {
                     my $current_node = $node->id;
-                    print "$current_node\t";
 
                     my $statement
                         = qq(SELECT odb_accessions.extracted_accession, odb_maintable.genus_species, odb_maintable.source FROM odb_maintable INNER JOIN odb_accessions ON odb_maintable.genome_id = odb_accessions.lookup_id WHERE hashed_accession='$current_node');
@@ -101,14 +179,14 @@ sub rename_newick_trees {
                     my ( $extracted_accession, $genus_species, $source )
                         = $prepare->fetchrow_array();
 
-                    print
-                        "$genus_species \[$source\:$extracted_accession\]\n";
-
+                    $node->id(
+                        "$genus_species \[$source\-$extracted_accession\]");
                 }
             }
+
+            $output_tree->write_tree($tree);
         }
     }
-
 }
 
 #
@@ -119,8 +197,7 @@ sub sqllite {
     my $driver   = 'SQLite';
     my $database = "$orchardDB_location\/$db_name\.sqlite";
     my $dsn      = "DBI:$driver:dbname=$database";
-    print
-        "Connecting to $database with $orchardDB_username:$orchardDB_password\n";
+
     my $dbh
         = DBI->connect( $dsn, $orchardDB_username, $orchardDB_password,
         { RaiseError => 1 } )
