@@ -333,20 +333,20 @@ sub sqllite {
 #
 sub help_message {
     print "Usage: orchard_accessories -p params.yaml -n\n";
-    print "Required Parameters:\n";
+    print "Required Parameters\n";
     print "\t-p <parameters.yaml>\n";
-    print "Other Parameters:\n";
-    print "Renaming:\n";
-    print "\t-s Rename Taxa in Sequence Hits Files\n";
-    print "\t-a Rename Taxa in Alignment Files\n";
-    print "\t-m Rename Taxa in Masked Files\n";
-    print "\t-e Rename Taxa in Excluded Files\n";
-    print "\t-n Rename Taxa in Newick Trees\n";
+    print "Optional Parameters\n";
+    print "Renaming\n";
+    print "\t-s\tRename Taxa in Sequence Hits Files\n";
+    print "\t-a\tRename Taxa in Alignment Files\n";
+    print "\t-m\tRename Taxa in Masked Files\n";
+    print "\t-e\tRename Taxa in Excluded Files\n";
+    print "\t-n\tRename Taxa in Newick Trees\n";
     print "Tree Drawing\n";
-    print "\t-renamed  Convert Renamed Trees use with below\n";
-    print "\t-eps_tree Draw a Phylogram in EPS Format (Basic)\n";
-    print "\t-svg_tree Draw a Phylogram with Dendroscope in SVG Format\n";
-    print "\t-pdf_tree Draw a Phylogram with Dendroscope in PDF Format\n";
+    print "\t-renamed\tConvert Renamed Trees use with below\n";
+    print "\t-eps_tree\tDraw a Phylogram in EPS Format (Basic)\n";
+    print "\t-svg_tree\tDraw a Phylogram with Dendroscope in SVG Format\n";
+    print "\t-pdf_tree\tDraw a Phylogram with Dendroscope in PDF Format\n";
     print
         "Cite: https://github.com/guyleonard/orchard and doi: 10.1105/tpc.109.065805\n";
     exit(0);

@@ -78,20 +78,20 @@ Optional Parameters
 ## orchard_accessories
 ```
 Usage: orchard_accessories -p params.yaml -n
-Required Parameters:
+Required Parameters
 	-p <parameters.yaml>
-Other Parameters:
-Renaming:
-	-s Rename Taxa in Sequence Hits Files
-	-a Rename Taxa in Alignment Files
-	-m Rename Taxa in Masked Files
-	-e Rename Taxa in Excluded Files
-	-n Rename Taxa in Newick Trees
+Optional Parameters
+Renaming
+	-s	Rename Taxa in Sequence Hits Files
+	-a	Rename Taxa in Alignment Files
+	-m	Rename Taxa in Masked Files
+	-e	Rename Taxa in Excluded Files
+	-n	Rename Taxa in Newick Trees
 Tree Drawing
-	-renamed  Convert Renamed Trees use with below
-	-eps_tree Draw a Phylogram in EPS Format (Basic)
-	-svg_tree Draw a Phylogram with Dendroscope in SVG Format
-	-pdf_tree Draw a Phylogram with Dendroscope in PDF Format
+	-renamed	Convert Renamed Trees use with below
+	-eps_tree	Draw a Phylogram in EPS Format (Basic)
+	-svg_tree	Draw a Phylogram with Dendroscope in SVG Format
+	-pdf_tree	Draw a Phylogram with Dendroscope in PDF Format
 ```
 ## Example Parameters File
 ```yaml
