@@ -16,6 +16,7 @@ Please set up an orchardDB from [here](https://github.com/guyleonard/orchardDB).
 * Digest::MD5
 * IO::Prompt
 * YAML::XS
+
 e.g. you can install these by typing:
 ```
 $ sudo cpanm Bundle::BioPerl Bio::DB::Fasta Digest::MD5 IO::Prompt YAML::XS
@@ -44,7 +45,7 @@ One each, or all of the options below.
 
 ### SVG Tree Creation
 1. [Dendroscope 3](http://ab.inf.uni-tuebingen.de/software/dendroscope/)
-  1. XVFB - Needed for running on a headless server.
+   1. XVFB - Needed for running on a headless server.
 
 ### PDF Creation (SVG to PDF)
 1. [Inkscape](https://www.inkscape.org/en/)
@@ -62,14 +63,12 @@ Optional Parameters
 	-a	Run Alignments e.g. MAFFT
 	-m	Run Masking e.g trimAl
 	-x	Run Trees e.g FastTree2
-
 ```
-
 ## orchard_accessories
 ```
 Usage: orchard_accessories -p params.yaml -n
 Required Parameters:
-	-p parameters file
+	-p <parameters.yaml>
 Other Parameters:
 Renaming:
 	-s Rename Taxa in Sequence Hits Files
