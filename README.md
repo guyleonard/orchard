@@ -54,7 +54,7 @@ One each, or all of the options below.
 ### PDF Creation (SVG to PDF)
 1. [Inkscape](https://www.inkscape.org/en/)
 
-e.g. You may install many of these with Conda (divvier, dendroscope and NCBI Taxdump will need manually installing)
+e.g. You may install many of these with Conda (divvier, dendroscope and NCBI Taxdump will need to be manually installed)
 ```
 conda install -c bioconda blast blat mafft muscle trimal fasttree iqtree 
 conda install -c conda-forge inkscape
@@ -87,6 +87,11 @@ Renaming:
 	-m Rename Taxa in Masked Files
 	-e Rename Taxa in Excluded Files
 	-n Rename Taxa in Newick Trees
+Tree Drawing
+	-renamed  Convert Renamed Trees use with below
+	-eps_tree Draw a Phylogram in EPS Format (Basic)
+	-svg_tree Draw a Phylogram with Dendroscope in SVG Format
+	-pdf_tree Draw a Phylogram with Dendroscope in PDF Format
 ```
 ## Example Parameters File
 ```yaml
