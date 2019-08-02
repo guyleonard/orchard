@@ -10,23 +10,20 @@ This set of scripts is intended to create a set of "pilot" trees, given your ini
 Please set up an orchardDB from [here](https://github.com/guyleonard/orchardDB). You may like to use the *cider* DB to start, or build your own.
 
 ## Perl Modules
-* Bio::DB::Fasta;
-* Bio::SearchIO;
-* Bio::SeqIO;
-* Bio::TreeIO;
-* Cwd 'abs_path';
+* Bio::Perl
+* Cwd;
 * DBI;
 * File::Basename;
-* File::Path qw(make_path);
+* File::Path;
 * File::Slurp;
 * Getopt::Long;
 * IO::Prompt;
 * IO::Tee;
-* YAML::XS qw/LoadFile/;
+* YAML::XS;
 
 e.g. you can install these by typing:
 ```
-$ sudo cpanm Bio::DB::Fasta Bio::SearchIO Bio::SeqIO Bio::TreeIO Cwd DBI File::Basename File::Path File::Slurp Getopt::Long IO::Prompt IO::Tee YAML::XS
+$ sudo cpanm Bio::Perl Cwd DBI File::Basename File::Path File::Slurp Getopt::Long IO::Prompt IO::Tee YAML::XS
 ```
 ## Software
 ### Search Programs
