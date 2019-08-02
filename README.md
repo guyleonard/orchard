@@ -11,15 +11,15 @@ Please set up an orchardDB from [here](https://github.com/guyleonard/orchardDB).
 
 ## Perl Modules
 * Bio::Perl
-* Cwd;
-* DBI;
-* File::Basename;
-* File::Path;
-* File::Slurp;
-* Getopt::Long;
-* IO::Prompt;
-* IO::Tee;
-* YAML::XS;
+* Cwd
+* DBI
+* File::Basename
+* File::Path
+* File::Slurp
+* Getopt::Long
+* IO::Prompt
+* IO::Tee
+* YAML::XS
 
 e.g. you can install these by typing:
 ```
