@@ -10,16 +10,23 @@ This set of scripts is intended to create a set of "pilot" trees, given your ini
 Please set up an orchardDB from [here](https://github.com/guyleonard/orchardDB). You may like to use the *cider* DB to start, or build your own.
 
 ## Perl Modules
-* Bundle::BioPerl
-* Bio::DB::Fasta
-* DateTime::Format::Duration
-* Digest::MD5
-* IO::Prompt
-* YAML::XS
+* Bio::DB::Fasta;
+* Bio::SearchIO;
+* Bio::SeqIO;
+* Bio::TreeIO;
+* Cwd 'abs_path';
+* DBI;
+* File::Basename;
+* File::Path qw(make_path);
+* File::Slurp;
+* Getopt::Long;
+* IO::Prompt;
+* IO::Tee;
+* YAML::XS qw/LoadFile/;
 
 e.g. you can install these by typing:
 ```
-$ sudo cpanm Bundle::BioPerl Bio::DB::Fasta Digest::MD5 IO::Prompt YAML::XS
+$ sudo cpanm Bio::DB::Fasta Bio::SearchIO Bio::SeqIO Bio::TreeIO Cwd DBI File::Basename File::Path File::Slurp Getopt::Long IO::Prompt IO::Tee YAML::XS
 ```
 ## Software
 ### Search Programs
@@ -49,6 +56,13 @@ One each, or all of the options below.
 
 ### PDF Creation (SVG to PDF)
 1. [Inkscape](https://www.inkscape.org/en/)
+
+e.g. You may install many of these with Conda (divvier, dendroscope and NCBI Taxdump will need manually installing)
+```
+conda install -c bioconda blast blat mafft muscle trimal fasttree iqtree 
+conda install -c conda-forge inkscape
+sudo apt-get install xvfb
+```
 
 # Program Execution
 ## orchard
