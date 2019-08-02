@@ -27,7 +27,7 @@ my $log;
 my ($rename_sequences, $rename_alignments, $rename_masks,
     $rename_excluded,  $rename_newick_trees
 );
-my ( $renamed, $eps_tree, $svg_tree );
+my ( $renamed, $eps_tree, $svg_tree, $pdf_tree );
 
 #
 # getopt Logic
@@ -46,6 +46,7 @@ GetOptions(
     'renamed'               => \$renamed,
     'eps_tree'              => \$eps_tree,
     'svg_tree'              => \$svg_tree,
+    'pdf_tree'              => \$pdf_tree,
     'version|v'             => sub { print "$version"; exit(0) },
     'help|h' => sub { help_message() }
 ) or help_message();
@@ -95,10 +96,17 @@ if ( -f $params_file ) {
     }
 
     if ( defined $svg_tree eq 1 && !defined $renamed ) {
-        draw_svg_tree('');
+        draw_dendroscope_tree( '', 'svg' );
     }
     elsif ( defined $svg_tree eq 1 && defined $renamed eq 1 ) {
-        draw_svg_tree('renamed');
+        draw_dendroscope_tree( 'renamed', 'svg' );
+    }
+
+    if ( defined $pdf_tree eq 1 && !defined $renamed ) {
+        draw_dendroscope_tree( '', 'pdf' );
+    }
+    elsif ( defined $pdf_tree eq 1 && defined $renamed eq 1 ) {
+        draw_dendroscope_tree( 'renamed', 'pdf' );
     }
 }
 else {
@@ -142,11 +150,11 @@ sub draw_eps_tree {
     }
 }
 
-sub draw_svg_tree {
-    my $renamed         = shift;
+sub draw_dendroscope_tree {
+    my ( $renamed, $type ) = @_;
     my $trees_directory = "$outdir\/trees\/$renamed";
 
-    my $trees_dir_out = "$trees_directory\/svg";
+    my $trees_dir_out = "$trees_directory\/$type";
     make_path("$trees_dir_out");
 
     my @trees_to_svg = glob "$trees_directory\/*.treefile";
@@ -155,7 +163,7 @@ sub draw_svg_tree {
         my $current_file = $trees_to_svg[$i];
 
         print
-            "[orchard_accessories:INFO] - Drawing SVG $renamed Tree from $current_file\n";
+            "[orchard_accessories:INFO] - Drawing $type $renamed Tree from $current_file\n";
 
         my $basename = fileparse( $current_file, qr/\Q.treefile\E/ );
 
@@ -187,7 +195,7 @@ sub draw_svg_tree {
         $dendroscope_opts
             .= "find searchtext=$accession\;\nset labelfillcolor=255 0 0\;\ndeselect all\;\n";
         $dendroscope_opts
-            .= "exportimage file=$trees_dir_out\/$basename\.svg format=svg replace=true\;\n";
+            .= "exportimage file=$trees_dir_out\/$basename\.$type format=$type replace=true\;\n";
         $dendroscope_opts .= "quit\;\n";
 
         open my $command_file, '>', "$outdir\/dendroscope.cmd";
@@ -334,6 +342,11 @@ sub help_message {
     print "\t-m Rename Taxa in Masked Files\n";
     print "\t-e Rename Taxa in Excluded Files\n";
     print "\t-n Rename Taxa in Newick Trees\n";
+    print "Tree Drawing\n";
+    print "\t-renamed  Convert Renamed Trees use with below\n";
+    print "\t-eps_tree Draw a Phylogram in EPS Format (Basic)\n";
+    print "\t-svg_tree Draw a Phylogram with Dendroscope in SVG Format\n";
+    print "\t-pdf_tree Draw a Phylogram with Dendroscope in PDF Format\n";
     print
         "Cite: https://github.com/guyleonard/orchard and doi: 10.1105/tpc.109.065805\n";
     exit(0);
