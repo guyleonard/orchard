@@ -210,7 +210,16 @@ sub sqllite {
 # Help Function
 #
 sub help_message {
-    print "Usage: bin/orchard_accessories\n";
+    print "Usage: orchard_accessories -p params.yaml -n";
+    print "Required Parameters:";
+    print "\t-p <parameters.yaml>";
+    print "Other Parameters:";
+    print "Renaming:";
+    print "\t-s Rename Taxa in Sequence Hits Files";
+    print "\t-a Rename Taxa in Alignment Files";
+    print "\t-m Rename Taxa in Masked Files";
+    print "\t-e Rename Taxa in Excluded Files";
+    print "\t-n Rename Taxa in Newick Trees";
     print
         "Cite: https://github.com/guyleonard/orchard and doi: 10.1105/tpc.109.065805\n";
     exit(0);
