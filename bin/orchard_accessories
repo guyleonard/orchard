@@ -3,6 +3,7 @@ use strict;
 use warnings;
 
 use Bio::SeqIO;
+use Bio::Tree::Draw::Cladogram;
 use Bio::TreeIO;
 use DBI;
 use File::Basename;
@@ -26,6 +27,7 @@ my $log;
 my ($rename_sequences, $rename_alignments, $rename_masks,
     $rename_excluded,  $rename_newick_trees
 );
+my ( $renamed, $eps_tree, $svg_tree );
 
 #
 # getopt Logic
@@ -41,6 +43,9 @@ GetOptions(
     'mask|m'                => \$rename_masks,
     'excluded|e'            => \$rename_excluded,
     'newick|n'              => \$rename_newick_trees,
+    'renamed'               => \$renamed,
+    'eps_tree'              => \$eps_tree,
+    'svg_tree'              => \$svg_tree,
     'version|v'             => sub { print "$version"; exit(0) },
     'help|h' => sub { help_message() }
 ) or help_message();
@@ -81,11 +86,120 @@ if ( -f $params_file ) {
     if ( defined $rename_newick_trees eq 1 ) {
         rename_newick_trees();
     }
+
+    if ( defined $eps_tree eq 1 && !defined $renamed ) {
+        draw_eps_tree('');
+    }
+    elsif ( defined $eps_tree eq 1 && defined $renamed eq 1 ) {
+        draw_eps_tree('renamed');
+    }
+
+    if ( defined $svg_tree eq 1 && !defined $renamed ) {
+        draw_svg_tree('');
+    }
+    elsif ( defined $svg_tree eq 1 && defined $renamed eq 1 ) {
+        draw_svg_tree('renamed');
+    }
 }
 else {
     print
         "[orchard_accessories:ERRR] - The parameters file $params_file does not exist!\n";
     exit(1);
+}
+
+#
+# Trees
+#
+sub draw_eps_tree {
+    my $renamed         = shift;
+    my $trees_directory = "$outdir\/trees\/$renamed";
+    my $trees_dir_out   = "$trees_directory\/eps";
+    make_path("$trees_dir_out");
+
+    my @trees_to_svg = glob "$trees_directory\/*.treefile";
+
+    for my $i ( 0 .. $#trees_to_svg ) {
+        my $current_file = $trees_to_svg[$i];
+
+        print
+            "[orchard_accessories:INFO] - Drawing EPS $renamed Tree from $current_file\n";
+
+        my $basename = fileparse( $current_file, qr/\Q.treefile\E/ );
+
+        my $tree_input = Bio::TreeIO->new(
+            -file   => "$current_file",
+            -format => 'newick'
+        );
+
+        if ( my $tree = $tree_input->next_tree ) {
+            my $tree_output = Bio::Tree::Draw::Cladogram->new(
+                -bootstrap => 1,
+                -tree      => $tree,
+                -compact   => 0
+            );
+            $tree_output->print( -file => "$trees_dir_out\/$basename.eps" );
+        }
+    }
+}
+
+sub draw_svg_tree {
+    my $renamed         = shift;
+    my $trees_directory = "$outdir\/trees\/$renamed";
+
+    my $trees_dir_out = "$trees_directory\/svg";
+    make_path("$trees_dir_out");
+
+    my @trees_to_svg = glob "$trees_directory\/*.treefile";
+
+    for my $i ( 0 .. $#trees_to_svg ) {
+        my $current_file = $trees_to_svg[$i];
+
+        print
+            "[orchard_accessories:INFO] - Drawing SVG $renamed Tree from $current_file\n";
+
+        my $basename = fileparse( $current_file, qr/\Q.treefile\E/ );
+
+        $basename =~ m/([0-9a-f]{32})\_.*/i;
+        my $accession = $1;
+
+        if ( $renamed eq "renamed" ) {
+            my $dbh = sqllite();
+
+            my $statement
+                = qq(SELECT odb_accessions.extracted_accession, odb_maintable.genus_species, odb_maintable.source FROM odb_maintable INNER JOIN odb_accessions ON odb_maintable.genome_id = odb_accessions.lookup_id WHERE hashed_accession='$accession');
+            my $prepare = $dbh->prepare($statement);
+            $prepare->execute();
+
+            my ( $extracted_accession, $genus_species, $source )
+                = $prepare->fetchrow_array();
+
+            $accession = "$source\-$extracted_accession";
+        }
+
+        my $dendroscope_opts = "open file=$current_file\;\n";
+        $dendroscope_opts
+            .= "set drawer=RectangularPhylogram\;\nladderize=left\;\n";
+        $dendroscope_opts .= "zoom what=expand\;\nset sparselabels=false\;\n";
+        $dendroscope_opts
+            .= "select nodes=labeled\;\nset labelcolor=255 0 0\;\n";
+        $dendroscope_opts
+            .= "deselect all\;\nselect nodes=leaves\;\nset labelcolor=0 0 0\;\ndeselect all\;\n";
+        $dendroscope_opts
+            .= "find searchtext=$accession\;\nset labelfillcolor=255 0 0\;\ndeselect all\;\n";
+        $dendroscope_opts
+            .= "exportimage file=$trees_dir_out\/$basename\.svg format=svg replace=true\;\n";
+        $dendroscope_opts .= "quit\;\n";
+
+        open my $command_file, '>', "$outdir\/dendroscope.cmd";
+        print {$command_file} $dendroscope_opts;
+        close $command_file;
+
+        my $dendroscope_command
+            = "xvfb-run --auto-servernum --server-num=1 Dendroscope -g true -c $outdir\/dendroscope.cmd";
+        system($dendroscope_command);
+
+        unlink "$outdir\/dendroscope.cmd";
+    }
 }
 
 #
@@ -210,16 +324,16 @@ sub sqllite {
 # Help Function
 #
 sub help_message {
-    print "Usage: orchard_accessories -p params.yaml -n";
-    print "Required Parameters:";
-    print "\t-p <parameters.yaml>";
-    print "Other Parameters:";
-    print "Renaming:";
-    print "\t-s Rename Taxa in Sequence Hits Files";
-    print "\t-a Rename Taxa in Alignment Files";
-    print "\t-m Rename Taxa in Masked Files";
-    print "\t-e Rename Taxa in Excluded Files";
-    print "\t-n Rename Taxa in Newick Trees";
+    print "Usage: orchard_accessories -p params.yaml -n\n";
+    print "Required Parameters:\n";
+    print "\t-p <parameters.yaml>\n";
+    print "Other Parameters:\n";
+    print "Renaming:\n";
+    print "\t-s Rename Taxa in Sequence Hits Files\n";
+    print "\t-a Rename Taxa in Alignment Files\n";
+    print "\t-m Rename Taxa in Masked Files\n";
+    print "\t-e Rename Taxa in Excluded Files\n";
+    print "\t-n Rename Taxa in Newick Trees\n";
     print
         "Cite: https://github.com/guyleonard/orchard and doi: 10.1105/tpc.109.065805\n";
     exit(0);
