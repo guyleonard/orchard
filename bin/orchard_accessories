@@ -36,11 +36,11 @@ if ( !@ARGV ) {
 
 GetOptions(
     'paramaters|params|p=s' => \$params_file,
-    'newick|n'              => \$rename_newick_trees,
     'seqs|s'                => \$rename_sequences,
     'align|a'               => \$rename_alignments,
     'mask|m'                => \$rename_masks,
     'excluded|e'            => \$rename_excluded,
+    'newick|n'              => \$rename_newick_trees,
     'version|v'             => sub { print "$version"; exit(0) },
     'help|h' => sub { help_message() }
 ) or help_message();
