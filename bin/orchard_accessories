@@ -12,8 +12,6 @@ use Getopt::Long;
 use IO::Tee;
 use YAML::XS qw/LoadFile/;
 
-use Data::Dumper;
-
 our $VERSION = 0.1;
 my $version = "Orchard Pipeline v1.0 -- orchard_accessories v$VERSION\n";
 
