@@ -75,6 +75,7 @@ Optional Parameters
 	-m	Run Masking e.g trimAl
 	-x	Run Trees e.g FastTree2
 ```
+
 ## orchard_accessories
 ```
 Usage: orchard_accessories -p params.yaml -n
@@ -93,7 +94,10 @@ Tree Drawing
 	-svg_tree	Draw a Phylogram with Dendroscope in SVG Format
 	-pdf_tree	Draw a Phylogram with Dendroscope in PDF Format
 ```
+
 ## Example Parameters File
+Why a YAML file? 1) Because it is human readable and 2) then you have a record of all settings for each analysis.
+
 ```yaml
 user:
   results: testing    # folder name for results
