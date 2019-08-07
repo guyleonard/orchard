@@ -133,9 +133,9 @@ Tree Drawing
 ```
 
 ## Example Parameters File
-Why a YAML file?
+Why a YAML file and not command line options?
 
-1) Because it is human readable and
+1) Because it is human readable and,
 2) then you have a record of all settings for each analysis.
 
 ```yaml
@@ -144,8 +144,8 @@ user:
   threads: 8          # number of cores to use
 
 search:
-  program: blast+     # blast+, blat
-  subprogram: blastp  # blast: blastp, blastx. blat: dna, prot, dnax
+  program: blast+     # blast+, blat, diamond
+  subprogram: blastp  # blast: blastp, blastx; blat: prot, dnax; diamond: blastp, blastx
   evalue: 1e-10       # 1e-10, 1e-05, etc
   tophits: 5          # integer
   maxlength: 3000     # ignore AA sequences larger than this value
@@ -155,21 +155,21 @@ special:
   tophits:            # integer
 
 alignment:
-  program: mafft      # mafft, muscle
+  program: mafft                     # mafft, muscle
   options: --auto --quiet --reorder  # mafft: '--auto --quiet --reorder' or muscle: '-maxiters 2 -quiet -group'
 
 masking:
   program: trimal     # trimal, divvier
-  cutoff1: 50         # integer
-  cutoff2: 30         # integer
+  cutoff1: 50         # higher integer
+  cutoff2: 30         # lower integer
 
 trees:
-  program: fasttreemp # fasttree, fasttreemp, iqtree
+  program: fasttreemp               # fasttree, fasttreemp, iqtree
   options: -bionj -slow -lg -quiet  # fasttree: '-bionj -slow -lg -quiet' or iqtree: '-fast -alrt 1000 -quiet -mset WAG,LG,JTT -merit BIC'
-  mintaxa: 3          # integer
+  mintaxa: 3                        # integer
 
 directories:
-  orchardDB: /home/cs02gl/Dropbox/git/orchardDB/testing/cider  # path to orchardDB SQL folder - .sql file must be the same name as the folder
+  orchardDB: /path/to/cider_db  # path to orchardDB SQL folder - .sql file must be the same name as the folder
 
 database:
   username: test      # orchardDB username
