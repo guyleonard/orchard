@@ -22,7 +22,7 @@ Please set up an orchardDB from [here](https://github.com/guyleonard/orchardDB).
 * YAML::XS
 
 e.g. you can install these by typing:
-```
+```bash
 $ sudo cpanm Bio::Perl Cwd DBI File::Basename File::Path File::Slurp Getopt::Long IO::Prompt IO::Tee YAML::XS
 ```
 ## Software
@@ -31,6 +31,8 @@ One each, or all of the options below.
 
 1. [Blast+](http://blast.ncbi.nlm.nih.gov/Blast.cgi/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
 2. [Blat](https://genome.ucsc.edu/FAQ/FAQblat.html)
+3. [Diamond](https://github.com/bbuchfink/diamond)
+   1. Diamond DBs must be created in your orchardDB directory using the same version of Diamond for searching.
 
 ### Alignment Programs
 1. [MAFFT](http://mafft.cbrc.jp/alignment/software/)
@@ -55,15 +57,15 @@ One each, or all of the options below.
 1. [Inkscape](https://www.inkscape.org/en/)
 
 e.g. You may install many of these with Conda (divvier, dendroscope and NCBI Taxdump will need to be manually installed)
-```
-conda install -c bioconda blast blat mafft muscle trimal fasttree iqtree 
+```bash
+conda install -c bioconda blast blat diamond mafft muscle trimal fasttree iqtree
 conda install -c conda-forge inkscape
 sudo apt-get install xvfb
 ```
 
 # Program Execution
 ## orchard
-```
+```bash
 Usage: orchard -i seqs.fasta -t taxa.txt -p params.yaml -s -a -m -x
 Required Parameters
 	-i <sequences.fasta>	Input Sequences in FASTA Format
@@ -77,7 +79,7 @@ Optional Parameters
 ```
 
 ## orchard_accessories
-```
+```bash
 Usage: orchard_accessories -p params.yaml -n
 Required Parameters
 	-p <parameters.yaml>

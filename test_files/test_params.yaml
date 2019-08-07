@@ -3,8 +3,8 @@ user:
   threads: 8          # number of cores to use
 
 search:
-  program: blast+     # blast+, blat
-  subprogram: blastp  # blast: blastp, blastx. blat: dna, prot, dnax
+  program: blast+     # blast+, blat, diamond
+  subprogram: blastp  # blast: blastp, blastx; blat: dna, prot, dnax; diamond: blastp, blastx
   evalue: 1e-10       # 1e-10, 1e-05, etc
   tophits: 5          # integer
   maxlength: 3000     # ignore AA sequences larger than this value

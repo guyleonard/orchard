@@ -198,6 +198,11 @@ sub searching {
             print "[Orchard:INFO] - Running: blat on $sequence_name\n";
             $hit_seqs_count = run_blat( \@taxa, $input_seqs, $sequence_name );
         }
+        elsif ( $search_prog =~ /DIAMOND/i ) {
+            print "[Orchard:INFO] - Running: diamond on $sequence_name\n";
+            $hit_seqs_count
+                = run_diamond( \@taxa, $input_seqs, $sequence_name );
+        }
         else {
             $search_prog    = 'blast+';
             $search_subprog = 'blastp';
@@ -272,8 +277,8 @@ sub run_blast {
                 $search_command .= " -max_target_seqs $search_tophits";
                 $search_command .= " -num_threads $threads";
                 system($search_command);
-                parse_search_output( $sequence_name, $current_taxa );
             }
+            parse_search_output( $sequence_name, $current_taxa );
         }
     }
 
@@ -315,6 +320,64 @@ sub run_blat {
             system($blat_command);
             parse_search_output( $sequence_name, $current_taxa );
 
+        }
+    }
+
+    chomp( my $hit_seqs_total = `grep -c ">" $sequence_name\_hits.fasta` );
+    print "[Orchard:INFO] - Number of Sequences found = $hit_seqs_total\n";
+    return $hit_seqs_total;
+}
+
+sub run_diamond {
+    my ( $taxa, $input_seqs, $sequence_name ) = @_;
+
+    my @taxa_list  = @{$taxa};
+    my $taxa_total = @taxa_list;
+    my $taxa_count = 1;
+
+    while (@taxa_list) {
+
+        chomp( my $current_taxa = shift(@taxa_list) );
+
+        if ( $current_taxa =~ m/^#/ ) {
+            print "[Orchard:WARN] - Skipping commented out $current_taxa\n";
+            $taxa_count++;
+        }
+        else {
+
+            my $search_output
+                = "$sequence_name\_vs\_$current_taxa\.$search_subprog";
+            my $database = "$current_taxa\.fasta";
+
+            if ( grep { $_ eq $current_taxa } @special_taxa ) {
+                print
+                    "[Orchard:INFO] - DIAMOND: Using special search for $search_output\n";
+                my $diamond_command = "diamond $search_subprog --quiet";
+                $diamond_command .= " --threads $threads";
+                $diamond_command .= " --db $orchardDB\/$database";
+                $diamond_command .= " --query $sequence_name\_query.fasta";
+                $diamond_command .= " --evalue $search_evalue";
+                $diamond_command .= " --max-target-seqs $special_tophits";
+                $diamond_command .= " --out $search_output";
+
+                system($diamond_command);
+            }
+            else {
+                print
+                    "[Orchard:INFO] - DIAMOND: $search_subprog is running as $search_output\n";
+
+                my $diamond_command = "diamond $search_subprog --quiet";
+                $diamond_command .= " --threads $threads";
+                $diamond_command .= " --db $orchardDB\/$database";
+                $diamond_command .= " --query $sequence_name\_query.fasta";
+                $diamond_command .= " --evalue $search_evalue";
+                $diamond_command .= " --max-target-seqs $search_tophits";
+                $diamond_command .= " --out $search_output";
+
+                system($diamond_command);
+            }
+
+            parse_search_output( $sequence_name, $current_taxa );
         }
     }
 
@@ -490,7 +553,7 @@ sub masking {
         elsif ( $masking_prog =~ /divvier/i ) {
             print
                 "[Orchard:INFO] - MASK: Masking Alignment with $masking_prog\n";
-            run_divvier($masking_directory, $current_file);
+            run_divvier( $masking_directory, $current_file );
         }
         else {
             print
@@ -507,12 +570,15 @@ sub run_divvier {
     my $symlink = abs_path($current_file);
     system("ln -s $symlink $masking_directory");
 
-    my $divvier_command = "divvier -divvygap $masking_directory\/$basename\.fasta";
+    my $divvier_command
+        = "divvier -divvygap $masking_directory\/$basename\.fasta";
     system($divvier_command);
 
-    system ("rm $masking_directory\/$basename\.fasta");
-    system ("rm $masking_directory\/$basename\.fasta\.PP");
-    system ("mv $masking_directory\/$basename\\ta.divvy.fas $masking_directory\/$basename\_masked\.fasta");
+    system("rm $masking_directory\/$basename\.fasta");
+    system("rm $masking_directory\/$basename\.fasta\.PP");
+    system(
+        "mv $masking_directory\/$basename\\ta.divvy.fas $masking_directory\/$basename\_masked\.fasta"
+    );
 }
 
 sub run_trimal {
@@ -619,16 +685,18 @@ sub run_iqtree {
 # Help Function
 #
 sub help_message {
-	print "Usage: bin/orchard -i seqs.fasta -t taxa.txt -p params.yaml -s -a -m -x\n";
-	print "Required Parameters\n";
-	print "\t-i <sequences.fasta>\tInput Sequences in FASTA Format\n";
-	print "\t-t <taxa_list.txt>\tList of orchardDB Taxa IDs\n";
-	print "\t-p <parameters.yaml>\tParameters File in YAML Format\n";
-	print "Optional Parameters\n";
-	print "\t-s\tRun Searches e.g. BLASTp\n";
-	print "\t-a\tRun Alignments e.g. MAFFT\n";
-	print "\t-m\tRun Masking e.g trimAl\n";
-	print "\t-x\tRun Trees e.g FastTree2\n";
-	print "Cite: https://github.com/guyleonard/orchard and doi: 10.1105/tpc.109.065805\n"; 
+    print
+        "Usage: bin/orchard -i seqs.fasta -t taxa.txt -p params.yaml -s -a -m -x\n";
+    print "Required Parameters\n";
+    print "\t-i <sequences.fasta>\tInput Sequences in FASTA Format\n";
+    print "\t-t <taxa_list.txt>\tList of orchardDB Taxa IDs\n";
+    print "\t-p <parameters.yaml>\tParameters File in YAML Format\n";
+    print "Optional Parameters\n";
+    print "\t-s\tRun Searches e.g. BLASTp\n";
+    print "\t-a\tRun Alignments e.g. MAFFT\n";
+    print "\t-m\tRun Masking e.g trimAl\n";
+    print "\t-x\tRun Trees e.g FastTree2\n";
+    print
+        "Cite: https://github.com/guyleonard/orchard and doi: 10.1105/tpc.109.065805\n";
     exit(0);
 }
