@@ -1,30 +1,22 @@
 # Orchard Pipeline
 A Quick Phylogenetic Tree Building Pipeline...
 
-Seed Sequences --> BLASTp --> Alignment --> Masking --> Phylogenetic Tree Reconstruction --> SVG/PDF Tree Images --> Taxon Annotation
+Seed Sequences --> DB Search --> Alignment --> Masking --> Phylogenetic Tree Reconstruction --> SVG/PDF Tree Images --> Taxon Annotation
 
-This set of scripts is intended to create a set of "pilot" trees, given your initial gene of interest. The resulting trees can be easily viewed, and then manually improved as needed.
+This set of scripts is intended to create a group of "pilot" trees, given your initial gene(s) of interest. The resulting Phylogenies can be easily viewed, and then manually improved as needed. The aim is speed, in order to calculate 1000s of trees for a dataset in reasonable time.
 
 # Dependencies
 ## orchardDB
-Please set up an orchardDB from [here](https://github.com/guyleonard/orchardDB). You may like to use the *cider* DB to start, or build your own.
+Please set up an orchardDB from [here](https://github.com/guyleonard/orchardDB). You may like to use the *cider* DB scritps to start, or build your own.
 
 ## Perl Modules
-* Bio::Perl
-* Cwd
-* DBI
-* File::Basename
-* File::Path
-* File::Slurp
-* Getopt::Long
-* IO::Prompt
-* IO::Tee
-* YAML::XS
+All of: Bio::Perl Cwd DBI File::Basename File::Path File::Slurp Getopt::Long IO::Prompt IO::Tee YAML::XS
 
-e.g. you can install these by typing:
+e.g. you may install these by typing:
 ```bash
 $ sudo cpanm Bio::Perl Cwd DBI File::Basename File::Path File::Slurp Getopt::Long IO::Prompt IO::Tee YAML::XS
 ```
+
 ## Software
 ### Search Programs
 One each, or all of the options below.
@@ -64,6 +56,15 @@ sudo apt-get install xvfb
 ```
 
 # Program Execution
+You will need four things to begin.
+
+1) An 'orchardDB' folder and sqlite database.
+2) Your initial search 'seed' sequences in FASTA format.
+3) A taxa list, based on the 'genome ID' from your orchardDB. One per line in a text file.
+4) A parameters file, as seen below, with your options in YAML format.
+
+You may run any Optional Parameter providing the previous output exists.
+
 ## orchard
 ```bash
 Usage: orchard -i seqs.fasta -t taxa.txt -p params.yaml -s -a -m -x
@@ -76,6 +77,18 @@ Optional Parameters
 	-a	Run Alignments e.g. MAFFT
 	-m	Run Masking e.g trimAl
 	-x	Run Trees e.g FastTree2
+```
+
+### Example Output Directory Structure
+```
+.
+└── output
+    ├── alignments
+    ├── excluded
+    ├── masking
+    ├── reports
+    ├── seqs
+    └── trees
 ```
 
 ## orchard_accessories
@@ -95,6 +108,24 @@ Tree Drawing
 	-eps_tree	Draw a Phylogram in EPS Format (Basic)
 	-svg_tree	Draw a Phylogram with Dendroscope in SVG Format
 	-pdf_tree	Draw a Phylogram with Dendroscope in PDF Format
+```
+
+### ExampleOutput Directory Structure
+```
+.
+└── output
+    ├── alignments
+    ├── excluded
+    ├── masking
+    ├── reports
+    ├── seqs
+    └── trees
+        ├── eps
+        ├── pdf
+        ├── renamed
+        │   ├── pdf
+        │   └── svg
+        └── svg
 ```
 
 ## Example Parameters File
