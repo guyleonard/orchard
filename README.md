@@ -124,12 +124,12 @@ Tree Drawing
     │   └── renamed  # taxon IDs renamed to human readable names
     ├── reports
     └── trees
-        ├── eps           # EPS format tree
-        │   └─── renamed  # taxon IDs renamed to human readable names
-        ├── pdf           # PDF from Dendroscope
-        │   └─── renamed  # taxon IDs renamed to human readable names
-        └── svg           # SVG from Dendroscope
-            └─── renamed  # taxon IDs renamed to human readable names
+        ├── eps          # EPS format tree
+        │   └── renamed  # taxon IDs renamed to human readable names
+        ├── pdf          # PDF from Dendroscope
+        │   └── renamed  # taxon IDs renamed to human readable names
+        └── svg          # SVG from Dendroscope
+            └── renamed  # taxon IDs renamed to human readable names
 ```
 
 ## Example Parameters File
