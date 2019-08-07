@@ -59,7 +59,7 @@ sudo apt-get install xvfb
 You will need four things to begin.
 
 1) An 'orchardDB' folder and sqlite database.
-2) Your initial search 'seed' sequences in FASTA format.
+2) Your initial search 'seed' sequence(s) in FASTA format.
 3) A taxa list, based on the 'genome ID' from your orchardDB. One per line in a text file.
 4) A parameters file, as seen below, with your options in YAML format.
 
@@ -83,12 +83,12 @@ Optional Parameters
 ```
 .
 └── output
-    ├── alignments
-    ├── excluded
-    ├── masking
-    ├── reports
-    ├── seqs
-    └── trees
+    ├── seqs       # all hits to search seed
+    ├── alignments # aligned hits
+    ├── masking    # masked/trimmed hits
+    ├── trees      # newick trees
+    ├── excluded   # seeds that were excluded due to too few hits or poor alignment
+    └── reports    # blast/search program reports
 ```
 
 ## orchard_accessories
@@ -114,18 +114,21 @@ Tree Drawing
 ```
 .
 └── output
-    ├── alignments
-    ├── excluded
-    ├── masking
-    ├── reports
-    ├── seqs
+    ├── seqs         # all hits to search seed
+        └─── renamed # taxon IDs renamed to human readable names
+    ├── alignments   # aligned hits
+        └─── renamed # taxon IDs renamed to human readable names
+    ├── masking      # masked/trimmed hits
+        └─── renamed # taxon IDs renamed to human readable names
+    ├── excluded     # seeds that were excluded due to too few hits or poor alignment
+        └─── renamed # taxon IDs renamed to human readable names
+    ├── reports      # blast/search program reports
     └── trees
-        ├── eps
-        ├── pdf
-        ├── renamed
-        │   ├── pdf
-        │   └── svg
-        └── svg
+        ├── eps          # EPS format tree
+        ├── pdf          # PDF from Dendroscope
+        │   └─── renamed # taxon IDs renamed to human readable names
+        └── svg          # SVG from Dendroscope
+            └─── renamed # taxon IDs renamed to human readable names
 ```
 
 ## Example Parameters File
