@@ -110,29 +110,33 @@ Tree Drawing
 	-pdf_tree	Draw a Phylogram with Dendroscope in PDF Format
 ```
 
-### ExampleOutput Directory Structure
+### Example Output Directory Structure
 ```
 .
 └── output
-    ├── seqs         # all hits to search seed
-        └─── renamed # taxon IDs renamed to human readable names
-    ├── alignments   # aligned hits
-        └─── renamed # taxon IDs renamed to human readable names
-    ├── masking      # masked/trimmed hits
-        └─── renamed # taxon IDs renamed to human readable names
-    ├── excluded     # seeds that were excluded due to too few hits or poor alignment
-        └─── renamed # taxon IDs renamed to human readable names
-    ├── reports      # blast/search program reports
+    ├── seqs         
+    │   └── renamed  # taxon IDs renamed to human readable names
+    ├── alignments
+    │   └── renamed  # taxon IDs renamed to human readable names
+    ├── masking
+    │   └── renamed  # taxon IDs renamed to human readable names
+    ├── excluded
+    │   └── renamed  # taxon IDs renamed to human readable names
+    ├── reports
     └── trees
-        ├── eps          # EPS format tree
-        ├── pdf          # PDF from Dendroscope
-        │   └─── renamed # taxon IDs renamed to human readable names
-        └── svg          # SVG from Dendroscope
-            └─── renamed # taxon IDs renamed to human readable names
+        ├── eps           # EPS format tree
+        │   └─── renamed  # taxon IDs renamed to human readable names
+        ├── pdf           # PDF from Dendroscope
+        │   └─── renamed  # taxon IDs renamed to human readable names
+        └── svg           # SVG from Dendroscope
+            └─── renamed  # taxon IDs renamed to human readable names
 ```
 
 ## Example Parameters File
-Why a YAML file? 1) Because it is human readable and 2) then you have a record of all settings for each analysis.
+Why a YAML file?
+
+1) Because it is human readable and
+2) then you have a record of all settings for each analysis.
 
 ```yaml
 user:
