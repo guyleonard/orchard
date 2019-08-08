@@ -253,8 +253,9 @@ sub run_blast {
         }
         else {
 
+            $search_prog =~ s/\+//;
             my $search_output
-                = "$sequence_name\_vs\_$current_taxa\.$search_subprog";
+                = "$sequence_name\_vs\_$current_taxa\_$search_prog\_$search_subprog\.out";
             my $database = "$current_taxa\.fasta";
 
             if ( grep { $_ eq $current_taxa } @special_taxa ) {
@@ -286,7 +287,8 @@ sub run_blast {
     }
 
     chomp( my $hit_seqs_total = `grep -c ">" $sequence_name\_hits.fasta` );
-    print "[Orchard:BLAST:INFO] - Number of Sequences found = $hit_seqs_total\n";
+    print
+        "[Orchard:BLAST:INFO] - Number of Sequences found = $hit_seqs_total\n";
     return $hit_seqs_total;
 }
 
@@ -301,12 +303,13 @@ sub run_blat {
         chomp( my $current_taxa = shift(@taxa_list) );
 
         if ( $current_taxa =~ m/^#/ ) {
-            print "[Orchard:BLAT:WARN] - Skipping commented out $current_taxa\n";
+            print
+                "[Orchard:BLAT:WARN] - Skipping commented out $current_taxa\n";
         }
         else {
 
             my $search_output
-                = "$sequence_name\_vs\_$current_taxa\.$search_subprog";
+                = "$sequence_name\_vs\_$current_taxa\_$search_prog\_$search_subprog\.out";
             my $database = "$current_taxa\.fasta";
 
             print
@@ -316,7 +319,7 @@ sub run_blat {
             $blat_command .= " $orchardDB\/$database";
             $blat_command .= " $sequence_name\_query.fasta";
             $blat_command .= ' -out=blast8';
-            $blat_command .= " $search_output";
+            $blat_command .= " $search_output 1>/dev/null";
 
             system($blat_command);
             parse_search_output( $sequence_name, $current_taxa );
@@ -325,7 +328,8 @@ sub run_blat {
     }
 
     chomp( my $hit_seqs_total = `grep -c ">" $sequence_name\_hits.fasta` );
-    print "[Orchard:BLAT:INFO] - Number of Sequences found = $hit_seqs_total\n";
+    print
+        "[Orchard:BLAT:INFO] - Number of Sequences found = $hit_seqs_total\n";
     return $hit_seqs_total;
 }
 
@@ -340,7 +344,8 @@ sub run_diamond {
         chomp( my $current_taxa = shift(@taxa_list) );
 
         if ( $current_taxa =~ m/^#/ ) {
-            print "[Orchard:DIAMOND:WARN] - Skipping commented out $current_taxa\n";
+            print
+                "[Orchard:DIAMOND:WARN] - Skipping commented out $current_taxa\n";
         }
         elsif ( !-f "$orchardDB\/$current_taxa\.fasta\.dmnd" ) {
             print
@@ -349,7 +354,7 @@ sub run_diamond {
         else {
 
             my $search_output
-                = "$sequence_name\_vs\_$current_taxa\.$search_subprog";
+                = "$sequence_name\_vs\_$current_taxa\_$search_prog\_$search_subprog\.out";
             my $database = "$current_taxa\.fasta";
 
             if ( grep { $_ eq $current_taxa } @special_taxa ) {
@@ -385,15 +390,17 @@ sub run_diamond {
     }
 
     chomp( my $hit_seqs_total = `grep -c ">" $sequence_name\_hits.fasta` );
-    print "[Orchard:DIAMOND:INFO] - Number of Sequences found = $hit_seqs_total\n";
+    print
+        "[Orchard:DIAMOND:INFO] - Number of Sequences found = $hit_seqs_total\n";
     return $hit_seqs_total;
 }
 
 sub parse_search_output {
 
     my ( $sequence_name, $current_taxa ) = @_;
-    my $search_output = "$sequence_name\_vs\_$current_taxa\.$search_subprog";
-    my $database      = "$current_taxa\.fasta";
+    my $search_output
+        = "$sequence_name\_vs\_$current_taxa\_$search_prog\_$search_subprog\.out";
+    my $database = "$current_taxa\.fasta";
     my $sequence_file;
 
     if ( !-f "$orchardDB\/$database\.index" ) {
@@ -433,7 +440,8 @@ sub parse_search_output {
         }
     }
 
-    my $report_dir = "$outdir\/reports\/$sequence_name\/$search_subprog";
+    $search_prog =~ s/\+//;
+    my $report_dir = "$outdir\/reports\/$sequence_name\/$search_prog\_$search_subprog";
     make_path($report_dir);
     system "mv $search_output $report_dir";
 }
@@ -441,7 +449,6 @@ sub parse_search_output {
 #
 # Alignment
 #
-
 sub alignment {
     my $sequence_directory   = "$outdir\/seqs";
     my $alignments_directory = "$outdir\/alignments";
