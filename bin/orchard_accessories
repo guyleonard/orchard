@@ -249,9 +249,11 @@ sub rename_sequences {
             my ( $extracted_accession, $genus_species, $source )
                 = $prepare->fetchrow_array();
 
-            $genus_species =~ s/ /\_/g;
+            if ( defined $genus_species ) {
+                $genus_species =~ s/ /\_/g;
 
-            $seq->id("$genus_species\_\[$source\-$extracted_accession\]");
+                $seq->id("$genus_species\_\[$source\-$extracted_accession\]");
+            }
 
             $output_file->write_seq($seq);
         }
@@ -298,9 +300,12 @@ sub rename_newick_trees {
 
                     my ( $extracted_accession, $genus_species, $source )
                         = $prepare->fetchrow_array();
-
-                    $node->id(
-                        "$genus_species \[$source\-$extracted_accession\]");
+                        
+                    if ( defined $genus_species ) {
+                        $node->id(
+                            "$genus_species \[$source\-$extracted_accession\]"
+                        );
+                    }
                 }
             }
 
