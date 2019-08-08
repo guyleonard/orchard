@@ -238,15 +238,18 @@ sub run_blast {
 
     my @taxa_list  = @{$taxa};
     my $taxa_total = @taxa_list;
-    my $taxa_count = 1;
 
     while (@taxa_list) {
 
         chomp( my $current_taxa = shift(@taxa_list) );
 
         if ( $current_taxa =~ m/^#/ ) {
-            print "[Orchard:WARN] - Skipping commented out $current_taxa\n";
-            $taxa_count++;
+            print
+                "[Orchard:BLAST:WARN] - Commented out $current_taxa\. Skipping.\n";
+        }
+        elsif ( !-f "$orchardDB\/$current_taxa\.fasta\.pin" ) {
+            print
+                "[Orchard:BLAST:WARN] - Missing BLAST DB for $current_taxa\. Skipping.\n";
         }
         else {
 
@@ -256,7 +259,7 @@ sub run_blast {
 
             if ( grep { $_ eq $current_taxa } @special_taxa ) {
                 print
-                    "[Orchard:INFO] - BLAST: Using special search for $search_output\n";
+                    "[Orchard:BLAST:INFO] - Using special search for $search_output\n";
                 my $search_command = "$search_subprog -task $search_subprog";
                 $search_command .= " -db $orchardDB\/$database";
                 $search_command .= " -query $sequence_name\_query.fasta";
@@ -268,7 +271,7 @@ sub run_blast {
             }
             else {
                 print
-                    "[Orchard:INFO] - BLAST: $search_subprog is running as $search_output\n";
+                    "[Orchard:BLAST:INFO] - $search_subprog is running as $search_output\n";
                 my $search_command = "$search_subprog -task $search_subprog";
                 $search_command .= " -db $orchardDB\/$database";
                 $search_command .= " -query $sequence_name\_query.fasta";
@@ -283,7 +286,7 @@ sub run_blast {
     }
 
     chomp( my $hit_seqs_total = `grep -c ">" $sequence_name\_hits.fasta` );
-    print "[Orchard:INFO] - Number of Sequences found = $hit_seqs_total\n";
+    print "[Orchard:BLAST:INFO] - Number of Sequences found = $hit_seqs_total\n";
     return $hit_seqs_total;
 }
 
@@ -292,15 +295,13 @@ sub run_blat {
 
     my @taxa_list  = @{$taxa};
     my $taxa_total = @taxa_list;
-    my $taxa_count = 1;
 
     while (@taxa_list) {
 
         chomp( my $current_taxa = shift(@taxa_list) );
 
         if ( $current_taxa =~ m/^#/ ) {
-            print "[Orchard:WARN] - Skipping commented out $current_taxa\n";
-            $taxa_count++;
+            print "[Orchard:BLAT:WARN] - Skipping commented out $current_taxa\n";
         }
         else {
 
@@ -309,7 +310,7 @@ sub run_blat {
             my $database = "$current_taxa\.fasta";
 
             print
-                "[Orchard:INFO] - BLAT: $search_subprog is running as $search_output\n";
+                "[Orchard:BLAT:INFO] - $search_subprog is running as $search_output\n";
             my $blat_command = 'blat';
             $blat_command .= " \-$search_subprog";
             $blat_command .= " $orchardDB\/$database";
@@ -324,7 +325,7 @@ sub run_blat {
     }
 
     chomp( my $hit_seqs_total = `grep -c ">" $sequence_name\_hits.fasta` );
-    print "[Orchard:INFO] - Number of Sequences found = $hit_seqs_total\n";
+    print "[Orchard:BLAT:INFO] - Number of Sequences found = $hit_seqs_total\n";
     return $hit_seqs_total;
 }
 
@@ -333,15 +334,17 @@ sub run_diamond {
 
     my @taxa_list  = @{$taxa};
     my $taxa_total = @taxa_list;
-    my $taxa_count = 1;
 
     while (@taxa_list) {
 
         chomp( my $current_taxa = shift(@taxa_list) );
 
         if ( $current_taxa =~ m/^#/ ) {
-            print "[Orchard:WARN] - Skipping commented out $current_taxa\n";
-            $taxa_count++;
+            print "[Orchard:DIAMOND:WARN] - Skipping commented out $current_taxa\n";
+        }
+        elsif ( !-f "$orchardDB\/$current_taxa\.fasta\.dmnd" ) {
+            print
+                "[Orchard:DIAMOND:WARN] - Missing DIAMOND DB for $current_taxa\. Skipping.\n";
         }
         else {
 
@@ -351,7 +354,7 @@ sub run_diamond {
 
             if ( grep { $_ eq $current_taxa } @special_taxa ) {
                 print
-                    "[Orchard:INFO] - DIAMOND: Using special search for $search_output\n";
+                    "[Orchard:DIAMOND:INFO] - Using special search for $search_output\n";
                 my $diamond_command = "diamond $search_subprog --quiet";
                 $diamond_command .= " --threads $threads";
                 $diamond_command .= " --db $orchardDB\/$database";
@@ -364,7 +367,7 @@ sub run_diamond {
             }
             else {
                 print
-                    "[Orchard:INFO] - DIAMOND: $search_subprog is running as $search_output\n";
+                    "[Orchard:DIAMOND:INFO] - $search_subprog is running as $search_output\n";
 
                 my $diamond_command = "diamond $search_subprog --quiet";
                 $diamond_command .= " --threads $threads";
@@ -382,7 +385,7 @@ sub run_diamond {
     }
 
     chomp( my $hit_seqs_total = `grep -c ">" $sequence_name\_hits.fasta` );
-    print "[Orchard:INFO] - Number of Sequences found = $hit_seqs_total\n";
+    print "[Orchard:DIAMOND:INFO] - Number of Sequences found = $hit_seqs_total\n";
     return $hit_seqs_total;
 }
 
