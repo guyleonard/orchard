@@ -113,23 +113,24 @@ Tree Drawing
 ### Example Output Directory Structure
 ```
 .
-└── output
-    ├── seqs         
-    │   └── renamed  # taxon IDs renamed to human readable names
+└── testing
+    ├── seqs
+    │   └── renamed
     ├── alignments
-    │   └── renamed  # taxon IDs renamed to human readable names
-    ├── masking
-    │   └── renamed  # taxon IDs renamed to human readable names
+    │   └── renamed
+    ├── masking
+    │   └── renamed
     ├── excluded
-    │   └── renamed  # taxon IDs renamed to human readable names
+    │   └── renamed
     ├── reports
     └── trees
-        ├── eps          # EPS format tree
-        │   └── renamed  # taxon IDs renamed to human readable names
-        ├── pdf          # PDF from Dendroscope
-        │   └── renamed  # taxon IDs renamed to human readable names
-        └── svg          # SVG from Dendroscope
-            └── renamed  # taxon IDs renamed to human readable names
+        ├── eps
+        ├── pdf
+        ├── svg
+        └── renamed
+            ├── eps 
+            ├── pdf
+            └── svg
 ```
 
 ## Example Parameters File
