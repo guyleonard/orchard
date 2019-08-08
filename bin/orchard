@@ -171,9 +171,16 @@ sub searching {
     while ( my $seq = $seqs_in->next_seq() ) {
 
         print
-            "\n[Orchard:INFO] - Processing: $input_seqs_count of $input_seqs_total\n";
+            "\n[Orchard:SEARCH:INFO] - Processing: $input_seqs_count of $input_seqs_total\n";
 
         my $sequence_name = $seq->id;
+        $sequence_name =~ s/\./\_/;
+
+        if ( $sequence_name =~ m/[\!\"\#\%\:\;\=\?\@\|"]/ ) {
+            print
+                "[Orchard:SEARCH:WARN] - Sequence Name contains non-alphanumeric characters!!\n";
+            $sequence_name = ( split /\|/, $sequence_name )[1];
+        }
 
         # Output Query Sequence
         my $query_out = Bio::SeqIO->new(
@@ -404,6 +411,7 @@ sub parse_search_output {
     my $sequence_file;
 
     if ( !-f "$orchardDB\/$database\.index" ) {
+        print "[Orchard:PARSE:INFO] - Generating FASTA Index\n";
         $sequence_file
             = Bio::DB::Fasta->new( "$orchardDB\/$database", -reindex );
     }
@@ -441,7 +449,8 @@ sub parse_search_output {
     }
 
     $search_prog =~ s/\+//;
-    my $report_dir = "$outdir\/reports\/$sequence_name\/$search_prog\_$search_subprog";
+    my $report_dir
+        = "$outdir\/reports\/$sequence_name\/$search_prog\_$search_subprog";
     make_path($report_dir);
     system "mv $search_output $report_dir";
 }
@@ -640,8 +649,7 @@ sub generate_tree {
         my $basename = fileparse( $current_file, qr/\Q.fasta\E/ );
 
         if ( $tree_prog =~ /fasttree/i ) {
-            print
-                "[Orchard:TREE:INFO] - Running FastTree on $current_file\n";
+            print "[Orchard:TREE:INFO] - Running FastTree on $current_file\n";
             run_fasttree( $current_file, $trees_directory );
         }
         elsif ( $tree_prog =~ /iqtree/i ) {
