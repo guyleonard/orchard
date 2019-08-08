@@ -1,5 +1,5 @@
 user:
-  results: testing    # folder name for results
+  results: output    # folder name for results
   threads: 8          # number of cores to use
 
 search:
@@ -28,7 +28,7 @@ trees:
   mintaxa: 3                        # integer
 
 directories:
-  orchardDB: /home/cs02gl/Dropbox/git/orchardDB/test_db/test  # path to orchardDB SQL folder - .sql file must be the same name as the folder
+  orchardDB: /path/to/orchardDB     # path to orchardDB SQL folder - .sql file must be the same name as the folder
 
 database:
   username: test      # orchardDB username
