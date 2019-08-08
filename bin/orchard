@@ -623,13 +623,13 @@ sub generate_tree {
 
     if ( !-d $masking_directory ) {
         print
-            "[Orchard:INFO] - TREE: The directory $masking_directory does not exist!\n";
+            "[Orchard:TREE:INFO] - The directory $masking_directory does not exist!\n";
         exit(1);
     }
 
     if ( !@files_to_tree ) {
         print
-            "[Orchard:INFO] - TREE: There are no sequence files in $masking_directory!\n";
+            "[Orchard:TREE:INFO] - There are no sequence files in $masking_directory!\n";
         exit(1);
     }
 
@@ -641,11 +641,11 @@ sub generate_tree {
 
         if ( $tree_prog =~ /fasttree/i ) {
             print
-                "[Orchard:INFO] - TREE: Running FastTree on $current_file\n";
+                "[Orchard:TREE:INFO] - Running FastTree on $current_file\n";
             run_fasttree( $current_file, $trees_directory );
         }
         elsif ( $tree_prog =~ /iqtree/i ) {
-            print "[Orchard:INFO] - TREE: Running IQTree on $current_file\n";
+            print "[Orchard:TREE:INFO] - Running IQTree on $current_file\n";
             my $symlink = abs_path($current_file);
             system("ln -s $symlink $trees_directory");
             run_iqtree( $current_file, $trees_directory );
@@ -659,7 +659,7 @@ sub run_fasttree {
     my $basename = fileparse( $current_file, qr/\Q.fasta\E/ );
     my $fasttree_command;
 
-    print "[Orchard:INFO] - TREE: Calculating FastTree on $current_file\n";
+    print "[Orchard:FASTTREE:INFO] - Calculating FastTree on $current_file\n";
 
     if ( $tree_prog =~ /fasttreemp/i ) {
         $fasttree_command = "FastTreeMP $tree_opts";
@@ -679,15 +679,17 @@ sub run_iqtree {
     my ( $current_file, $trees_directory ) = @_;
     my $basename = fileparse( $current_file, qr/\Q.fasta\E/ );
 
+    print "[Orchard:IQTREE:INFO] - Calculating IQTree on $current_file\n";
+
     my $iqtree_command = "iqtree -s $trees_directory\/$basename\.fasta";
     $iqtree_command .= " -nt $threads";
-    $iqtree_command .= " $tree_opts";
+    $iqtree_command .= " $tree_opts -pre $trees_directory\/$basename\_IQ";
 
     system($iqtree_command);
 
     make_path("$trees_directory\/iqtree_info");
     system(
-        "mv $trees_directory\/*.bionj $trees_directory\/*.gz $trees_directory\/*.iqtree $trees_directory\/*.log $trees_directory\/*.mldist $trees_directory\/iqtree_info"
+        "mv $trees_directory\/*.bionj $trees_directory\/*.gz $trees_directory\/*.iqtree $trees_directory\/*.log $trees_directory\/*.mldist $trees_directory\/*.phy $trees_directory\/iqtree_info"
     );
 }
 
