@@ -185,7 +185,7 @@ sub searching {
             }
             else {
                 $sequence_name = ( split / /, $sequence_name )[0];
-                $sequence_name =~ s/[^\w][\s]/\_/g;
+                $sequence_name =~ s/[^\w\s]/\_/g;
                 print "[Orchard:SEARCH:WARN] - New name is $sequence_name\n";
             }
         }
