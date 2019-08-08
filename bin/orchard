@@ -179,7 +179,15 @@ sub searching {
         if ( $sequence_name =~ m/[\!\"\#\%\:\;\=\?\@\|"]/ ) {
             print
                 "[Orchard:SEARCH:WARN] - Sequence Name contains non-alphanumeric characters!!\n";
-            $sequence_name = ( split /\|/, $sequence_name )[1];
+            if ( $sequence_name =~ m/.*\|.*\|.*/ ) {
+                $sequence_name = ( split /\|/, $sequence_name )[1];
+                print "[Orchard:SEARCH:WARN] - New name is $sequence_name\n";
+            }
+            else {
+                $sequence_name = ( split / /, $sequence_name )[0];
+                $sequence_name =~ s/[\w\s]/\_/g;
+                print "[Orchard:SEARCH:WARN] - New name is $sequence_name\n";
+            }
         }
 
         # Output Query Sequence
@@ -197,23 +205,26 @@ sub searching {
         $hits_out->write_seq($seq);
 
         if ( $search_prog =~ /BLAST/i ) {
-            print "[Orchard:INFO] - Running: blast+ on $sequence_name\n";
+            print
+                "[Orchard:SEARCH:INFO] - Running: blast+ on $sequence_name\n";
             $hit_seqs_count
                 = run_blast( \@taxa, $input_seqs, $sequence_name );
         }
         elsif ( $search_prog =~ /BLAT/i ) {
-            print "[Orchard:INFO] - Running: blat on $sequence_name\n";
+            print "[Orchard:SEARCH:INFO] - Running: blat on $sequence_name\n";
             $hit_seqs_count = run_blat( \@taxa, $input_seqs, $sequence_name );
         }
         elsif ( $search_prog =~ /DIAMOND/i ) {
-            print "[Orchard:INFO] - Running: diamond on $sequence_name\n";
+            print
+                "[Orchard:SEARCH:INFO] - Running: diamond on $sequence_name\n";
             $hit_seqs_count
                 = run_diamond( \@taxa, $input_seqs, $sequence_name );
         }
         else {
             $search_prog    = 'blast+';
             $search_subprog = 'blastp';
-            print "[Orchard:INFO] - Running: blast+ on $sequence_name\n";
+            print
+                "[Orchard:SEARCH:INFO] - Running: blast+ on $sequence_name\n";
             $hit_seqs_count
                 = run_blast( \@taxa, $input_seqs, $sequence_name );
         }
@@ -221,7 +232,8 @@ sub searching {
         $input_seqs_count++;
 
         if ( $hit_seqs_count <= $tree_mintaxa ) {
-            print "[Orchard:WARN] - Too Few Hits for $sequence_name.\n";
+            print
+                "[Orchard:SEARCH:WARN] - Too Few Hits for $sequence_name.\n";
 
             unlink "$sequence_name\_query.fasta";
             make_path("$outdir\/excluded");
