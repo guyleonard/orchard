@@ -200,7 +200,7 @@ sub draw_dendroscope_tree {
         close $command_file;
 
         my $dendroscope_command
-            = "xvfb-run --auto-servernum --server-num=1 Dendroscope -g true -c $outdir\/dendroscope.cmd";
+            = "xvfb-run --auto-servernum --server-num=1 Dendroscope -g true -c $outdir\/dendroscope.cmd 1>/dev/null";
         system($dendroscope_command);
 
         unlink "$outdir\/dendroscope.cmd";
