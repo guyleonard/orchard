@@ -1,0 +1,83 @@
+
+[Orchard:INFO] - Processing: 1 of 3
+[Orchard:INFO] - Running: blast+ on NP_000782.1
+[Orchard:BLAST:INFO] - blastp is running as NP_000782.1_vs_892de7e6392c2da4eca7afdc1f2423a1_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_000782.1_vs_0d016200d7be2f27e60cc1f3f6d0fdc3_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_000782.1_vs_2609b43401603616e96e364cbaf24422_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_000782.1_vs_8943f4053643d471c6a93ce340d8b830_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_000782.1_vs_c208531a49e4a18e6d0c5158d9981fbd_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_000782.1_vs_c0116b19576caa6fe0ee1ad0d25b0638_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_000782.1_vs_a87cc1dda87d31c578e1892f1185326d_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_000782.1_vs_643af8bc9fd1fe2e32bda86fae7628f1_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_000782.1_vs_fb1f94f2f9dabb709862a225735fb29d_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_000782.1_vs_94698eb5caf64d60b123371f4b4d4c35_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_000782.1_vs_e562c4f43952c3a521c2eff0fe526a11_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_000782.1_vs_bbec05ea31d4bbc2ffd1595a7ff58914_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_000782.1_vs_061d905f5fd013ddb6833f67ee02e103_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_000782.1_vs_6cf5a6bea1a813b4cb47cdc152d13e06_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_000782.1_vs_d7dee5760e810f3e72e5ef72e758a52e_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_000782.1_vs_72272ff8ff51120012555575e64dfdf1_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_000782.1_vs_e3909ec45bf00dfacbe25ce37a70940f_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_000782.1_vs_d25cf35c70f20a09d7102711de9bbe44_blast_blastp.out
+[Orchard:BLAST:INFO] - Number of Sequences found = 38
+
+[Orchard:INFO] - Processing: 2 of 3
+[Orchard:INFO] - Running: blast+ on NP_001062.1
+[Orchard:BLAST:INFO] - blastp is running as NP_001062.1_vs_892de7e6392c2da4eca7afdc1f2423a1_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_001062.1_vs_0d016200d7be2f27e60cc1f3f6d0fdc3_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_001062.1_vs_2609b43401603616e96e364cbaf24422_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_001062.1_vs_8943f4053643d471c6a93ce340d8b830_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_001062.1_vs_c208531a49e4a18e6d0c5158d9981fbd_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_001062.1_vs_c0116b19576caa6fe0ee1ad0d25b0638_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_001062.1_vs_a87cc1dda87d31c578e1892f1185326d_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_001062.1_vs_643af8bc9fd1fe2e32bda86fae7628f1_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_001062.1_vs_fb1f94f2f9dabb709862a225735fb29d_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_001062.1_vs_94698eb5caf64d60b123371f4b4d4c35_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_001062.1_vs_e562c4f43952c3a521c2eff0fe526a11_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_001062.1_vs_bbec05ea31d4bbc2ffd1595a7ff58914_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_001062.1_vs_061d905f5fd013ddb6833f67ee02e103_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_001062.1_vs_6cf5a6bea1a813b4cb47cdc152d13e06_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_001062.1_vs_d7dee5760e810f3e72e5ef72e758a52e_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_001062.1_vs_72272ff8ff51120012555575e64dfdf1_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_001062.1_vs_e3909ec45bf00dfacbe25ce37a70940f_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as NP_001062.1_vs_d25cf35c70f20a09d7102711de9bbe44_blast_blastp.out
+[Orchard:BLAST:INFO] - Number of Sequences found = 40
+
+[Orchard:INFO] - Processing: 3 of 3
+[Orchard:INFO] - Running: blast+ on Q27783.1
+[Orchard:BLAST:INFO] - blastp is running as Q27783.1_vs_892de7e6392c2da4eca7afdc1f2423a1_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as Q27783.1_vs_0d016200d7be2f27e60cc1f3f6d0fdc3_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as Q27783.1_vs_2609b43401603616e96e364cbaf24422_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as Q27783.1_vs_8943f4053643d471c6a93ce340d8b830_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as Q27783.1_vs_c208531a49e4a18e6d0c5158d9981fbd_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as Q27783.1_vs_c0116b19576caa6fe0ee1ad0d25b0638_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as Q27783.1_vs_a87cc1dda87d31c578e1892f1185326d_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as Q27783.1_vs_643af8bc9fd1fe2e32bda86fae7628f1_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as Q27783.1_vs_fb1f94f2f9dabb709862a225735fb29d_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as Q27783.1_vs_94698eb5caf64d60b123371f4b4d4c35_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as Q27783.1_vs_e562c4f43952c3a521c2eff0fe526a11_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as Q27783.1_vs_bbec05ea31d4bbc2ffd1595a7ff58914_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as Q27783.1_vs_061d905f5fd013ddb6833f67ee02e103_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as Q27783.1_vs_6cf5a6bea1a813b4cb47cdc152d13e06_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as Q27783.1_vs_d7dee5760e810f3e72e5ef72e758a52e_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as Q27783.1_vs_72272ff8ff51120012555575e64dfdf1_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as Q27783.1_vs_e3909ec45bf00dfacbe25ce37a70940f_blast_blastp.out
+[Orchard:BLAST:INFO] - blastp is running as Q27783.1_vs_d25cf35c70f20a09d7102711de9bbe44_blast_blastp.out
+[Orchard:BLAST:INFO] - Number of Sequences found = 48
+[Orchard:ALIGN:INFO] - Aligning testing/seqs/NP_000782.1_hits.fasta with mafft
+[Orchard:ALIGN:INFO] - Aligning testing/seqs/NP_001062.1_hits.fasta with mafft
+[Orchard:ALIGN:INFO] - Aligning testing/seqs/Q27783.1_hits.fasta with mafft
+[Orchard:MASK:INFO] - Masking testing/alignments/NP_000782.1_hits_aligned.fasta Alignment with trimal.
+[Orchard:MASK:INFO] - Length is 72 and bigger than 1st cutoff: 50. Next!
+[Orchard:MASK:INFO] - Masking testing/alignments/NP_001062.1_hits_aligned.fasta Alignment with trimal.
+[Orchard:MASK:WARN] - Length is 0 and smaller than 1st cutoff: 50. Trying again!
+[Orchard:MASK:INFO] - Length is 270 and bigger than 2nd cutoff: 30. Next!
+[Orchard:MASK:INFO] - Masking testing/alignments/Q27783.1_hits_aligned.fasta Alignment with trimal.
+[Orchard:MASK:WARN] - Length is 0 and smaller than 1st cutoff: 50. Trying again!
+[Orchard:MASK:INFO] - Length is 380 and bigger than 2nd cutoff: 30. Next!
+[Orchard:TREE:INFO] - Running FastTree on testing/masking/NP_000782.1_hits_aligned_masked.fasta
+[Orchard:FASTTREE:INFO] - Calculating FastTree on testing/masking/NP_000782.1_hits_aligned_masked.fasta
+[Orchard:TREE:INFO] - Running FastTree on testing/masking/NP_001062.1_hits_aligned_masked.fasta
+[Orchard:FASTTREE:INFO] - Calculating FastTree on testing/masking/NP_001062.1_hits_aligned_masked.fasta
+[Orchard:TREE:INFO] - Running FastTree on testing/masking/Q27783.1_hits_aligned_masked.fasta
+[Orchard:FASTTREE:INFO] - Calculating FastTree on testing/masking/Q27783.1_hits_aligned_masked.fasta
