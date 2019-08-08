@@ -1,0 +1,35 @@
+user:
+  results: testing    # folder name for results
+  threads: 8          # number of cores to use
+
+search:
+  program: blast+     # blast+, blat, diamond
+  subprogram: blastp  # blast: blastp, blastx; blat: prot, dnax; diamond: blastp, blastx
+  evalue: 1e-10       # 1e-10, 1e-05, etc
+  tophits: 5          # integer
+  maxlength: 3000     # ignore AA sequences larger than this value
+
+special:
+  taxa:               # comma separated list of genome IDs from orchardDB
+  tophits:            # integer
+
+alignment:
+  program: mafft                     # mafft, muscle
+  options: --auto --quiet --reorder  # mafft: '--auto --quiet --reorder' or muscle: '-maxiters 2 -quiet -group'
+
+masking:
+  program: trimal     # trimal, divvier
+  cutoff1: 50         # higher integer
+  cutoff2: 30         # lower integer
+
+trees:
+  program: fasttreemp               # fasttree, fasttreemp, iqtree
+  options: -bionj -slow -lg -quiet  # fasttree: '-bionj -slow -lg -quiet' or iqtree: '-fast -alrt 1000 -quiet -mset WAG,LG,JTT -merit BIC'
+  mintaxa: 3                        # integer
+
+directories:
+  orchardDB: /home/cs02gl/Dropbox/git/orchardDB/test_db/test  # path to orchardDB SQL folder - .sql file must be the same name as the folder
+
+database:
+  username: test      # orchardDB username
+  password: test      # orchardDB password
