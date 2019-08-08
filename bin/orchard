@@ -118,11 +118,6 @@ if ( defined $input_seqs && defined $taxa_list && defined $params_file ) {
 
     make_path($outdir);
 
-    # output to screen and log file
-    my $logfile = ">>$outdir\.log";
-    $log = IO::Tee->new( \*STDOUT, $logfile );
-    select $log;
-
     if ( -f "$outdir\.log" ) {
         print
             "[Orchard:WARN] - Logfile exists, previous run detected! Continue? Y/N\n";
@@ -132,6 +127,11 @@ if ( defined $input_seqs && defined $taxa_list && defined $params_file ) {
             exit(1);
         }
     }
+
+    # output to screen and log file
+    my $logfile = ">>$outdir\.log";
+    $log = IO::Tee->new( \*STDOUT, $logfile );
+    select $log;
 
     if ( defined $search eq 1 ) {
         searching( $input_seqs, \@taxa );
