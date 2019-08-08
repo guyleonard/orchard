@@ -165,7 +165,8 @@ sub draw_dendroscope_tree {
 
         my $basename = fileparse( $current_file, qr/\Q.treefile\E/ );
 
-        $basename =~ m/([0-9a-f]{32})\_.*/i;
+        #$basename =~ m/([0-9a-f]{32})\_.*/i;
+        $basename =~ m/(.*)(_hits_aligned_masked_)(FT|IQ)/i;
         my $accession = $1;
 
         if ( $renamed eq "renamed" ) {
@@ -178,8 +179,6 @@ sub draw_dendroscope_tree {
 
             my ( $extracted_accession, $genus_species, $source )
                 = $prepare->fetchrow_array();
-
-            $accession = "$source\-$extracted_accession";
         }
 
         my $dendroscope_opts = "open file=$current_file\;\n";
@@ -300,7 +299,7 @@ sub rename_newick_trees {
 
                     my ( $extracted_accession, $genus_species, $source )
                         = $prepare->fetchrow_array();
-                        
+
                     if ( defined $genus_species ) {
                         $node->id(
                             "$genus_species \[$source\-$extracted_accession\]"
