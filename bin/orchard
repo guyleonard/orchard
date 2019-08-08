@@ -516,13 +516,13 @@ sub masking {
 
     if ( !-d $alignments_directory ) {
         print
-            "[Orchard:INFO] - ALIGN: The directory $alignments_directory does not exist!\n";
+            "[Orchard:MASK:INFO] - The directory $alignments_directory does not exist!\n";
         exit(1);
     }
 
     if ( !@files_to_mask ) {
         print
-            "[Orchard:INFO] - ALIGN: There are no sequence files in $alignments_directory!\n";
+            "[Orchard:MASK:INFO] - There are no sequence files in $alignments_directory!\n";
         exit(1);
     }
 
@@ -534,40 +534,40 @@ sub masking {
 
         if ( $masking_prog =~ /trimal/i ) {
             print
-                "[Orchard:INFO] - MASK: Masking Alignment with $masking_prog\n";
+                "[Orchard:MASK:INFO] - Masking $current_file Alignment with $masking_prog\.\n";
             my $mask_length
                 = run_trimal( $masking_directory, $current_file, '-nogaps' );
 
             if ( $mask_length <= $masking_cutoff1 ) {
                 print
-                    "[Orchard:WARN] - MASK: Length is $mask_length and smaller than 1st cutoff: $masking_cutoff1. Trying again!\n";
+                    "[Orchard:MASK:WARN] - Length is $mask_length and smaller than 1st cutoff: $masking_cutoff1. Trying again!\n";
                 my $mask_length
                     = run_trimal( $masking_directory, $current_file,
                     '-automated1' );
                 if ( $mask_length <= $masking_cutoff2 ) {
                     print
-                        "[Orchard:WARN] - MASK: Length is $mask_length and smaller than 2nd cutoff: $masking_cutoff2. Excluding!\n";
+                        "[Orchard:MASK:WARN] - Length is $mask_length and smaller than 2nd cutoff: $masking_cutoff2. Excluding!\n";
                     system
                         "mv $masking_directory\/$basename\_masked\.fasta $outdir\/excluded";
                 }
                 else {
                     print
-                        "[Orchard:INFO] - MASK: Length is $mask_length and bigger than 2nd cutoff: $masking_cutoff2. Next!\n";
+                        "[Orchard:MASK:INFO] - Length is $mask_length and bigger than 2nd cutoff: $masking_cutoff2. Next!\n";
                 }
             }
             else {
                 print
-                    "[Orchard:INFO] - MASK: Length is $mask_length and bigger than 1st cutoff: $masking_cutoff1. Next!\n";
+                    "[Orchard:MASK:INFO] - Length is $mask_length and bigger than 1st cutoff: $masking_cutoff1. Next!\n";
             }
         }
         elsif ( $masking_prog =~ /divvier/i ) {
             print
-                "[Orchard:INFO] - MASK: Masking Alignment with $masking_prog\n";
+                "[Orchard:MASK:INFO] - Masking Alignment with $masking_prog\n";
             run_divvier( $masking_directory, $current_file );
         }
         else {
             print
-                "[Orchard:INFO] - MASK: Please use Correct Program Name for Trimming in your YAML\n";
+                "[Orchard:MASK:INFO] - Please use Correct Program Name for Trimming in your YAML\n";
             exit(1);
         }
     }
@@ -581,7 +581,7 @@ sub run_divvier {
     system("ln -s $symlink $masking_directory");
 
     my $divvier_command
-        = "divvier -divvygap $masking_directory\/$basename\.fasta";
+        = "divvier -divvygap $masking_directory\/$basename\.fasta 1>/dev/null";
     system($divvier_command);
 
     system("rm $masking_directory\/$basename\.fasta");
