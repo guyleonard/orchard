@@ -165,21 +165,8 @@ sub draw_dendroscope_tree {
 
         my $basename = fileparse( $current_file, qr/\Q.treefile\E/ );
 
-        #$basename =~ m/([0-9a-f]{32})\_.*/i;
         $basename =~ m/(.*)(_hits_aligned_masked_)(FT|IQ)/i;
         my $accession = $1;
-
-        if ( $renamed eq "renamed" ) {
-            my $dbh = sqllite();
-
-            my $statement
-                = qq(SELECT odb_accessions.extracted_accession, odb_maintable.genus_species, odb_maintable.source FROM odb_maintable INNER JOIN odb_accessions ON odb_maintable.genome_id = odb_accessions.lookup_id WHERE hashed_accession='$accession');
-            my $prepare = $dbh->prepare($statement);
-            $prepare->execute();
-
-            my ( $extracted_accession, $genus_species, $source )
-                = $prepare->fetchrow_array();
-        }
 
         my $dendroscope_opts = "open file=$current_file\;\n";
         $dendroscope_opts
