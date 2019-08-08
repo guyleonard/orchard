@@ -366,7 +366,7 @@ sub run_diamond {
                 $diamond_command .= " --query $sequence_name\_query.fasta";
                 $diamond_command .= " --evalue $search_evalue";
                 $diamond_command .= " --max-target-seqs $special_tophits";
-                $diamond_command .= " --out $search_output";
+                $diamond_command .= " --out $search_output 2>/dev/null";
 
                 system($diamond_command);
             }
@@ -380,7 +380,7 @@ sub run_diamond {
                 $diamond_command .= " --query $sequence_name\_query.fasta";
                 $diamond_command .= " --evalue $search_evalue";
                 $diamond_command .= " --max-target-seqs $search_tophits";
-                $diamond_command .= " --out $search_output";
+                $diamond_command .= " --out $search_output 2>/dev/null";
 
                 system($diamond_command);
             }
