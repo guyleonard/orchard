@@ -430,12 +430,12 @@ sub parse_search_output {
                 }
                 else {
                     print
-                        "[Orchard:WARN] - $sequence_name: sequence hit too long for: $hit_name -> $current_taxa\n";
+                        "[Orchard:PARSE:WARN] - $sequence_name: sequence hit too long for: $hit_name -> $current_taxa\n";
                 }
             }
             else {
                 print
-                    "[Orchard:WARN] - $sequence_name: sequence retreival problem for: $hit_name -> $current_taxa\n";
+                    "[Orchard:PARSE:WARN] - $sequence_name: sequence retreival problem for: $hit_name -> $current_taxa\n";
             }
         }
     }
@@ -457,13 +457,13 @@ sub alignment {
 
     if ( !-d $sequence_directory ) {
         print
-            "[Orchard:INFO] - ALIGN: The directory $sequence_directory does not exist!\n";
+            "[Orchard:ALIGN:INFO] - The directory $sequence_directory does not exist!\n";
         exit(1);
     }
 
     if ( !@files_to_align ) {
         print
-            "[Orchard:INFO] - ALIGN: There are no sequence files in $sequence_directory!\n";
+            "[Orchard:ALIGN:INFO] - There are no sequence files in $sequence_directory!\n";
         exit(1);
     }
 
@@ -475,7 +475,7 @@ sub alignment {
 
         if ( $alignment_prog =~ /mafft/i ) {
             print
-                "[Orchard:INFO] - ALIGN: Aligning $current_file with $alignment_prog\n";
+                "[Orchard:ALIGN:INFO] - Aligning $current_file with $alignment_prog\n";
             my $mafft_command = "mafft $alignment_opts";
             $mafft_command .= " --thread $threads";
             $mafft_command
@@ -485,7 +485,7 @@ sub alignment {
         }
         elsif ( $alignment_prog =~ /muscle/i ) {
             print
-                "[Orchard:INFO] - ALIGN: Aligning $current_file with $alignment_prog\n";
+                "[Orchard:ALIGN:INFO] - Aligning $current_file with $alignment_prog\n";
             my $muscle_command = "muscle $alignment_opts";
             $muscle_command
                 .= " -in $current_file -out $alignments_directory\/$basename\_aligned\.fasta";
@@ -494,7 +494,7 @@ sub alignment {
         }
         else {
             print
-                "[Orchard:INFO] - ALIGN: Aligning $current_file with $alignment_prog\n";
+                "[Orchard:ALIGN:INFO] - Aligning $current_file with $alignment_prog\n";
             my $mafft_command = "mafft $alignment_opts";
             $mafft_command .= " --thread $threads";
             $mafft_command
