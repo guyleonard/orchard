@@ -623,12 +623,19 @@ sub run_trimal {
 
     system($trimal_command);
 
-    my $bioseq = Bio::SeqIO->new(
-        '-file'  => "$masking_directory\/$basename\_masked\.fasta",
-        -verbose => -1
-    );
-    my $sequence = $bioseq->next_seq;
-    my $length   = $sequence->length;
+    my ( $sequence, $length );
+    if ( !-f "$masking_directory\/$basename\_masked\.fasta" ) {
+        $length = '0';
+    }
+    else {
+
+        my $bioseq = Bio::SeqIO->new(
+            '-file'  => "$masking_directory\/$basename\_masked\.fasta",
+            -verbose => -1
+        );
+        $sequence = $bioseq->next_seq;
+        $length   = $sequence->length;
+    }
 
     return $length;
 }
