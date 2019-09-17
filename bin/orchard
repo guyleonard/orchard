@@ -8,7 +8,6 @@ use Bio::SeqIO;
 use Cwd 'abs_path';
 use File::Basename;
 use File::Path qw(make_path);
-use File::Slurp;
 use Getopt::Long;
 use IO::Prompt;
 use IO::Tee;
@@ -72,7 +71,10 @@ if ( defined $input_seqs && defined $taxa_list && defined $params_file ) {
 
     my @taxa;
     if ( -f $taxa_list ) {
-        @taxa = read_file("$taxa_list");
+
+    #chomp(my @taxa = do { local $/; open my $fh, "<", "$taxa_list"; <$fh> });
+        open( my $taxa_list_in, '<', $taxa_list ) or die "$!";
+        my @taxa = split( /\t|,/, <$taxa_list_in> );
     }
     else {
         print
