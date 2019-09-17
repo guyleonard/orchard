@@ -2,6 +2,7 @@
 use strict;
 use warnings;
 
+use File::Slurp;
 use Bio::DB::Fasta;
 use Bio::SearchIO;
 use Bio::SeqIO;
@@ -12,6 +13,8 @@ use Getopt::Long;
 use IO::Prompt;
 use IO::Tee;
 use YAML::XS qw/LoadFile/;
+
+use Data::Dumper;
 
 our $VERSION = 0.1;
 my $version = "Orchard Pipeline v1.0 -- orchard v$VERSION\n";
@@ -71,10 +74,12 @@ if ( defined $input_seqs && defined $taxa_list && defined $params_file ) {
 
     my @taxa;
     if ( -f $taxa_list ) {
-
-    #chomp(my @taxa = do { local $/; open my $fh, "<", "$taxa_list"; <$fh> });
-        open( my $taxa_list_in, '<', $taxa_list ) or die "$!";
-        my @taxa = split( /\t|,/, <$taxa_list_in> );
+	open( my $taxa_list_in, '<', $taxa_list ) or die "$!";
+	foreach my $line (<$taxa_list_in>) {
+		chomp $line;
+        	my $taxon = (split/\t|,| /, $line)[0];
+		push @taxa, $taxon;
+	}
     }
     else {
         print
