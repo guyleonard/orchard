@@ -115,9 +115,11 @@ if ( -f $params_file ) {
         if ( defined $paramaters->{annotation}->{taxonomy_colours} ) {
             @taxonomy_list = split /,/,
                 $paramaters->{annotation}->{taxonomy_colours};
+
             %taxonomy_colours
                 = map { my ( $key, $value ) = split ";"; $key => $value }
                 @taxonomy_list;
+
             colourise_svg_trees( 'renamed', 'svg', %taxonomy_colours );
         }
         else {
@@ -196,6 +198,58 @@ sub colourise_svg_trees {
             $colour = "black";
         }
     }
+}
+
+sub draw_key {
+    my %taxonomy_colours = shift;
+
+    my $x1 = "25";
+    my $x2 = "55";
+
+    my $taxa_number = keys %taxonomy_colours;
+
+    my $y1 = ( $HEIGHT - ( 80 * $taxa_number ) );
+    my $y2 = $y1 + 10;
+    my $y3 = $y1 - 20;
+
+    print $svg_out "
+    <g id=\"key\">
+      <text
+         x=\"$x1\"
+         y=\"$y3\"
+         id=\"key\"
+         xml:space=\"preserve\"
+         style=\"font-size:14px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:OpenSymbol\">Key
+         </text>";
+
+    for my $key ( keys %taxa_colours ) {
+
+        my $colour = $taxa_colours{$key};
+
+        #print "$key - $colour\n";
+
+        print $svg_out "
+            <g
+                id=\"$key\">
+            <rect
+                width=\"25\"
+                height=\"10\"
+                x=\"$x1\"
+                y=\"$y1\"
+                id=\"rect_$key\"
+                style=\"opacity:1;fill:$colour;fill-opacity:1;stroke:none\" />\n";
+        print $svg_out "
+            <text
+                x=\"$x2\"
+                y=\"$y2\"
+                id=\"text_$key\"
+                xml:space=\"preserve\"
+                style=\"font-size:12px;font-style:normal;font-weight:normal;fill:$colour;fill-opacity:1;stroke:none;font-family:OpenSymbol\">$key
+                </text></g>\n";
+        $y1 += 10;
+        $y2 += 10;
+    }
+    print $svg_out "</g>";
 }
 
 #
