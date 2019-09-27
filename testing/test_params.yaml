@@ -33,3 +33,6 @@ directories:
 database:
   username: test      # orchardDB username
   password: test      # orchardDB password
+
+annotation:
+  taxonomy_colours: ascomycota;#3b9049,basidiomycota;#3B4990

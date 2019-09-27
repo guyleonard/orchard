@@ -12,6 +12,8 @@ use Getopt::Long;
 use IO::Tee;
 use YAML::XS qw/LoadFile/;
 
+use Data::Dumper;
+
 our $VERSION = 0.1;
 my $version = "Orchard Pipeline v1.0 -- orchard_accessories v$VERSION\n";
 
@@ -26,6 +28,7 @@ my ($rename_sequences, $rename_alignments, $rename_masks,
     $rename_excluded,  $rename_newick_trees
 );
 my ( $renamed, $eps_tree, $svg_tree, $pdf_tree );
+my ( $colourise, @taxonomy_list, %taxonomy_colours );
 
 #
 # getopt Logic
@@ -45,6 +48,7 @@ GetOptions(
     'eps_tree'              => \$eps_tree,
     'svg_tree'              => \$svg_tree,
     'pdf_tree'              => \$pdf_tree,
+    'colourise|c'           => \$colourise,
     'version|v'             => sub { print "$version"; exit(0) },
     'help|h' => sub { help_message() }
 ) or help_message();
@@ -106,11 +110,92 @@ if ( -f $params_file ) {
     elsif ( defined $pdf_tree eq 1 && defined $renamed eq 1 ) {
         draw_dendroscope_tree( 'renamed', 'pdf' );
     }
+
+    if ( defined $colourise eq 1 ) {
+        if ( defined $paramaters->{annotation}->{taxonomy_colours} ) {
+            @taxonomy_list = split /,/,
+                $paramaters->{annotation}->{taxonomy_colours};
+            %taxonomy_colours
+                = map { my ( $key, $value ) = split ";"; $key => $value }
+                @taxonomy_list;
+            colourise_svg_trees( 'renamed', 'svg', %taxonomy_colours );
+        }
+        else {
+            print
+                "[orchard_accessories:ERRR] - No colours for taxonomic groups in paramaters file.\n";
+        }
+    }
 }
 else {
     print
         "[orchard_accessories:ERRR] - The parameters file $params_file does not exist!\n";
     exit(1);
+}
+
+#
+# Annotation
+#
+sub colourise_svg_trees {
+    my ( $renamed, $type, %taxonomy_colours ) = @_;
+    my $trees_directory = "$outdir\/trees\/$renamed\/$type";
+
+    my $colourised_dir_out = "$trees_directory\/colourised";
+    make_path("$colourised_dir_out");
+
+    my $colour = "black";
+
+    my $dbh = sqllite();
+
+    my @trees = glob "$trees_directory\/*.svg";
+
+    for my $i ( 0 .. $#trees ) {
+        my $current_file = $trees[$i];
+
+        print "[orchard_accessories:INFO] - Colourising $current_file\n";
+        open my $svg_in, '<', "$current_file";
+
+        my $basename = fileparse( $current_file, qr/\Q.svg\E/ );
+        open my $svg_out, '>',
+            "$colourised_dir_out\/$basename\_colourised\.svg";
+
+        while ( my $line = <$svg_in> ) {
+
+            if ( $line =~ m/(\<text xml\:space\=\"preserve\")/is ) {
+                my $taxon_name = $line;
+
+                if ( $taxon_name
+                    =~ m/(.*\>)(.*?)(\s+)(\[.*\])(\<\/text\>)/isgm )
+                {
+                    $taxon_name = $2;
+
+                    my $statement
+                        = qq(SELECT odb_maintable.taxonomy FROM odb_maintable WHERE genus_species='$taxon_name');
+                    my $prepare = $dbh->prepare($statement);
+                    $prepare->execute();
+
+                    my $taxonomy = $prepare->fetchrow_array();
+
+                    foreach ( keys %taxonomy_colours ) {
+                        if ( $taxonomy =~ /$_/i ) {
+                            $colour = "$taxonomy_colours{$_}";
+                        }
+                    }
+
+                    $line =~ s/\<text /\<text fill\=\"$colour\" /;
+                    print $svg_out "$line";
+                }
+                else {
+                    $line
+                        =~ s/\<text /\<text fill\=\"black\" font-weight\=\"bold\" /;
+                    print $svg_out "$line";
+                }
+            }
+            else {
+                print $svg_out "$line";
+            }
+            $colour = "black";
+        }
+    }
 }
 
 #
