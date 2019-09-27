@@ -2,13 +2,13 @@
 use strict;
 use warnings;
 
-use File::Slurp;
 use Bio::DB::Fasta;
 use Bio::SearchIO;
 use Bio::SeqIO;
 use Cwd 'abs_path';
 use File::Basename;
 use File::Path qw(make_path);
+use File::Slurp;
 use Getopt::Long;
 use IO::Prompt;
 use IO::Tee;
@@ -255,6 +255,10 @@ sub searching {
             # sequences with X, just in case!
             system
                 "sed -i \'/^>/!s/U|\\w/X/g\' $outdir\/seqs\/$sequence_name\_hits.fasta";
+
+            system "fasuniq $outdir\/seqs\/$sequence_name\_hits.fasta > $outdir\/seqs\/$sequence_name\_hits.fasta_temp";
+            system "rm $outdir\/seqs\/$sequence_name\_hits.fasta";
+            system "mv $outdir\/seqs\/$sequence_name\_hits.fasta_temp $outdir\/seqs\/$sequence_name\_hits.fasta"; 
         }
     }
 }
