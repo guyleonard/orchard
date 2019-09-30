@@ -153,6 +153,11 @@ sub colourise_svg_trees {
 
     my @trees = glob "$trees_directory\/*.svg";
 
+    if ( $#trees <= 0 ) {
+        print "[orchard_accessories:ERR] - Missing renamed trees!\n";
+        exit 0;
+    }
+
     for my $i ( 0 .. $#trees ) {
         my $current_file = $trees[$i];
 
@@ -180,8 +185,11 @@ sub colourise_svg_trees {
                 $height = $1;
                 print $svg_out "$line";
             }
-            # <text stroke="none" x="754" xml:space="preserve" y="256">Zea mays [Ensembl-Zm00001d049188_P008]</text>
-            elsif ( $line =~ m/(\s+\<text xml\:space\=\"preserve\")/is || $line =~ m/(\s+\<text stroke=\"none\")/is ) {
+
+# <text stroke="none" x="754" xml:space="preserve" y="256">Zea mays [Ensembl-Zm00001d049188_P008]</text>
+            elsif ($line =~ m/(\s+\<text xml\:space\=\"preserve\")/is
+                || $line =~ m/(\s+\<text stroke=\"none\")/is )
+            {
                 my $taxon_name = $line;
 
                 if ( $taxon_name
@@ -295,6 +303,12 @@ sub draw_eps_tree {
 
     my @trees_to_svg = glob "$trees_directory\/*.treefile";
 
+    if ( $#trees_to_svg <= 0 ) {
+        print
+            "[orchard_accessories:ERR] - Missing trees, did you forget the -x option?\n";
+        exit 0;
+    }
+
     for my $i ( 0 .. $#trees_to_svg ) {
         my $current_file = $trees_to_svg[$i];
 
@@ -391,6 +405,12 @@ sub rename_sequences {
 
     my @files_to_rename = glob "$directory\/*.fasta";
 
+    if ( $#trees_to_rename <= 0 ) {
+        print
+            "[orchard_accessories:ERR] - Missing files from $stage. Did you forget to create them?\n";
+        exit 0;
+    }
+
     for my $i ( 0 .. $#files_to_rename ) {
         my $current_file = $files_to_rename[$i];
         print
@@ -438,6 +458,12 @@ sub rename_newick_trees {
     my $dbh = sqllite();
 
     my @trees_to_rename = glob "$trees_directory\/*.treefile";
+
+    if ( $#trees_to_rename <= 0 ) {
+        print
+            "[orchard_accessories:ERR] - Missing trees, did you run the -x option in Orchard?\n";
+        exit 0;
+    }
 
     for my $i ( 0 .. $#trees_to_rename ) {
         my $current_file = $trees_to_rename[$i];
