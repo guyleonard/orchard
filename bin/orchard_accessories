@@ -11,6 +11,7 @@ use File::Path qw(make_path);
 use Getopt::Long;
 use IO::Tee;
 use YAML::XS qw/LoadFile/;
+use XML::Tidy;
 
 use Data::Dumper;
 
@@ -145,6 +146,8 @@ sub colourise_svg_trees {
     make_path("$colourised_dir_out");
 
     my $colour = "black";
+    my $width  = 0;
+    my $height = 0;
 
     my $dbh = sqllite();
 
@@ -161,8 +164,15 @@ sub colourise_svg_trees {
             "$colourised_dir_out\/$basename\_colourised\.svg";
 
         while ( my $line = <$svg_in> ) {
-
-            if ( $line =~ m/(\<text xml\:space\=\"preserve\")/is ) {
+            if ( $line
+                =~ m/\s+<rect width=\"(\d+)\"\s+x=\"\d+\"\s+height=\"(\d+)\".*/
+                )
+            {
+                $width  = $1;
+                $height = $2;
+                print $svg_out "$line";
+            }
+            elsif ( $line =~ m/(\s+\<text xml\:space\=\"preserve\")/is ) {
                 my $taxon_name = $line;
 
                 if ( $taxon_name
@@ -192,6 +202,17 @@ sub colourise_svg_trees {
                     print $svg_out "$line";
                 }
             }
+            elsif ( $line =~ m/\<\/svg\>/ ) {
+
+                print "KEY\n";
+
+                $line =~ s/\<\\svg\>//;
+
+                draw_key( $svg_out, "$width", "$height", \%taxonomy_colours );
+
+                # reinstate end tag
+                print $svg_out "\<\/svg\>";
+            }
             else {
                 print $svg_out "$line";
             }
@@ -201,14 +222,18 @@ sub colourise_svg_trees {
 }
 
 sub draw_key {
-    my %taxonomy_colours = shift;
+    my ( $svg_out, $width, $height, $taxonomy_colours ) = @_;
 
-    my $x1 = "25";
-    my $x2 = "55";
+    my $x1 = 25;    #$height / 2; #"25";
+    my $x2 = 55;    #$x1 + 30;    #"55";
 
-    my $taxa_number = keys %taxonomy_colours;
+    my $taxa_number = keys %{$taxonomy_colours};
 
-    my $y1 = ( $HEIGHT - ( 80 * $taxa_number ) );
+    print "Y: $width - $height - $taxa_number\n";
+
+    my $y1 = $height / 2;
+
+    #$y1 = ( $height - ( 80 * $taxa_number ) );
     my $y2 = $y1 + 10;
     my $y3 = $y1 - 20;
 
@@ -222,11 +247,9 @@ sub draw_key {
          style=\"font-size:14px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:OpenSymbol\">Key
          </text>";
 
-    for my $key ( keys %taxa_colours ) {
+    for my $key ( sort keys %taxonomy_colours ) {
 
-        my $colour = $taxa_colours{$key};
-
-        #print "$key - $colour\n";
+        my $colour = $taxonomy_colours{$key};
 
         print $svg_out "
             <g
@@ -249,7 +272,7 @@ sub draw_key {
         $y1 += 10;
         $y2 += 10;
     }
-    print $svg_out "</g>";
+    print $svg_out "</g>\n";
 }
 
 #
@@ -296,6 +319,11 @@ sub draw_dendroscope_tree {
 
     my @trees_to_svg = glob "$trees_directory\/*.treefile";
 
+    if ( $#trees_to_svg <= 0) {
+        print "[orchard_accessories:ERR] - Missing renamed trees, did you forget the -n option?\n";
+        exit 0;
+    }
+
     for my $i ( 0 .. $#trees_to_svg ) {
         my $current_file = $trees_to_svg[$i];
 
@@ -330,6 +358,12 @@ sub draw_dendroscope_tree {
         system($dendroscope_command);
 
         unlink "$outdir\/dendroscope.cmd";
+
+        if ( $type eq 'svg') {
+            my $tidy_obj = XML::Tidy->new( 'filename' => "$trees_dir_out\/$basename\.$type" );
+            $tidy_obj->tidy();
+            $tidy_obj->write();
+        }
     }
 }
 
