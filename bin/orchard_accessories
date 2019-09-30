@@ -180,7 +180,8 @@ sub colourise_svg_trees {
                 $height = $1;
                 print $svg_out "$line";
             }
-            elsif ( $line =~ m/(\s+\<text xml\:space\=\"preserve\")/is ) {
+            # <text stroke="none" x="754" xml:space="preserve" y="256">Zea mays [Ensembl-Zm00001d049188_P008]</text>
+            elsif ( $line =~ m/(\s+\<text xml\:space\=\"preserve\")/is || $line =~ m/(\s+\<text stroke=\"none\")/is ) {
                 my $taxon_name = $line;
 
                 if ( $taxon_name
