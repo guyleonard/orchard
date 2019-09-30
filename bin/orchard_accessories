@@ -172,6 +172,14 @@ sub colourise_svg_trees {
                 $height = $2;
                 print $svg_out "$line";
             }
+            elsif ( $line
+                =~ m/\s+<rect height=\"(\d+)\"\s+stroke=\"none\"\s+width=\"(\d+)\".*/
+                )
+            {
+                $width  = $2;
+                $height = $1;
+                print $svg_out "$line";
+            }
             elsif ( $line =~ m/(\s+\<text xml\:space\=\"preserve\")/is ) {
                 my $taxon_name = $line;
 
@@ -319,8 +327,9 @@ sub draw_dendroscope_tree {
 
     my @trees_to_svg = glob "$trees_directory\/*.treefile";
 
-    if ( $#trees_to_svg <= 0) {
-        print "[orchard_accessories:ERR] - Missing renamed trees, did you forget the -n option?\n";
+    if ( $#trees_to_svg <= 0 ) {
+        print
+            "[orchard_accessories:ERR] - Missing renamed trees, did you forget the -n option?\n";
         exit 0;
     }
 
@@ -359,8 +368,9 @@ sub draw_dendroscope_tree {
 
         unlink "$outdir\/dendroscope.cmd";
 
-        if ( $type eq 'svg') {
-            my $tidy_obj = XML::Tidy->new( 'filename' => "$trees_dir_out\/$basename\.$type" );
+        if ( $type eq 'svg' ) {
+            my $tidy_obj = XML::Tidy->new(
+                'filename' => "$trees_dir_out\/$basename\.$type" );
             $tidy_obj->tidy();
             $tidy_obj->write();
         }
