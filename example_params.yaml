@@ -33,3 +33,6 @@ directories:
 database:
   username: test      # orchardDB username
   password: test      # orchardDB password
+
+annotation:
+  taxonomy_colours: Alveolata;#cc6677,Amoebozoa;#44aa99,Archaea;#696969,Bacteria;#343434,Capsaspora_owczarzaki;#005eb0,Choanoflagellatea;#88ccee,Cryptophyta;#ec660d,Discoba;#ff0000,Fonticula_alba;#005eb0,Fungi;#332288,Glaucophyta;#868510,Haptophyceae;#9f531b,Metamonada;#661100,Metazoa;#6699cc,Rhizaria;#aa4499,Rhodophyta;#ddcc77,Sphaeroforma_arctica;#005eb0,Stramenopiles;#aa4466,Thecamonas_trahens;#005eb0,Viridiplantae;#117733

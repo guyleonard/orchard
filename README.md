@@ -95,19 +95,26 @@ Optional Parameters
 ```bash
 Usage: orchard_accessories -p params.yaml -n
 Required Parameters
-	-p <parameters.yaml>
+  -p <parameters.yaml>
 Optional Parameters
 Renaming
-	-s	Rename Taxa in Sequence Hits Files
-	-a	Rename Taxa in Alignment Files
-	-m	Rename Taxa in Masked Files
-	-e	Rename Taxa in Excluded Files
-	-n	Rename Taxa in Newick Trees
+  -s  Rename Taxa in Sequence Hits Files
+  -a  Rename Taxa in Alignment Files
+  -m  Rename Taxa in Masked Files
+  -e  Rename Taxa in Excluded Files
+  -n  Rename Taxa in Newick Trees
 Tree Drawing
-	-renamed	Convert Renamed Trees use with below
-	-eps_tree	Draw a Phylogram in EPS Format (Basic)
-	-svg_tree	Draw a Phylogram with Dendroscope in SVG Format
-	-pdf_tree	Draw a Phylogram with Dendroscope in PDF Format
+  -eps_tree Draw a Phylogram in EPS Format (Basic)
+  -svg_tree Draw a Phylogram with Dendroscope in SVG Format
+  -pdf_tree Draw a Phylogram with Dendroscope in PDF Format
+Modify Tree Drawing
+  -r  After -n use this with Tree Drawing options to use renamed tees
+Annotation
+  -c  Colourise taxa in SVG tree according to taxonomy colours in parameters file
+SVG Conversion
+  -p  Convert colourised SVG to PDF
+Cite: https://github.com/guyleonard/orchard and doi: 10.1105/tpc.109.065805
+
 ```
 
 ### Example Output Directory Structure
@@ -131,6 +138,7 @@ Tree Drawing
             ├── eps 
             ├── pdf
             └── svg
+                └── colourised
 ```
 
 ## Example Parameters File
@@ -175,6 +183,10 @@ directories:
 database:
   username: test      # orchardDB username
   password: test      # orchardDB password
+
+annotation:
+  taxonomy_colours: Alveolata;#cc6677,Amoebozoa;#44aa99,Archaea;#696969,Bacteria;#343434,Capsaspora_owczarzaki;#005eb0,Choanoflagellatea;#88ccee,Cryptophyta;#ec660d,Discoba;#ff0000,Fonticula_alba;#005eb0,Fungi;#332288,Glaucophyta;#868510,Haptophyceae;#9f531b,Metamonada;#661100,Metazoa;#6699cc,Rhizaria;#aa4499,Rhodophyta;#ddcc77,Sphaeroforma_arctica;#005eb0,Stramenopiles;#aa4466,Thecamonas_trahens;#005eb0,Viridiplantae;#117733
+
  ```
 
 # Citation

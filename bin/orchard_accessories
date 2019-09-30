@@ -45,7 +45,7 @@ GetOptions(
     'mask|m'                => \$rename_masks,
     'excluded|e'            => \$rename_excluded,
     'newick|n'              => \$rename_newick_trees,
-    'renamed'               => \$renamed,
+    'renamed|r'             => \$renamed,
     'eps_tree'              => \$eps_tree,
     'svg_tree'              => \$svg_tree,
     'pdf_tree'              => \$pdf_tree,
@@ -185,8 +185,6 @@ sub colourise_svg_trees {
                 $height = $1;
                 print $svg_out "$line";
             }
-
-# <text stroke="none" x="754" xml:space="preserve" y="256">Zea mays [Ensembl-Zm00001d049188_P008]</text>
             elsif ($line =~ m/(\s+\<text xml\:space\=\"preserve\")/is
                 || $line =~ m/(\s+\<text stroke=\"none\")/is )
             {
@@ -405,7 +403,7 @@ sub rename_sequences {
 
     my @files_to_rename = glob "$directory\/*.fasta";
 
-    if ( $#trees_to_rename <= 0 ) {
+    if ( $#files_to_rename <= 0 ) {
         print
             "[orchard_accessories:ERR] - Missing files from $stage. Did you forget to create them?\n";
         exit 0;
@@ -542,10 +540,17 @@ sub help_message {
     print "\t-e\tRename Taxa in Excluded Files\n";
     print "\t-n\tRename Taxa in Newick Trees\n";
     print "Tree Drawing\n";
-    print "\t-renamed\tConvert Renamed Trees use with below\n";
     print "\t-eps_tree\tDraw a Phylogram in EPS Format (Basic)\n";
     print "\t-svg_tree\tDraw a Phylogram with Dendroscope in SVG Format\n";
     print "\t-pdf_tree\tDraw a Phylogram with Dendroscope in PDF Format\n";
+    print "Modify Tree Drawing\n";
+    print
+        "\t-r\tAfter -n use this with Tree Drawing options to use renamed tees\n";
+    print "Annotation\n";
+    print
+        "\t-c\tColourise taxa in SVG tree according to taxonomy colours in parameters file\n";
+    print "SVG Conversion\n";
+    print "\t-p\tConvert colourised SVG to PDF\n";
     print
         "Cite: https://github.com/guyleonard/orchard and doi: 10.1105/tpc.109.065805\n";
     exit(0);
