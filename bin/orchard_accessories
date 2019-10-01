@@ -219,8 +219,6 @@ sub colourise_svg_trees {
             }
             elsif ( $line =~ m/\<\/svg\>/ ) {
 
-                print "KEY\n";
-
                 $line =~ s/\<\\svg\>//;
 
                 draw_key( $svg_out, "$width", "$height", \%taxonomy_colours );
@@ -244,11 +242,7 @@ sub draw_key {
 
     my $taxa_number = keys %{$taxonomy_colours};
 
-    print "Y: $width - $height - $taxa_number\n";
-
     my $y1 = $height / 2;
-
-    #$y1 = ( $height - ( 80 * $taxa_number ) );
     my $y2 = $y1 + 10;
     my $y3 = $y1 - 20;
 
