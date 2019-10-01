@@ -160,6 +160,7 @@ sub colourise_svg_trees {
 
     for my $i ( 0 .. $#trees ) {
         my $current_file = $trees[$i];
+        my %used_colours;
 
         print "[orchard_accessories:INFO] - Colourising $current_file\n";
         open my $svg_in, '<', "$current_file";
@@ -205,6 +206,7 @@ sub colourise_svg_trees {
                     foreach ( keys %taxonomy_colours ) {
                         if ( $taxonomy =~ /$_/i ) {
                             $colour = "$taxonomy_colours{$_}";
+                            $used_colours{$_} = "$taxonomy_colours{$_}";
                         }
                     }
 
@@ -221,7 +223,7 @@ sub colourise_svg_trees {
 
                 $line =~ s/\<\\svg\>//;
 
-                draw_key( $svg_out, "$width", "$height", \%taxonomy_colours );
+                draw_key( $svg_out, "$width", "$height", \%used_colours );
 
                 # reinstate end tag
                 print $svg_out "\<\/svg\>";
@@ -235,12 +237,13 @@ sub colourise_svg_trees {
 }
 
 sub draw_key {
-    my ( $svg_out, $width, $height, $taxonomy_colours ) = @_;
+    my ( $svg_out, $width, $height, $used_colours ) = @_;
 
     my $x1 = 25;    #$height / 2; #"25";
     my $x2 = 55;    #$x1 + 30;    #"55";
 
-    my $taxa_number = keys %{$taxonomy_colours};
+    my $taxa_number = keys %{$used_colours};
+    print Dumper $taxa_number;
 
     my $y1 = $height / 2;
     my $y2 = $y1 + 10;
@@ -256,9 +259,9 @@ sub draw_key {
          style=\"font-size:14px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:OpenSymbol\">Key
          </text>";
 
-    for my $key ( sort keys %taxonomy_colours ) {
+    for my $key ( sort keys %{$used_colours} ) {
 
-        my $colour = $taxonomy_colours{$key};
+        my $colour = %{$used_colours}{$key};
 
         print $svg_out "
             <g
