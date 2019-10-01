@@ -3,18 +3,18 @@ A Quick Phylogenetic Tree Building Pipeline...
 
 Seed Sequences --> DB Search --> Alignment --> Masking --> Phylogenetic Tree Reconstruction --> SVG/PDF Tree Images --> Taxon Annotation
 
-This set of scripts is intended to create a group of "pilot" trees, given your initial gene(s) of interest. The resulting Phylogenies can be easily viewed, and then manually improved as needed. The aim is speed, in order to calculate 1000s of trees for a dataset in reasonable time.
+This set of scripts is intended to create a group of "pilot" trees, given your initial gene(s) of interest. The resulting phylogenies can be easily viewed, and then manually improved as needed. The aim is speed, in order to calculate 1000s of trees for a dataset in reasonable time.
 
 # Dependencies
 ## orchardDB
 Please set up an orchardDB from [here](https://github.com/guyleonard/orchardDB). You may like to use the *cider* DB scritps to start, or build your own.
 
 ## Perl Modules
-All of: Bio::Perl Cwd DBI File::Basename File::Path File::Slurp Getopt::Long IO::Prompt IO::Tee YAML::XS
+All of: Bio::Perl DBI File::Basename File::Path Getopt::Long IO::Tee YAML::XS XML::Tidy
 
 e.g. you may install these by typing:
 ```bash
-$ sudo cpanm Bio::Perl Cwd DBI File::Basename File::Path File::Slurp Getopt::Long IO::Prompt IO::Tee YAML::XS
+$ sudo cpanm Bio::Perl DBI File::Basename File::Path Getopt::Long IO::Tee YAML::XS XML::Tidy
 ```
 
 ## Software
@@ -38,17 +38,14 @@ One each, or all of the options below.
 1. [FastTree2](http://meta.microbesonline.org/fasttree/)
 2. [IQTree](https://github.com/Cibiv/IQ-TREE)
 
-### Renaming Taxa
-1. [NCBI Taxonomy](ftp://ftp.ncbi.nih.gov/pub/taxonomy) - retrieve 'taxdump.tar.gz' from ftp://ftp.ncbi.nih.gov/pub/taxonomy
-
 ### SVG Tree Creation
-1. [Dendroscope 3](http://ab.inf.uni-tuebingen.de/software/dendroscope/)
+1. [Dendroscope 3.6.3](http://ab.inf.uni-tuebingen.de/software/dendroscope/) - Orchard will not work with previous versions.
    1. XVFB - Needed for running on a headless server.
 
 ### PDF Creation (SVG to PDF)
 1. [Inkscape](https://www.inkscape.org/en/)
 
-e.g. You may install many of these with Conda (divvier, dendroscope and NCBI Taxdump will need to be manually installed)
+e.g. You may try to install many of these with Conda (divvier, dendroscope and NCBI Taxdump will need to be manually installed)
 ```bash
 conda install -c bioconda blast blat diamond mafft muscle trimal fasttree iqtree
 conda install -c conda-forge inkscape
@@ -68,6 +65,7 @@ You may run any Optional Parameter providing the previous output exists.
 ## orchard
 ```bash
 Usage: orchard -i seqs.fasta -t taxa.txt -p params.yaml -s -a -m -x
+
 Required Parameters
 	-i <sequences.fasta>	Input Sequences in FASTA Format
 	-t <taxa_list.txt>	List of orchardDB Taxa IDs
@@ -77,6 +75,7 @@ Optional Parameters
 	-a	Run Alignments e.g. MAFFT
 	-m	Run Masking e.g trimAl
 	-x	Run Trees e.g FastTree2
+Cite: https://github.com/guyleonard/orchard and doi: 10.1105/tpc.109.065805
 ```
 
 ### Example Output Directory Structure
@@ -94,6 +93,7 @@ Optional Parameters
 ## orchard_accessories
 ```bash
 Usage: orchard_accessories -p params.yaml -n
+
 Required Parameters
   -p <parameters.yaml>
 Optional Parameters
@@ -108,11 +108,11 @@ Tree Drawing
   -svg_tree Draw a Phylogram with Dendroscope in SVG Format
   -pdf_tree Draw a Phylogram with Dendroscope in PDF Format
 Modify Tree Drawing
-  -r  After -n use this with Tree Drawing options to use renamed tees
+  -r  After -n use this with 'Tree Drawing' options.
 Annotation
   -c  Colourise taxa in SVG tree according to taxonomy colours in parameters file
 SVG Conversion
-  -p  Convert colourised SVG to PDF
+  -p  Convert Colourised SVG to PDF
 Cite: https://github.com/guyleonard/orchard and doi: 10.1105/tpc.109.065805
 
 ```
@@ -139,6 +139,7 @@ Cite: https://github.com/guyleonard/orchard and doi: 10.1105/tpc.109.065805
             ├── pdf
             └── svg
                 └── colourised
+                    └── pdf
 ```
 
 ## Example Parameters File
