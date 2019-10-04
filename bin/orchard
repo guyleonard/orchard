@@ -389,7 +389,7 @@ sub run_diamond {
 
             if ( grep { $_ eq $current_taxa } @special_taxa ) {
                 print
-                    "[Orchard:DIAMOND:INFO] - Using special search for $search_output\n";
+                    "[Orchard:DIAMOND:INFO] - Using special search parameters with $search_prog + $search_subprog for $search_output\n";
                 my $diamond_command = "diamond $search_subprog --quiet";
                 $diamond_command .= " --threads $threads";
                 $diamond_command .= " --db $orchardDB\/$database";
@@ -402,7 +402,7 @@ sub run_diamond {
             }
             else {
                 print
-                    "[Orchard:DIAMOND:INFO] - $search_subprog is running as $search_output\n";
+                    "[Orchard:DIAMOND:INFO] - $search_prog $search_subprog is running as $search_output\n";
 
                 my $diamond_command = "diamond $search_subprog --quiet";
                 $diamond_command .= " --threads $threads";
@@ -466,7 +466,7 @@ sub parse_search_output {
             }
             else {
                 print
-                    "[Orchard:PARSE:WARN] - $sequence_name: sequence retreival problem for: $hit_name -> $current_taxa\n";
+                    "[Orchard:PARSE:WARN] - $sequence_name: sequence retreival problem for: accession $hit_name from $current_taxa\n";
             }
         }
     }
