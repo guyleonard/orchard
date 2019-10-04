@@ -203,10 +203,13 @@ sub colourise_svg_trees {
 
                     my $taxonomy = $prepare->fetchrow_array();
 
-                    foreach ( keys %taxonomy_colours ) {
-                        if ( $taxonomy =~ /$_/i ) {
-                            $colour = "$taxonomy_colours{$_}";
-                            $used_colours{$_} = "$taxonomy_colours{$_}";
+                    if ( defined $taxonomy ) {
+
+                        foreach ( keys %taxonomy_colours ) {
+                            if ( defined $taxonomy =~ /$_/i ) {
+                                $colour = "$taxonomy_colours{$_}";
+                                $used_colours{$_} = "$taxonomy_colours{$_}";
+                            }
                         }
                     }
 
@@ -243,7 +246,6 @@ sub draw_key {
     my $x2 = 55;    #$x1 + 30;    #"55";
 
     my $taxa_number = keys %{$used_colours};
-    print Dumper $taxa_number;
 
     my $y1 = $height / 2;
     my $y2 = $y1 + 10;
@@ -493,6 +495,11 @@ sub rename_newick_trees {
                         = $prepare->fetchrow_array();
 
                     if ( defined $genus_species ) {
+
+                        # some strain names have weird characters in them
+                        # these are not good in newick trees
+                        $genus_species =~ s/[^a-zA-Z0-9 ]+/\_/g;
+
                         $node->id(
                             "$genus_species \[$source\-$extracted_accession\]"
                         );
