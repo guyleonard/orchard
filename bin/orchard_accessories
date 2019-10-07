@@ -163,7 +163,7 @@ sub svg_to_pdf {
             "[orchard_accessories:INFO] - Converting SVG to PDF: $svg_tree\n";
 
         my $cmd
-            = "inkscape -z --file=$svg_tree --export-area-drawing --export-pdf=$basename\.pdf";
+            = "inkscape -z --file=$svg_tree --export-area-drawing --export-pdf=$pdf_dir_out\/$basename\.pdf";
         system($cmd);
     }
 }
@@ -530,7 +530,7 @@ sub rename_newick_trees {
 
                         # some strain names have weird characters in them
                         # these are not good in newick trees
-                        $genus_species =~ s/[^a-zA-Z0-9\.\- ]+/\_/g;
+                        $genus_species =~ s/[^a-zA-Z0-9 ]+/\_/g;
 
                         $node->id(
                             "$genus_species \[$source\-$extracted_accession\]"
