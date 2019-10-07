@@ -51,7 +51,7 @@ GetOptions(
     'svg_tree'              => \$svg_tree,
     'pdf_tree'              => \$pdf_tree,
     'colourise|c'           => \$colourise,
-    'p'                     => \$svg_to_pdf,
+    'pdf'                   => \$svg_to_pdf,
     'version|v'             => sub { print "$version"; exit(0) },
     'help|h' => sub { help_message() }
 ) or help_message();
@@ -159,9 +159,10 @@ sub svg_to_pdf {
 
         my $basename = fileparse( $svg_tree, qr/\Q.svg\E/ );
 
-        print "[orchard_accessories:INFO] - Converting SVG to PDF: $svg_tree\n";
-        
-        $cmd
+        print
+            "[orchard_accessories:INFO] - Converting SVG to PDF: $svg_tree\n";
+
+        my $cmd
             = "inkscape -z --file=$svg_tree --export-area-drawing --export-pdf=$basename\.pdf";
         system($cmd);
     }
