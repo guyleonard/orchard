@@ -30,6 +30,7 @@ my ($rename_sequences, $rename_alignments, $rename_masks,
 );
 my ( $renamed, $eps_tree, $svg_tree, $pdf_tree );
 my ( $colourise, @taxonomy_list, %taxonomy_colours );
+my $svg_to_pdf;
 
 #
 # getopt Logic
@@ -50,6 +51,7 @@ GetOptions(
     'svg_tree'              => \$svg_tree,
     'pdf_tree'              => \$pdf_tree,
     'colourise|c'           => \$colourise,
+    'p'                     => \$svg_to_pdf,
     'version|v'             => sub { print "$version"; exit(0) },
     'help|h' => sub { help_message() }
 ) or help_message();
@@ -128,11 +130,41 @@ if ( -f $params_file ) {
                 "[orchard_accessories:ERRR] - No colours for taxonomic groups in paramaters file.\n";
         }
     }
+
+    if ( defined $svg_to_pdf eq 1 ) {
+        svg_to_pdf( 'renamed', 'svg' );
+
+    }
 }
 else {
     print
         "[orchard_accessories:ERRR] - The parameters file $params_file does not exist!\n";
     exit(1);
+}
+
+#
+# Conversion
+#
+sub svg_to_pdf {
+    my ( $renamed, $type ) = @_;
+
+    my $trees_directory = "$outdir\/trees\/$renamed\/$type\/colourised";
+
+    my $pdf_dir_out = "$trees_directory\/pdf";
+    make_path("$pdf_dir_out");
+
+    my @trees = glob "$trees_directory\/*.svg";
+
+    foreach $svg_tree (@trees) {
+
+        my $basename = fileparse( $svg_tree, qr/\Q.svg\E/ );
+
+        print "[orchard_accessories:INFO] - Converting SVG to PDF: $svg_tree\n";
+        
+        $cmd
+            = "inkscape -z --file=$svg_tree --export-area-drawing --export-pdf=$basename\.pdf";
+        system($cmd);
+    }
 }
 
 #
@@ -204,9 +236,8 @@ sub colourise_svg_trees {
                     my $taxonomy = $prepare->fetchrow_array();
 
                     if ( defined $taxonomy ) {
-
                         foreach ( keys %taxonomy_colours ) {
-                            if ( defined $taxonomy =~ /$_/i ) {
+                            if ( $taxonomy =~ /$_/i ) {
                                 $colour = "$taxonomy_colours{$_}";
                                 $used_colours{$_} = "$taxonomy_colours{$_}";
                             }
