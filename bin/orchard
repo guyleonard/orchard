@@ -74,12 +74,12 @@ if ( defined $input_seqs && defined $taxa_list && defined $params_file ) {
 
     my @taxa;
     if ( -f $taxa_list ) {
-	open( my $taxa_list_in, '<', $taxa_list ) or die "$!";
-	foreach my $line (<$taxa_list_in>) {
-		chomp $line;
-        	my $taxon = (split/\t|,| /, $line)[0];
-		push @taxa, $taxon;
-	}
+        open( my $taxa_list_in, '<', $taxa_list ) or die "$!";
+        foreach my $line (<$taxa_list_in>) {
+            chomp $line;
+            my $taxon = ( split /\t|,| /, $line )[0];
+            push @taxa, $taxon;
+        }
     }
     else {
         print
@@ -256,9 +256,28 @@ sub searching {
             system
                 "sed -i \'/^>/!s/U|\\w/X/g\' $outdir\/seqs\/$sequence_name\_hits.fasta";
 
-            system "fasuniq $outdir\/seqs\/$sequence_name\_hits.fasta > $outdir\/seqs\/$sequence_name\_hits.fasta_temp";
+            my %unique;
+            my $seqio = Bio::SeqIO->new(
+                -file   => "$outdir\/seqs\/$sequence_name\_hits.fasta",
+                -format => "fasta"
+            );
+            my $outseq = Bio::SeqIO->new(
+                -file   => ">$outdir\/seqs\/$sequence_name\_hits.fasta_uniq",
+                -format => "fasta"
+            );
+
+            while ( my $seqs = $seqio->next_seq ) {
+                my $id  = $seqs->display_id;
+                my $seq = $seqs->seq;
+                unless ( exists( $unique{$seq} ) ) {
+                    $outseq->write_seq($seqs);
+                    $unique{$seq} += 1;
+                }
+            }
+
             system "rm $outdir\/seqs\/$sequence_name\_hits.fasta";
-            system "mv $outdir\/seqs\/$sequence_name\_hits.fasta_temp $outdir\/seqs\/$sequence_name\_hits.fasta"; 
+            system
+                "mv $outdir\/seqs\/$sequence_name\_hits.fasta_uniq $outdir\/seqs\/$sequence_name\_hits.fasta";
         }
     }
 }
