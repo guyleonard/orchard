@@ -531,8 +531,9 @@ sub rename_newick_trees {
                         # some strain names have weird characters in them
                         # these are not good in newick trees
                         # convert anything that is not in the char class
-                        # to an underscore                        
+                        # to an underscore
                         $genus_species =~ s/[^a-zA-Z0-9\-\.\s+]+/\_/g;
+                        $extracted_accession =~ s/[^a-zA-Z0-9\-\.\s+]+/\_/g;
 
                         $node->id(
                             "$genus_species \[$source\-$extracted_accession\]"
