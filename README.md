@@ -1,16 +1,53 @@
 # Orchard Pipeline
-A Quick Phylogenetic Tree Building Pipeline...
+A Rapid Phylogenetic Tree Building Pipeline...
 
-Seed Sequences --> BLASTp --> Alignment --> Masking --> Phylogenetic Tree Reconstruction --> SVG/PDF Tree Images --> Taxon Annotation
+'Seed' Sequences --> Search --> Alignment --> Masking --> Phylogenetic Tree Reconstruction --> SVG/PDF Tree Images --> Taxon Annotation
 
-This set of scripts is intended to create a set of "pilot" trees, given your initial gene of interest. The resulting trees can be easily viewed, and then manually improved as needed.
+This package is intended to create a set of "pilot" trees, given a set of initial genes of interest. The resulting trees can then be manually inspected, and then manually improved as needed.
 
-# Dependencies
-## orchardDB
+This package also relies on an [OrchardDB](https://github.com/guyleonard/orchardDB) database. There are several to choose from...
+
+[Insert Schematic]
+
+Continue below to:
+ * Installation
+ * Program Execution
+ * Examples
+ * Citation
+
+# Installation
+Many components are available from 'conda' and can easily be installed that way. However, there are some dependencies that may require expert/admin installtion if you are running on a headless server (e.g. your local HPC, an AWS AMI).
+
+## Manually
+
+There are a number of components that you need to set up first:
+ 1. orchardDB
+ 2. NCBI Taxonomy DB
+
+Please set them up, as below, before continuing to the Conda or Advanced sections.
+
+### orchardDB
 Please set up an orchardDB from [here](https://github.com/guyleonard/orchardDB). You may like to use the *cider* DB to start, or build your own.
 
-## Perl Modules
+### NCBI Taxonomy DB
+1. [NCBI Taxonomy](ftp://ftp.ncbi.nih.gov/pub/taxonomy) - retrieve 'taxdump.tar.gz' from ftp://ftp.ncbi.nih.gov/pub/taxonomy
+
+## Conda
+```bash
+conda create -n orchard
+conda activate orchard
+
+conda install -c bioconda blast=2.11.0 blat diamond mafft muscle trimal fasttree iqtree perl-bioperl perl-io-prompt
+conda install -c conda-forge inkscape
+```
+
+## Advanced
+### Dependencies
+#### Perl Modules
+* Bio::DB::Fasta
 * Bio::Perl
+* Bio::SearchIO
+* Bio::SeqIO
 * Cwd
 * DBI
 * File::Basename
@@ -23,45 +60,42 @@ Please set up an orchardDB from [here](https://github.com/guyleonard/orchardDB).
 
 e.g. you can install these by typing:
 ```bash
-$ sudo cpanm Bio::Perl Cwd DBI File::Basename File::Path File::Slurp Getopt::Long IO::Prompt IO::Tee YAML::XS
+$ sudo cpanm Bio::DB::Fasta Bio::Perl Bio::SearchIO Bio::SeqIO Cwd DBI File::Basename File::Path File::Slurp Getopt::Long IO::Prompt IO::Tee YAML::XS
 ```
-## Software
-### Search Programs
-One each, or all of the options below.
 
+#### Software
+One from each section, or all of the options below must be installed; the defaults/prefered are Blast+, MAFFT, trimAL, FastTree2.
+
+##### Search Programs
 1. [Blast+](http://blast.ncbi.nlm.nih.gov/Blast.cgi/Blast.cgi?CMD=Web&PAGE_TYPE=BlastDocs&DOC_TYPE=Download)
 2. [Blat](https://genome.ucsc.edu/FAQ/FAQblat.html)
 3. [Diamond](https://github.com/bbuchfink/diamond)
-   1. Diamond DBs must be created in your orchardDB directory using the same version of Diamond for searching.
+   1. Diamond DBs must be created in your orchardDB directory using the same version of Diamond that you use for searching.
 
-### Alignment Programs
+##### Alignment Programs
 1. [MAFFT](http://mafft.cbrc.jp/alignment/software/)
 2. [MUSCLE](http://www.drive5.com/muscle/)
 
-### Masking Programs
+##### Masking Programs
 1. [trimAl v1.4](http://trimal.cgenomics.org/)
 2. [Divvier](https://github.com/simonwhelan/Divvier)
 
-### Tree Building Programs
+##### Tree Building Programs
 1. [FastTree2](http://meta.microbesonline.org/fasttree/)
 2. [IQTree](https://github.com/Cibiv/IQ-TREE)
 
-### Renaming Taxa
+##### Renaming Taxa
 1. [NCBI Taxonomy](ftp://ftp.ncbi.nih.gov/pub/taxonomy) - retrieve 'taxdump.tar.gz' from ftp://ftp.ncbi.nih.gov/pub/taxonomy
 
-### SVG Tree Creation
+##### SVG Tree Creation
 1. [Dendroscope 3](http://ab.inf.uni-tuebingen.de/software/dendroscope/)
    1. XVFB - Needed for running on a headless server.
-
-### PDF Creation (SVG to PDF)
-1. [Inkscape](https://www.inkscape.org/en/)
-
-e.g. You may install many of these with Conda (divvier, dendroscope and NCBI Taxdump will need to be manually installed)
 ```bash
-conda install -c bioconda blast blat diamond mafft muscle trimal fasttree iqtree
-conda install -c conda-forge inkscape
 sudo apt-get install xvfb
 ```
+
+##### PDF Creation (SVG to PDF)
+1. [Inkscape](https://www.inkscape.org/en/)
 
 # Program Execution
 ## orchard
