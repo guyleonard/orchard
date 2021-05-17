@@ -21,7 +21,7 @@ This package relies on an [orchardDB](https://github.com/guyleonard/orchardDB) d
 Continue below to:
  * [Installation](#Installation)
  * [Program Execution](#Program_Execution)
- * [Examples](#Example_Parameters_File)
+ * [Example Parameters File](#Example_Parameters_File)
  * [Citation](#Citation)
  * [History](#History)
 
@@ -49,14 +49,12 @@ As mentioned previously the 'orchard' package is separated in to two components:
  1. [orchard](#orchard)
  2. [orchard_accessories](#orchard_accessories)
 
-The first program is responsible for all of the essential tree building stages, requiring as input:
+## orchard
+This program is responsible for all of the essential tree building stages, requiring as input:
  1. a set of amino acid sequences contained in a FASTA file,
  2. a list of taxon IDs from an [orchardDB](https://github.com/guyleonard/orchardDB) database,
  3. a parameters file to set the options for each stage/sub-program.
 
-The second program is responsible for all the annotation of the trees. It will convert the computer-readable accessions from the [orchardDB](https://github.com/guyleonard/orchardDB) back to their original accessions and taxon names. Currently, it can also draw PDF and SVG trees providing Dendroscope and Inkscape have been installed. Eventually it will also annotate PFAM domains onto the PDFs.
-
-## orchard
 ```bash
 Usage: orchard -i seqs.fasta -t taxa.txt -p params.yaml -s -a -m -x
 
@@ -72,6 +70,8 @@ Optional Parameters
 ```
 
 ## orchard_accessories
+This program is responsible for all the annotation of the trees. It will convert the computer-readable accessions from the [orchardDB](https://github.com/guyleonard/orchardDB) back to their original accessions and taxon names. Currently, it can also draw PDF and SVG trees providing Dendroscope and Inkscape have been installed. Eventually it will also annotate PFAM domains onto the PDFs.
+
 ```bash
 Usage: orchard_accessories -p params.yaml -n
 
@@ -97,7 +97,6 @@ This file contains all the default and changeable values for each sub-program in
 It is in the 'YAML' format, allowing for good readability for huamns and machines aliked. Each sub-program/step of 'orchard' has a section, and each setion has sub-sections which are the options. Anything with a '#' infront of it is a comment and will be ignored by the programs.
 
 An example file is given below, for the most part you can leave the defaults as we have set them. Pay special attention to 'threads', 'e-value' and the values for 'directories' & 'databases' as these will be specific to your setup and analysis.
-
 
 ```yaml
 user:
@@ -136,6 +135,7 @@ database:
   username: test      # orchardDB username
   password: test      # orchardDB password
  ```
+
 ## Advanced Installation
 This has a more indepth set of information pertaining to the installation of certain programs and other non-default options.
 
@@ -153,6 +153,7 @@ This has a more indepth set of information pertaining to the installation of cer
 * IO::Prompt
 * IO::Tee
 * YAML::XS
+
  e.g. you can install these by typing:
 ```bash
 $ sudo cpanm Bio::DB::Fasta Bio::Perl Bio::SearchIO Bio::SeqIO Cwd DBI File::Basename File::Path File::Slurp Getopt::Long IO::Prompt IO::Tee YAML::XS
