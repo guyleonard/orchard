@@ -21,7 +21,7 @@ This package relies on an [orchardDB](https://github.com/guyleonard/orchardDB) d
 Continue below to:
  * [Installation](#Installation)
  * [Program Execution](#Program-Execution)
- * [Example Parameters File](#Example_Parameters_File)
+ * [Example Parameters File](#Example-Parameters-File)
  * [Citation](#Citation)
  * [History](#History)
 
@@ -94,9 +94,9 @@ Tree Drawing
 # Example Parameters File
 This file contains all the default and changeable values for each sub-program included in 'orchard' and 'orchard_accessories'. You should make a new one for each analysis you conduct.
 
-It is in the 'YAML' format, allowing for good readability for huamns and machines aliked. Each sub-program/step of 'orchard' has a section, and each setion has sub-sections which are the options. Anything with a '#' infront of it is a comment and will be ignored by the programs.
+It is in the 'YAML' format, allowing for good readability for huamns and machines alike. Each sub-program/step of 'orchard' has a section, and each setion has sub-sections which are the options. Anything with a '#' infront of it is a comment and will be ignored by the programs.
 
-An example file is given below, for the most part you can leave the defaults as we have set them. Pay special attention to 'threads', 'e-value' and the values for 'directories' & 'databases' as these will be specific to your setup and analysis.
+An example file is given below, for the most part you can leave the defaults as we have set them. Pay special attention to 'results', 'threads', 'e-value', 'top-hits', and the values for 'directories' & 'databases' as these will be specific to your setup and analysis.
 
 ```yaml
 user:
