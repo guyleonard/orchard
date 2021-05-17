@@ -254,8 +254,14 @@ sub parse_input_accession {
         }
     }
     elsif ( length $input_accession >= 32 ) {
+
+        # if the accession is bigger than 32 chars, chop it to 32
         $output_accession = substr $input_accession, 0, 32;
+
+        # convert spaces to underscores
         $output_accession =~ s/\s+/\_/g;
+
+        # removed anything that is not alphanumeric and underscore
         $output_accession =~ s/[^a-zA-Z0-9\_]+//g;
     }
     else {
@@ -555,13 +561,13 @@ sub masking {
 
         if ( $masking_prog =~ /trimal/i ) {
             print
-                "[Orchard:INFO] - MASK: Masking Alignment with $masking_prog\n";
+                "[Orchard:INFO] - MASK: Masking $current_file with $masking_prog and -nogaps\n";
             my $mask_length
                 = run_trimal( $masking_directory, $current_file, '-nogaps' );
 
             if ( $mask_length <= $masking_cutoff1 ) {
                 print
-                    "[Orchard:WARN] - MASK: Length is $mask_length and smaller than 1st cutoff: $masking_cutoff1. Trying again!\n";
+                    "[Orchard:WARN] - MASK: Length is $mask_length and smaller than 1st cutoff: $masking_cutoff1. Trying again with -automated1!\n";
                 my $mask_length
                     = run_trimal( $masking_directory, $current_file,
                     '-automated1' );
@@ -583,7 +589,7 @@ sub masking {
         }
         elsif ( $masking_prog =~ /divvier/i ) {
             print
-                "[Orchard:INFO] - MASK: Masking Alignment with $masking_prog\n";
+                "[Orchard:INFO] - MASK: Masking $current_file with $masking_prog\n";
             run_divvier( $masking_directory, $current_file );
         }
         else {
@@ -615,6 +621,7 @@ sub run_divvier {
 sub run_trimal {
     my ( $masking_directory, $current_file, $masking_opt ) = @_;
     my $basename = fileparse( $current_file, qr/\Q.fasta\E/ );
+    my $length;
 
     my $trimal_command = 'trimal';
     $trimal_command .= " -in $current_file";
@@ -623,12 +630,19 @@ sub run_trimal {
 
     system($trimal_command);
 
-    my $bioseq = Bio::SeqIO->new(
-        '-file'  => "$masking_directory\/$basename\_masked\.fasta",
-        -verbose => -1
-    );
-    my $sequence = $bioseq->next_seq;
-    my $length   = $sequence->length;
+    if ( -f "$masking_directory\/$basename\_masked\.fasta" ) {
+        my $bioseq = Bio::SeqIO->new(
+            '-file'  => "$masking_directory\/$basename\_masked\.fasta",
+            -verbose => -1
+        );
+        my $sequence = $bioseq->next_seq;
+        $length = $sequence->length;
+    }
+    else {
+        print
+            "[Orchard:WARN] - MASK: trimal did not produce an alignment. Messy.\n";
+        $length = '0';
+    }
 
     return $length;
 }
