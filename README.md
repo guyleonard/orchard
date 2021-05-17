@@ -1,11 +1,11 @@
-# Orchard Pipeline
-A Rapid Phylogenetic Tree Building Pipeline...
+# Orchard Pipeline Introduction
+A Rapid Phylogenetic Tree Building Pipeline.
 
-'Seed' Sequences --> Search --> Alignment --> Masking --> Phylogenetic Tree Reconstruction --> SVG/PDF Tree Images --> Taxon Annotation
+'Seed' Sequences --> Search DB --> Alignment --> Masking --> Phylogenetic Tree Reconstruction (+-> SVG/PDF Tree Images --> Taxon Annotation)
 
-This package is intended to create a set of "pilot" trees, given a set of initial genes of interest and is separated into two components:
- 1. orchard
- 2. orchard_accessories
+This package is intended to create a set of "pilot" trees, from a given a set of initial 'seed' amino acid sequences. It is separated into main two components:
+ 1. [orchard](#orchard)
+ 2. [orchard_accessories](#orchard_accessories)
 
 The first program is responsible for all of the tree building stages. It requires the input of a set of amino acid sequences contained in a FASTA file. A list of taxon IDs from the orchardDB you would like to search your sequences against, and a parameters file to set the options for each stage/sub-program.
 
@@ -105,8 +105,8 @@ sudo apt-get install xvfb
 
 # Program Execution
 The 'orchard' package is separated in to two components:
- 1. orchard
- 2. orchard_accessories
+ 1. [orchard](#orchard)
+ 2. [orchard_accessories](#orchard_accessories)
 
 The first program is responsible for all of the tree building stages. It requires the input of a set of amino acid sequences contained in a FASTA file. A list of taxon IDs from the orchardDB you would like to search your sequences against, and a parameters file to set the options for each stage/sub-program.
 
