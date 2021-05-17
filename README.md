@@ -3,7 +3,13 @@ A Rapid Phylogenetic Tree Building Pipeline...
 
 'Seed' Sequences --> Search --> Alignment --> Masking --> Phylogenetic Tree Reconstruction --> SVG/PDF Tree Images --> Taxon Annotation
 
-This package is intended to create a set of "pilot" trees, given a set of initial genes of interest. The resulting trees can then be manually inspected, and then manually improved as needed.
+This package is intended to create a set of "pilot" trees, given a set of initial genes of interest and is separated into two components:
+ 1. orchard
+ 2. orchard_accessories
+
+The first program is responsible for all of the tree building stages. It requires the input of a set of amino acid sequences contained in a FASTA file. A list of taxon IDs from the orchardDB you would like to search your sequences against, and a parameters file to set the options for each stage/sub-program.
+
+The second program is responsible for all the annotation of the trees. It will convert the computer-readable accessions from the orchardDB back to original accessions or taxon names for any of the stages completed previously. It can also draw PDF and SVG trees providing Dendroscope and Inkscape have been installed.
 
 This package also relies on an [OrchardDB](https://github.com/guyleonard/orchardDB) database. There are several to choose from...
 
@@ -98,9 +104,18 @@ sudo apt-get install xvfb
 1. [Inkscape](https://www.inkscape.org/en/)
 
 # Program Execution
+The 'orchard' package is separated in to two components:
+ 1. orchard
+ 2. orchard_accessories
+
+The first program is responsible for all of the tree building stages. It requires the input of a set of amino acid sequences contained in a FASTA file. A list of taxon IDs from the orchardDB you would like to search your sequences against, and a parameters file to set the options for each stage/sub-program.
+
+The second program is responsible for all the annotation of the trees. It will convert the computer-readable accessions from the orchardDB back to original accessions or taxon names for any of the stages completed previously. It can also draw PDF and SVG trees providing Dendroscope and Inkscape have been installed.
+
 ## orchard
 ```bash
 Usage: orchard -i seqs.fasta -t taxa.txt -p params.yaml -s -a -m -x
+
 Required Parameters
 	-i <sequences.fasta>	Input Sequences in FASTA Format
 	-t <taxa_list.txt>	List of orchardDB Taxa IDs
@@ -115,6 +130,7 @@ Optional Parameters
 ## orchard_accessories
 ```bash
 Usage: orchard_accessories -p params.yaml -n
+
 Required Parameters
 	-p <parameters.yaml>
 Optional Parameters
