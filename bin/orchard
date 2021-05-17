@@ -15,7 +15,7 @@ use IO::Tee;
 use YAML::XS qw/LoadFile/;
 
 our $VERSION = 0.1;
-my $version = "Orchard Pipeline v1.0 -- orchard v$VERSION\n";
+my $version = "Orchard Pipeline -- orchard v$VERSION\n";
 
 #
 # Input Variables
@@ -57,7 +57,7 @@ GetOptions(
     'masking|mask|m'        => \$masking,
     'tree|x'                => \$tree,
     'version|v'             => sub { print "$version"; exit(0) },
-    'help|h' => sub { help_message() }
+    'help|h'                => sub { help_message() }
 ) or help_message();
 
 #
@@ -118,11 +118,6 @@ if ( defined $input_seqs && defined $taxa_list && defined $params_file ) {
 
     make_path($outdir);
 
-    # output to screen and log file
-    my $logfile = ">>$outdir\.log";
-    $log = IO::Tee->new( \*STDOUT, $logfile );
-    select $log;
-
     if ( -f "$outdir\.log" ) {
         print
             "[Orchard:WARN] - Logfile exists, previous run detected! Continue? Y/N\n";
@@ -131,6 +126,13 @@ if ( defined $input_seqs && defined $taxa_list && defined $params_file ) {
             print "[Orchard:WARN] - Exiting.\n";
             exit(1);
         }
+    }
+    else {
+
+        # output to screen and log file
+        my $logfile = ">>$outdir\.log";
+        $log = IO::Tee->new( \*STDOUT, $logfile );
+        select $log;
     }
 
     if ( defined $search eq 1 ) {
@@ -461,7 +463,7 @@ sub alignment {
 
     for my $i ( 0 .. $#files_to_align ) {
         my $current_file = $files_to_align[$i];
-        my $basename = fileparse( $current_file, qr/\Q.fasta\E/ );
+        my $basename     = fileparse( $current_file, qr/\Q.fasta\E/ );
 
         if ( $alignment_prog =~ /mafft/i ) {
             print
@@ -520,7 +522,7 @@ sub masking {
 
     for my $i ( 0 .. $#files_to_mask ) {
         my $current_file = $files_to_mask[$i];
-        my $basename = fileparse( $current_file, qr/\Q.fasta\E/ );
+        my $basename     = fileparse( $current_file, qr/\Q.fasta\E/ );
 
         if ( $masking_prog =~ /trimal/i ) {
             print
@@ -627,7 +629,7 @@ sub generate_tree {
 
     for my $i ( 0 .. $#files_to_tree ) {
         my $current_file = $files_to_tree[$i];
-        my $basename = fileparse( $current_file, qr/\Q.fasta\E/ );
+        my $basename     = fileparse( $current_file, qr/\Q.fasta\E/ );
 
         if ( $tree_prog =~ /fasttree/i ) {
             print
