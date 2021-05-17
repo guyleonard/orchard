@@ -20,7 +20,7 @@ This package relies on an [orchardDB](https://github.com/guyleonard/orchardDB) d
 
 Continue below to:
  * [Installation](#Installation)
- * [Program Execution](#Program_Execution)
+ * [Program Execution](#Program-Execution)
  * [Example Parameters File](#Example_Parameters_File)
  * [Citation](#Citation)
  * [History](#History)
