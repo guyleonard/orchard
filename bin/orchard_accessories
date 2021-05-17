@@ -289,6 +289,10 @@ sub rename_newick_trees {
 
                     if ( defined $extracted_accession ) {
 
+                        # remove annoying colons from some taxa names
+                        $genus_species =~ s/\:/_/ig;
+                        $extracted_accession =~ s/\:/_/ig;
+
                         $node->id(
                             "$genus_species \[$source\-$extracted_accession\]"
                         );
