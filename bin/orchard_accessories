@@ -46,7 +46,7 @@ GetOptions(
     'svg_tree'              => \$svg_tree,
     'pdf_tree'              => \$pdf_tree,
     'version|v'             => sub { print "$version"; exit(0) },
-    'help|h' => sub { help_message() }
+    'help|h'                => sub { help_message() }
 ) or help_message();
 
 #
@@ -231,7 +231,7 @@ sub rename_sequences {
             -format => "fasta"
         );
 
-        my $basename = fileparse( $current_file, qr/\Q.fasta\E/ );
+        my $basename    = fileparse( $current_file, qr/\Q.fasta\E/ );
         my $output_file = new Bio::SeqIO(
             -file   => ">$renamed_directory\/$basename\_renamed\.fasta",
             -format => "fasta"
@@ -249,9 +249,12 @@ sub rename_sequences {
             my ( $extracted_accession, $genus_species, $source )
                 = $prepare->fetchrow_array();
 
-            $genus_species =~ s/ /\_/g;
+            if ( defined $extracted_accession ) {
 
-            $seq->id("$genus_species\_\[$source\-$extracted_accession\]");
+                $genus_species =~ s/ /\_/g;
+
+                $seq->id("$genus_species\_\[$source\-$extracted_accession\]");
+            }
 
             $output_file->write_seq($seq);
         }
@@ -277,7 +280,7 @@ sub rename_newick_trees {
             -format => "newick"
         );
 
-        my $basename = fileparse( $current_file, qr/\Q.treefile\E/ );
+        my $basename    = fileparse( $current_file, qr/\Q.treefile\E/ );
         my $output_tree = new Bio::TreeIO(
             -file =>
                 ">$trees_renamed_directory\/$basename\_renamed\.treefile",
@@ -299,8 +302,12 @@ sub rename_newick_trees {
                     my ( $extracted_accession, $genus_species, $source )
                         = $prepare->fetchrow_array();
 
-                    $node->id(
-                        "$genus_species \[$source\-$extracted_accession\]");
+                    if ( defined $extracted_accession ) {
+
+                        $node->id(
+                            "$genus_species \[$source\-$extracted_accession\]"
+                        );
+                    }
                 }
             }
 
