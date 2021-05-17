@@ -14,6 +14,8 @@ use IO::Prompt;
 use IO::Tee;
 use YAML::XS qw/LoadFile/;
 
+use Data::Dumper;
+
 our $VERSION = 0.1;
 my $version = "Orchard Pipeline -- orchard v$VERSION\n";
 
@@ -175,7 +177,7 @@ sub searching {
         print
             "\n[Orchard:INFO] - Processing: $input_seqs_count of $input_seqs_total\n";
 
-        my $sequence_name = $seq->id;
+        my $sequence_name = parse_input_accession( $seq->id );
 
         # Output Query Sequence
         my $query_out = Bio::SeqIO->new(
@@ -233,6 +235,34 @@ sub searching {
                 "sed -i \'/^>/!s/U|\\w/X/g\' $outdir\/seqs\/$sequence_name\_hits.fasta";
         }
     }
+}
+
+# Bio::SeqIO->id won't always get the right input_accession
+# normally it returns up to the first space, but with funkier things
+# it just reports the whole accession, which is messy for filenames.
+sub parse_input_accession {
+    my $input_accession = shift;
+    my ( $output_accession, $test );
+
+    if ( $input_accession =~ m/.*\|.*/ ) {
+
+        # try getting the second value of a split with pipe
+        $test = ( split /\|/, $input_accession )[1];
+
+        if ( defined $test ) {
+            $output_accession = $test;
+        }
+    }
+    elsif ( length $input_accession >= 32 ) {
+        $output_accession = substr $input_accession, 0, 32;
+        $output_accession =~ s/\s+/\_/g;
+        $output_accession =~ s/[^a-zA-Z0-9\_]+//g;
+    }
+    else {
+        $output_accession = $input_accession;
+    }
+
+    return $output_accession;
 }
 
 sub run_blast {
@@ -440,7 +470,6 @@ sub parse_search_output {
 #
 # Alignment
 #
-
 sub alignment {
     my $sequence_directory   = "$outdir\/seqs";
     my $alignments_directory = "$outdir\/alignments";
