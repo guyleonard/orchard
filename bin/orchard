@@ -281,6 +281,7 @@ sub run_blast {
     while (@taxa_list) {
 
         chomp( my $current_taxa = shift(@taxa_list) );
+        $current_taxa = (split /\t/, $current_taxa)[0];
 
         if ( $current_taxa =~ m/^#/ ) {
             print "[Orchard:WARN] - Skipping commented out $current_taxa\n";
@@ -335,6 +336,7 @@ sub run_blat {
     while (@taxa_list) {
 
         chomp( my $current_taxa = shift(@taxa_list) );
+        $current_taxa = (split /\t/, $current_taxa)[0];
 
         if ( $current_taxa =~ m/^#/ ) {
             print "[Orchard:WARN] - Skipping commented out $current_taxa\n";
@@ -376,6 +378,7 @@ sub run_diamond {
     while (@taxa_list) {
 
         chomp( my $current_taxa = shift(@taxa_list) );
+        $current_taxa = (split /\t/, $current_taxa)[0];
 
         if ( $current_taxa =~ m/^#/ ) {
             print "[Orchard:WARN] - Skipping commented out $current_taxa\n";
