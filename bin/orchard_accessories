@@ -2,6 +2,9 @@
 use strict;
 use warnings;
 
+use autodie;
+use Bio::DB::EUtilities;
+use Bio::DB::Taxonomy;
 use Bio::SeqIO;
 use Bio::Tree::Draw::Cladogram;
 use Bio::TreeIO;
@@ -11,6 +14,8 @@ use File::Path qw(make_path);
 use Getopt::Long;
 use IO::Tee;
 use YAML::XS qw/LoadFile/;
+
+use Data::Dumper;
 
 our $VERSION = 0.1;
 my $version = "Orchard Pipeline v1.0 -- orchard_accessories v$VERSION\n";
@@ -25,7 +30,8 @@ my $log;
 my ($rename_sequences, $rename_alignments, $rename_masks,
     $rename_excluded,  $rename_newick_trees
 );
-my ( $renamed, $eps_tree, $svg_tree, $pdf_tree );
+my ( $renamed,   $eps_tree,   $svg_tree, $pdf_tree );
+my ( $colourise, $taxdump_on, $taxdump,  $taxon_colour_info );
 
 #
 # getopt Logic
@@ -41,10 +47,12 @@ GetOptions(
     'mask|m'                => \$rename_masks,
     'excluded|e'            => \$rename_excluded,
     'newick|n'              => \$rename_newick_trees,
-    'renamed'               => \$renamed,
-    'eps_tree'              => \$eps_tree,
-    'svg_tree'              => \$svg_tree,
-    'pdf_tree'              => \$pdf_tree,
+    'renamed|r'             => \$renamed,
+    'eps_tree|eps'          => \$eps_tree,
+    'svg_tree|svg'          => \$svg_tree,
+    'pdf_tree|pdf'          => \$pdf_tree,
+    'colourise|colorise|c'  => \$colourise,
+    'taxdump|t'             => \$taxdump_on,
     'version|v'             => sub { print "$version"; exit(0) },
     'help|h'                => sub { help_message() }
 ) or help_message();
@@ -62,50 +70,63 @@ if ( -f $params_file ) {
     $orchardDB_username = $paramaters->{database}->{username};
     $orchardDB_password = $paramaters->{database}->{password};
 
+    $taxon_colour_info = $paramaters->{annotation}->{taxonomy_colours};
+    $taxdump           = $paramaters->{annotation}->{taxdump};
+
     my $logfile = ">>$outdir\_orchard_accessories.log";
     $log = IO::Tee->new( \*STDOUT, $logfile );
     select $log;
 
-    if ( defined $rename_sequences eq 1 ) {
+    if ( defined $rename_sequences == 1 ) {
         rename_sequences('seqs');
     }
 
-    if ( defined $rename_alignments eq 1 ) {
+    if ( defined $rename_alignments == 1 ) {
         rename_sequences('alignments');
     }
 
-    if ( defined $rename_masks eq 1 ) {
+    if ( defined $rename_masks == 1 ) {
         rename_sequences('masking');
     }
 
-    if ( defined $rename_excluded eq 1 ) {
+    if ( defined $rename_excluded == 1 ) {
         rename_sequences('excluded');
     }
 
-    if ( defined $rename_newick_trees eq 1 ) {
+    if ( defined $rename_newick_trees == 1 ) {
         rename_newick_trees();
     }
 
-    if ( defined $eps_tree eq 1 && !defined $renamed ) {
+    if ( defined $eps_tree == 1 && !defined $renamed ) {
         draw_eps_tree('');
     }
-    elsif ( defined $eps_tree eq 1 && defined $renamed eq 1 ) {
+    elsif ( defined $eps_tree == 1 && defined $renamed == 1 ) {
         draw_eps_tree('renamed');
     }
 
-    if ( defined $svg_tree eq 1 && !defined $renamed ) {
+    if ( defined $svg_tree == 1 && !defined $renamed ) {
         draw_dendroscope_tree( '', 'svg' );
     }
-    elsif ( defined $svg_tree eq 1 && defined $renamed eq 1 ) {
+    elsif ( defined $svg_tree == 1 && defined $renamed == 1 ) {
         draw_dendroscope_tree( 'renamed', 'svg' );
     }
 
-    if ( defined $pdf_tree eq 1 && !defined $renamed ) {
+    if ( defined $pdf_tree == 1 && !defined $renamed ) {
         draw_dendroscope_tree( '', 'pdf' );
     }
-    elsif ( defined $pdf_tree eq 1 && defined $renamed eq 1 ) {
+    elsif ( defined $pdf_tree == 1 && defined $renamed == 1 ) {
         draw_dendroscope_tree( 'renamed', 'pdf' );
     }
+
+    if ( defined $colourise == 1 && defined $taxdump_on == 1 ) {
+
+        colourise_svg_tree( 'renamed', 'svg' );
+    }
+    elsif ( defined $colourise == 1 ) {
+
+        colourise_svg_tree( 'renamed', 'svg' );
+    }
+
 }
 else {
     print
@@ -211,13 +232,13 @@ sub rename_sequences {
         print
             "[orchard_accessories:INFO] - Renaming Taxa in Sequence File $current_file\n";
 
-        my $input_file = new Bio::SeqIO(
+        my $input_file = Bio::SeqIO->new(
             -file   => "$current_file",
             -format => "fasta"
         );
 
         my $basename    = fileparse( $current_file, qr/\Q.fasta\E/ );
-        my $output_file = new Bio::SeqIO(
+        my $output_file = Bio::SeqIO->new(
             -file   => ">$renamed_directory\/$basename\_renamed\.fasta",
             -format => "fasta"
         );
@@ -260,13 +281,13 @@ sub rename_newick_trees {
         print
             "[orchard_accessories:INFO] - Renaming Taxa in Tree $current_file\n";
 
-        my $input_tree = new Bio::TreeIO(
+        my $input_tree = Bio::TreeIO->new(
             -file   => "$current_file",
             -format => "newick"
         );
 
         my $basename    = fileparse( $current_file, qr/\Q.treefile\E/ );
-        my $output_tree = new Bio::TreeIO(
+        my $output_tree = Bio::TreeIO->new(
             -file =>
                 ">$trees_renamed_directory\/$basename\_renamed\.treefile",
             -format => "newick"
@@ -290,7 +311,7 @@ sub rename_newick_trees {
                     if ( defined $extracted_accession ) {
 
                         # remove annoying colons from some taxa names
-                        $genus_species =~ s/\:|\#/_/ig;
+                        $genus_species       =~ s/\:|\#/_/ig;
                         $extracted_accession =~ s/\:|\#/_/ig;
 
                         $node->id(
@@ -303,6 +324,273 @@ sub rename_newick_trees {
             $output_tree->write_tree($tree);
         }
     }
+}
+
+#
+# Taxon Colourising
+#
+sub colourise_svg_tree {
+
+    my ( $renamed, $type ) = @_;
+    my $trees_directory = "$outdir\/trees\/$renamed\/$type";
+    my $genus;
+    my $height;
+
+    my $trees_dir_out = "$trees_directory\/annotated";
+    make_path("$trees_dir_out");
+
+    my %colour_hash = colours_to_hash("$taxon_colour_info");
+
+    if ( defined $taxdump_on == 1 ) {
+
+        print "[orchard_accessories:INFO] - Using Local NCBI Taxdump\n";
+
+        if ( !-f "$taxdump/names.dmp" && !-f "$taxdump/nodes.dmp" ) {
+            print
+                "[orchard_accessories:ERRR] - The nodes.dmp and names.dmpare missing. Please make sure the correct path is specified in your parameters file.\n";
+            exit();
+        }
+    }
+    else {
+        print "[orchard_accessories:INFO] - Using Entrez Online\n";
+    }
+
+    my @trees_to_colourise = glob "$trees_directory\/*renamed.svg";
+
+    for my $i ( 0 .. $#trees_to_colourise ) {
+        my $current_file = $trees_to_colourise[$i];
+
+        print "[orchard_accessories:INFO] - Opening $current_file\n";
+
+        open my $svg_in, '<', "$current_file";
+
+        my $basename = fileparse( $current_file, qr/\Q.svg\E/ );
+        open my $svg_out, '>', "$trees_dir_out\/$basename\_annotated\.svg";
+
+        while ( my $line = <$svg_in> ) {
+
+            # if the line is svg code for text, get the text in a match
+            if ( $line =~ m/.*\<text.*\>(.*)\<\/text\>/is ) {
+
+                # now test for a taxon name compared to bootstraps (digits)
+                my $potential = $1;
+
+                # match bootsraps as integers "100" or "1"
+                # or as numbers with decimals e.g. "0.2" or "0.875"
+                if ( $potential =~ m/^(\d+\.\d+|\d+)$/ ) {
+
+                    # skip bootstraps
+                    # but, print unchanged line
+                    print {$svg_out} $line;
+                }
+                elsif ( $potential =~ m/^(.*)\s+\[.*\]$/ ) {
+
+                    # match the species name and accession which from Orchard
+                    # look like: "Species name strain [DB-XXXXXX]"
+
+                    # we only really need Genus to get the taxonomy
+                    # makes for a quicker search and removes complications
+                    # when searching for 'sp.' or strain names
+                    my @match = split / /, $1;
+                    $genus = $match[0];
+
+                    if ( $genus =~ m/Candidatus/i ) {
+                        $genus = "$match[1] $match[2]";
+                    }
+
+                    my $taxonomy = genus_to_taxonomy("$genus");
+                    my $taxa_colour
+                        = taxonomy_to_colour( $taxonomy, %colour_hash );
+
+                    if ( defined $taxa_colour ne "" ) {
+                        my $replace    = "fill:rgb(0,0,0)";
+                        my $new_colour = "fill:$taxa_colour";
+
+                        # \Q turns on autoescaping of any special regex chars
+                        $line =~ s/\Q$replace/$new_colour/g;
+
+                    }
+
+                    # print changed line
+                    print {$svg_out} $line;
+                }
+
+                # elsif ( $potential =~ m/^([A-z_]+\d+)(\.\d{1})$/ ) {
+
+                #     print "NCBI: $1$2\t";
+
+                #     my $factory = Bio::DB::EUtilities->new(
+                #         -correspondence => 1,
+                #         -db             => 'taxonomy',
+                #         -dbfrom         => 'protein',
+                #         -email          => 'mymail@foo.bar',
+                #         -eutil          => 'elink',
+                #         -id             => "$1"
+                #     );
+
+                #     print Dumper $factory;
+
+                #     my ( %taxa, @taxa );
+                #     while ( my $ds = $factory->next_LinkSet ) {
+                #         $taxa{ ( $ds->get_submitted_ids )[0] }
+                #             = ( $ds->get_ids )[0];
+                #     }
+
+                #     #@taxa = @taxa{@ids};
+                #     print Dumper @taxa;
+
+                #     #my ($name)
+                #     #    = $factory->next_DocSum->get_contents_by_name(
+                #     #    'ScientificName');
+
+                #     #print "Name: $name\n";
+
+                # }
+                else {
+                    # print unchanged line
+                    print {$svg_out} $line;
+                }
+
+            }
+            elsif ( $line =~ m/^\<svg .*height=\"(\d+)px\".*/ ) {
+                $height = $1;
+                print {$svg_out} $line;
+            }
+            elsif ( $line =~ m/\<\/svg\>/ ) {
+                my $key = draw_key( "$height", %colour_hash );
+                print {$svg_out} $key;
+                print {$svg_out} "</svg>";
+            }
+            else {
+                # print unchanged line
+                print {$svg_out} $line;
+            }
+        }
+    }
+}
+
+sub draw_key {
+    my ( $height, %taxa_colours ) = @_;
+    my $key_svg;
+
+    my $x1 = "25";
+    my $x2 = "55";
+
+    my $taxa_number = keys %taxa_colours;
+
+    my $y1 = "180";    #( $height - ( 80 * $taxa_number ) );
+    my $y2 = "190";
+
+    $key_svg
+        = "  <g id=\"key\">\n    <text x=\"$x1\" y=\"$y2\" id=\"key\" xml:space=\"preserve\" style=\"font-size:14px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:OpenSymbol\">Key</text>";
+
+    foreach my $key ( sort { $a cmp $b } keys %taxa_colours ) {
+
+        my $colour = $taxa_colours{$key};
+
+        $y1 += 10;
+        $y2 += 10;
+
+        $key_svg = $key_svg
+            . "    <g id=\"$key\">\n <rect width=\"25\" height=\"10\" x=\"$x1\" y=\"$y1\" id=\"rect_$key\" style=\"opacity:1;fill:$colour;fill-opacity:1;stroke:none\" />\n";
+
+        $key_svg = $key_svg
+            . "      <text x=\"$x2\" y=\"$y2\" id=\"text_$key\" xml:space=\"preserve\" style=\"font-size:12px;font-style:normal;font-weight:normal;fill:$colour;fill-opacity:1;stroke:none;font-family:OpenSymbol\">$key</text></g>\n";
+
+    }
+    $key_svg = $key_svg . "  </g>\n";
+
+    return $key_svg;
+}
+
+sub taxonomy_to_colour {
+    my ( $taxonomy, %colour_hash ) = @_;
+
+    my $colour;
+
+    for my $key ( keys %colour_hash ) {
+        my $value = $colour_hash{$key};
+        if ( $taxonomy =~ m/$key/igsm ) {
+            $colour = $value;
+        }
+    }
+
+    return $colour;
+}
+
+sub genus_to_taxonomy {
+
+    my $genus    = shift;
+    my $taxonomy = q{};
+    my $force    = 0;
+    my $dbh;
+
+    if ( defined $taxdump_on == 1 ) {
+
+        if ( !-f "$taxdump/parents" ) {
+            print
+                "[orchard_accessories:WARN] - Indexing nodes.dmp and names.dmp. This may take some time but will only run once.\n";
+            $force = '1';
+        }
+
+        $dbh = Bio::DB::Taxonomy->new(
+            -directory => "$taxdump",
+
+            #-source    => 'flatfile',
+            -source => 'sqlite',
+            -db     => "$taxdump/taxonomy.sqlite",
+
+            #-db        => ':memory:',
+            -nodesfile => "$taxdump/nodes.dmp",
+            -namesfile => "$taxdump/names.dmp",
+            -force     => "$force"
+        );
+    }
+    else {
+
+        # Entrez ONLINE!
+        $dbh = Bio::DB::Taxonomy->new( -source => 'entrez' );
+    }
+
+    # Retrieve taxon_name
+    my $unknown = $dbh->get_taxon( -name => "$genus" );
+
+    # build an empty tree
+    my $tree_functions = Bio::Tree::Tree->new();
+
+    # and get the lineage of the taxon_name
+    my @lineage = $tree_functions->get_lineage_nodes($unknown);
+
+    # Then we can extract the name of each node
+    # which will give us the Taxonomy lineages...
+    foreach my $item (@lineage) {
+        my $name = $item->node_name;
+        my $rank = $item->rank;
+        $taxonomy = "$taxonomy$name\[$rank\],";
+    }
+
+    return $taxonomy;
+}
+
+sub colours_to_hash {
+    my $input = shift;
+
+    # marvel at the wonder and power of perl regexes!
+    # this captures two sets
+    # 1) [A-z]+ whcih is the taxonomic group name allowing for underscores
+    # then ignores the ; and continues with finding the hash/pound sign
+    # 2) #(?:(?:[\da-f]{3}){1,2}|(?:[\da-f]{4}){1,2})
+    # either a non-cpaturing group of exactly 3 of single digit or letters a-f
+    # repeated exactly one or two times
+    # or, a non-cpaturing group or
+    # exactly foour of a single digit or a letter a-f
+    # repeated exactly one or two times
+    # commas are effectively ignored, upper-lower-case hex numbers are allowed
+
+    my %colour_hash = $input
+        =~ /([A-z_]+);(#(?:(?:[\da-f]{3}){1,2}|(?:[\da-f]{4}){1,2})),/ig;
+
+    return %colour_hash;
 }
 
 #
@@ -341,6 +629,8 @@ sub help_message {
     print "\t-eps_tree\tDraw a Phylogram in EPS Format (Basic)\n";
     print "\t-svg_tree\tDraw a Phylogram with Dendroscope in SVG Format\n";
     print "\t-pdf_tree\tDraw a Phylogram with Dendroscope in PDF Format\n";
+    print "Colourise Trees\n";
+    print "\t-c\tColourise Taxa in SVG Tree\n";
     print
         "Cite: https://github.com/guyleonard/orchard and doi: 10.1105/tpc.109.065805\n";
     exit(0);
